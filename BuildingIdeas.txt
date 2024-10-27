@@ -1,0 +1,165 @@
+Airports
+~ Algal farms
+~ Apartments
+Apiaries
+~ Aquaculture facilities
+Art galleries
+Automobile factories
+Bakeries
+~ Banks
+~ Battery factory (apparently 'gigafactory', though the term makes no sense)
+~ Bars
+Bike sharing stations
+~ Botanical gardens
+Brothels
+~ Bus depots
+~ Cafes
+Campsites
+Candy factories
+Car dealerships
+~ Carbon capture plants
+~ Casinos
+~ Cement mills
+Churches
+~ City halls
+~ Clinics
+Clothing stores
+~ Coal power plants
+~ Cold storage facilities
+~ Colleges
+~ College dorms
+Comic shops
+Community centers
+Concert halls
+Condominiums
+~ Convention centers
+~ Corner stores
+Courthouses
+Dance clubs
+~ Data centers
+~ Deep mine
+Dental offices
+Desalination plants
+DMVs
+Electric scooter/bike rental agencies
+~ Electric vehicle charging stations/rental lots
+Electric vehicle plants
+Electrical substations
+~ Electronics factories
+Electronics shops
+~ Elementary schools
+~ Farms
+~ Fire stations
+Fisheries
+~ Fountains
+~ Furniture factory
+~ Furniture store - increases move-in chance and is a business, but you have to fuel it with furniture
+~ Fusion power plants
+~ Game dev studio
+~ Game shops
+Gas stations
+~ Geothermal power plants
+~ Greenhouses (I made a floral one, but a food one would also be good)
+Grocery stores
+Gyms
+~ High schools
+~ High-rise residential towers
+~ Hospitals
+~ Hotels
+Hydroelectric dams
+~ Ice cream shops/trucks (could even have parking lots for business trucks that move around)
+Internet cafes
+~ Junkyards
+Karaoke booths
+Large houses
+Libraries
+Lighthouses
+~ Livestock farms
+Live theaters
+Mechanics
+Medium houses
+Mental health centers
+~ Metal mines
+Metal refineries
+Minigolf courses
+~ Moho mine
+Movie theaters
+Museums
+Natural gas power plants
+~ Nuclear fission power plants
+Observatories
+Office buildings
+~ Oil derricks
+~ Oil power plants
+Optometrists
+Orchards
+~ Parks
+Pharmacies
+~ Playgrounds
+~ Police stations
+~ Post offices
+Prisons
+~ Quantum computing lab
+Radio stations
+Recycling centers
+Rental shops
+Research labs
+~ Restaurants
+Sawmills
+Seaports
+Shipment distribution centers
+Shipyards
+Shooting Range
+Shopping malls
+~ Silos
+Ski resorts
+~ Small houses
+Snow plow garage
+~ Solar farms
+Solar panel factories
+~ Space launch sites
+Sports stadiums
+~ Statues
+~ Steel mills
+~ Stone quarries
+Strip clubs
+Supermarkets
+Swimming pools
+Telecommunications towers
+Telescope arrays
+~ Textile mills
+~ Toy manufacturer
+Train stations
+Travel agencies
+~ Tree farms
+TV stations
+Universities
+~ Vertical farms
+~ Warehouses
+Waste treatment plants
+Water towers
+Water treatment plants
+~ Weather control machine
+Weather stations
+Wind farms
+Zoos
+
+Needs its own container: Water
+
+
+
+...Military things
+...endless types of factory, shop, business, and government versions of things (e.g., government-provided housing, welfare office, homeless shelter)
+...could also have current cutting-edge tech like carbon capture plants (negative pollution) and centrifugal air purifiers. Carbon pollution could say "doesn't have immediate health effects, but a portion of the population is happier knowing they're contributing to the planet's health long-term." And noise barriers.
+
+*** could require there to be enough factories/businesses to supply all citizens (so you need more as the city grows) in order for there to be any surplus for you to use directly for the city
+***** That's a great idea for ensuring larger cities don't automatically mean you have a ton of disposable income from excess resources
+I did like the timer-based factories and such in SimCity BuildIt, but they need to allow stocking up 5 days worth of resources before they stop producing.
+
+There will definitely be events... especially at the convention center, like anime conventions, comic cons, even garbage like NASCAR...
+*** could have both sims and bots more like Timberborn and Surviving Mars... biomes of fire, ice, jungle, ocean, river, etc.
+
+** Then we need a "service" class to manage all buildings that fall under that service--that's where the player's budget adjustment (0.9, 1.0, or 1.1) would be.
+** A class for each window (budget, building stock, control bar, info, tutorials, etc), for each view (city layer, the several types of pollution, crime, minigames, etc), for each control (range-slider)...
+** Maybe a market service--to handle storage and calculation of resource buy and sell prices and availability
+** Maybe a techtree class to handle the research progress, techs that you are currently allowed to research, past unlocks, adoption progress and speed...

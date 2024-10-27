@@ -1,0 +1,12 @@
+export enum BuildingCategory {
+    RESIDENTIAL,
+    COMMERCIAL,
+    INDUSTRIAL,
+    ENERGY,
+    AGRICULTURE,
+    INFRASTRUCTURE,
+    GOVERNMENT,
+    LUXURY,
+    BLOCKER,
+    NATURAL_RESOURCE,
+}

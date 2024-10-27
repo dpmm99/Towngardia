@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "downlevelIteration": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "moduleResolution": "Node",
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "paths": {
+      "*": [ "node_modules/*" ]
+    }
+  },
+  "include": [ "src/**/*" ],
+  "exclude": [ "**/*.test.ts" ]
+}

@@ -1,0 +1,62 @@
+Towngardia: Isometric social city sim game (mobile-friendly, browser-based, and absolutely no microtransactions).
+Over 100 building types (many factories, businesses, city services, public utilities, decorations, infrastructure--but no power lines; roads and buildings transfer power)
+Over 50 resource types (including funds, happiness, population, apples, grain, root vegetables, silicon, iron, steel, etc.)
+Techs with variable adoption rates (by researching, you can unlock buildings, upgrades, and access to research more techs; many techs take a while to be fully adopted by the populace)
+Titles and achievements (similar, but titles are at the City level and with permanent effects, while achievements are at the Player level and only for brownie points).
+Trade (import power as needed automatically, and the player has settings to auto-trade other types of resources, e.g., auto-buy up to the given warehouse capacity percentage when provisioning resources to buildings, auto-sell when collecting unless stock gets below some percent)
+Long and short ticks (long ticks are 4x daily, affecting resource production/consumption, but power usage and road connectivity are based on short ticks, which occur every 5 minutes)
+Manual collection and provisioning of resources (player has to interact with factories/businesses occasionally for them to function, but buildings will stock up to 5 days worth; player has options for 1 tap to provide 1 Long Tick's worth, 1 day's worth, or 5 days' worth on a per-resource-type basis)
+Events (seasons that affect crop growth by type, holidays that may affect decorations and happiness, market events like economic booms/slumps and tradeable resource shortages, and disasters like snow accumulation, storms, and epidemics)
+Optional minigames (rate-limited so you can only play so many in a time period, with effects [much like events] such as a short-term tourism boost or increased tech adoption rate, but some minigames you can play to help your friends' cities as well)
+Happiness-oriented local conditions (several types of pollution, several types of crime, land value, etc.)
+City data views (to see population distribution, sources and concentrations of pollution, etc.)
+Budgets (one or a few types of tax, expenditures per service type, but the player only has a little control over each so it's easier for us to balance the income, trade prices, and service costs)
+Direct construction, corporate enticement, and automatic formation (the player selects where most buildings go, some they may pay for but are effectively just making a fixed-size zone for a specific type of business to ask them to move in, and residents build homes and come and go as they please)
+Nature exploitation (each player picks a region for their city, and regions have different natural resources, particularly rare ones; also, players must unlock areas within the region to expand their cities or to reach certain resources)
+Loss prevention (if the player does poorly and gets into negative funds, they can't build or buy resources, and city services also auto-downsize to try to keep enough population but low enough expenses to make the budget a net positive; city services also operate cheaper if they don't HAVE to be running at full steam, even if you're rich)
+Other central design decisions: 'addictive' over a long time scale, meant to be played across months to years, but not encouraging addictive behaviors like missing out on gains if you don't play daily; always-running and constantly-saving like an MMO, not like a single-player game. Keep players from becoming rich AND let players ease into things by increasing building costs as the city grows, making citizens demand more services for the same amount of happiness as population grows, and maybe other means. None of the titles and achievements are things you would easily get without intentionally aiming for them.
+
+One of the minigames will be a clone of that game Mom liked in the 90s/00s, Jewelbox. It's basically Tetris, but the falling blocks are always 3 in a line with 2-3 different jewel types, and any 3-in-a-row match disappears and the remaining ones obey gravity. Could be a speed game, but it's a matter of how fast you complete it instead of racing against falling blocks, perhaps making controls a bit easier.
+
+Might want a milestone chart that shows your current population and the next few unlocks. (e.g., population is 1 at the start, and it shows 50=food production, 100=police, 200=fire.)
+Tourism would be unlocked by having a few commercial establishments.
+Could even have an alien structure that lets you play minigames on occasion to get a resource you can't get any other way.
+Could have events that make you change your city layout a bit, like "a hot spring opened up at this location, so you should build a resort there."
+
+Regions could be like... ancient ocean: more oil, sand, maybe coal and crystals. Delta: more swamps and coal or something. Tundra: nothing useful and perpetual winter (no heatwaves)? Volcanic yard with a lot of copper and iron?
+
+Disaster ideas:
+Close call - fission power plant has to shut down for a day to repair after the safety triggered
+
+Prompt for UI icons:
+Four clean images, ICON OBJECTS GO HERE, style of a mostly flat (slightly 3D, slightly cartoony) software icon, plain black background
+Prompt for buildings:
+XYZ building, in the style of a detailed 3D realistic cartoon isometric city sim, no background or shadows around the tile, omnidirectional lighting, fitting completely in frame, plain black background
+
+
+
+Main remaining features:
+Regions
+Some more UI work, like maybe showing an unobtrusive pop-up when you collect resources
+aaand probably being able to buy things (particularly the resources that aren't in every region) more easily if your friends are selling them. I was thinking sales go into a list for 5 days, but then you have to load and affect the other players' city data...
+Otherwise, I'm pretty well down to just making buildings, events, techs (though I already have 30), and titles/achievements. 
+
+Coolest open ideas:
+the regions I described above (ancient ocean, delta, tundra, volcanic yard)
+Could have events that make you change your city layout a bit, like "a hot spring opened up at this location, so you should build a resort there."
+disasters like snow accumulation, fission 'close call'
+"corporate enticement"
+construction image until a building activates
+convention center with its own MEANINGFUL events (they just cause a temporary tourism increase as-is)
+...water. Beaches, marinas, dredgers, fishing ships, cruise ships, luaus, lighthouses
+business categories so people can be assigned to multiple types of business instead of just one each
+"authorizing" buildings to change behavior (I forget exactly what I was thinking early this morning, but I thought it was cool then ;) probably allowing pharmaceutical auto-use at hospitals or something, but that wouldn't have any impact since health benefits cap at 1 anyway)
+make certain buildings change the adjacent road tiles' variants to show trucks on them (or make them draw an overlay just like the collectible/provisioning overlays)
+space launch site or a tractor beam can be set to pull asteroids down to the ground, giving more resources but risking damaging nearby buildings
+
+Unused resources:
+toys could be a regional or citywide effect minigame wherein you distribute them
+rubber for cars (plus batteries though they aren't unused), but dunno
+Unused and unproduceable: clay, bricks, paper, rubber, lumber... dunno.
+Uranium and tritium can only be obtained as high-end minigame rewards.
+pharmaceuticals for health

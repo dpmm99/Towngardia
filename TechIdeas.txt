@@ -1,0 +1,28 @@
+Vacuum insulated windows: Improve energy efficiency
+Rooftop solar panels: Generate small amounts of electricity
+Smart home systems: Optimize energy usage
+Coal power scrubbers: Reduce pollution
+Perovskite-blend solar cells: Increase solar panel efficiency and reduce their silicon cost
+Wind turbine lattice frame: Reduce wind turbine construction costs
+Fusion power research: Unlock fusion reactors
+Advanced robotics: Increase factory production speed (affects a specific set of resources)
+AI-driven logistics: Improve warehouse capacity (specifically the warehouses that store smaller, more complex resources, not construction materials--I don't have names for warehouse types yet)
+3D printing facilities: Reduce plastic usage in manufacturing
+Carbon capture systems: Unlocks a Carbon Capture Plant building
+Vertical farming: Unlocks a vertical farm building
+Hydroponic gardens: Citizens grow their own edible plants, so they buy less food
+Lab-grown meat: Unlocks the Carnicultivator (edible meat-growing lab)
+Genetically modified crops: Increase crop yield
+Retaining soil: Reduce farm water usage and reduce impact of Drought disasters
+Graphene batteries: Increase electric vehicle adoption rates
+Autonomous vehicles: Reduce traffic and reduce impact of Snow disasters
+AR shopping experiences: Retailers produce more income
+Food service robots: Restaurants produce more income
+Drone delivery systems: Reduce traffic and reduce impact of Snow disasters
+Telemedicine infrastructure: Healthcare facilities have increased reach
+Nanomedicine research: Large healthcare facilities have a greater effect on citizen health
+AI diagnostics: Reduces upkeep costs of healthcare facilities
+VR classrooms: Increase effectiveness of educational facilities
+Brain-computer interfaces: Dramatically increase effectiveness of large educational facilities
+Quantum computing: Unlocks Quantum Research Lab, which gives random sporadic research bonuses
+Cloud seeding: shortens Drought disasters

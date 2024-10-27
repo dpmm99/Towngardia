@@ -1,0 +1,52 @@
+--Eliminated ideas:
+Autonomous City: Have 100% of vehicles be self-driving
+Balancing Act: Maintain equal levels of industrial, residential, and commercial development for a week
+Clean Slate: Transform the most polluted district into the cleanest within a month
+Cultural Melting Pot: Build one of each type of cultural building
+Cybersecurity Fortress: Prevent all cybercrime attempts for a month
+Eco-Warrior: Clean up a heavily polluted area and transform it into a nature reserve
+Harmony in Concrete: Achieve perfect balance between residential, commercial, and industrial zones
+Hoarder's Paradise: Stockpile more than a week's worth of a constantly consumed resource (funds, water)
+Master Trader: Complete trades with 10 different player cities in a week
+Off the Grid: Run your entire city on locally produced renewable energy for a day (combined with another and turned into Free Energy)
+Pigeon Paradise: Install more bird feeders than trash cans in your city
+Quantum Leap: Complete a major research project in record time using quantum computers
+Space Port: Successfully launch a satellite from your city
+Tech Haven: Have 50% of your population working in high-tech industries
+Traffic Tamer: Achieve zero traffic congestion during rush hour (I haven't considered traffic simulations at all, just "we have X vehicles of Y type in the city")
+Water Wise: Reduce water consumption by 50% through efficiency and recycling
+Who Needs Sleep?: Have a 24-hour dance party in every entertainment venue simultaneously
+Zero Waste: Recycle 100% of your city's waste for a month
+
+--Remaining/updated list:
+Carbon Nation: Achieve net-zero carbon emissions for a week in a city with at least 1000 population
+Crime Is Outlawed: Keep all types of crime at minimal levels for a week in a city with at least 1000 population
+Farm Vile: Have a Farm, Tree Farm, or Vertical Farm in an area of very high particulate pollution.
+No Adult Left A Dolt: Have colleges covering all residences in a city with at least 1000 population
+Noise Enthusiast: Have a single residence affected by 5 noisy buildings (not counting roads).
+Oops, All Parks!: Completely fill a 5x5 area with parks
+Party Through the Blackout: Keep at least 5 entertainment venues powered while at least 10 homes are experiencing a blackout
+Resource Tycoon: Collect and sell 30 types of resource in a single day.
+Self-Sufficiencity: Maintain a balanced budget, all services at 100% coverage and maximum budget allocation, and no water, power, or fuel purchases for a week in a city with at least 1000 population (fuel includes coal, oil, uranium, and tritium)
+Traffic Chaos Theory: Fill a 3x3 area with roads and connect it to the main road
+Urban Planner Extraordinaire: Have at least three elementary schools that neighbor a bar or casino
+Watts Up, Doc: Provide 10% more power than necessary in a city with at least 1000 population
+
+--
+Eco-Warrior: Clean up a heavily polluted area and transform it into a nature reserve
+Green Commute: Have 50% of your workforce use bicycles or walk to work in a city with at least 1000 population
+Green Utopia: Maintain zero air pollution for a week in a city with at least 1000 population
+Healthcare Hero: Maintain complete healthcare coverage with maximum efficiency for a week in a city with at least 1000 population
+Public Transit Paradise: Have public transportation coverage for all roads in a city with at least 1000 population
+Silent Night: Reduce noise pollution to zero in a 5x5 area encompassing at least 10 homes (not possible; roads can't be noise-free)
+Sustainable Skyline: Fully power a city with a population of at least 20,000 using only renewable energy
+Urban Farmer: Collect enough food in one day to feed your entire population for five days in a city with at least 20,000 population
+Urban Jungle: Have more trees than homes in a city with at least 1000 population
+Waste Not, Want Not: Maintain 90% recycling rate for a week in a city with at least 1000 population
+
+--Titles:
+Vegan Retreat: Within 7 days, collect at least 250 food and avoid producing any animal products. Reward: efficiency bonus for farms and vertical farms.
+City of Innovators: Complete two research options in one day. Reward: research speed bonus.
+Pioneergreen: Research an eco-friendly technology before reaching 1000 population. Reward: increases the rate at which eco-friendly technologies are adopted. (Note: This should be pointed out by the tutorial because it's locked forever once you reach 1000 population.)
+Culinary Capital: Have 6 restaurants that each share a wall with one of the others. Reward: boosts tourism and restaurant efficiency.
+Smart City Showcase: Research Smart Home Systems, Advanced Robotics, VR Classrooms, and AR Shopping, then boost tourism via a minigame. Reward: increases adoption rate of high-tech upgrades.

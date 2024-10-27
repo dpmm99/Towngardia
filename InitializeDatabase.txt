@@ -1,0 +1,41 @@
+CREATE DATABASE IF NOT EXISTS aureusco_games;
+USE aureusco_games;
+
+CREATE TABLE IF NOT EXISTS towngardia_players (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    discord_id VARCHAR(255) UNIQUE,
+    facebook_id VARCHAR(255) UNIQUE,
+    avatar VARCHAR(255),
+    display_name VARCHAR(255),
+    discriminator VARCHAR(10),
+    name VARCHAR(255),
+    email VARCHAR(255),
+    other_public JSON
+);
+
+CREATE TABLE IF NOT EXISTS towngardia_cities (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    player INT,
+    name VARCHAR(255),
+    city JSON,
+    FOREIGN KEY (player) REFERENCES towngardia_players(id)
+);
+
+CREATE TABLE IF NOT EXISTS towngardia_player_friends (
+    player_id INT,
+    friend_id INT,
+    assists JSON,
+    PRIMARY KEY (player_id, friend_id),
+    FOREIGN KEY (player_id) REFERENCES towngardia_players(id),
+    FOREIGN KEY (friend_id) REFERENCES towngardia_players(id)
+);
+
+CREATE TABLE IF NOT EXISTS towngardia_sessions (
+    id VARCHAR(255) PRIMARY KEY,
+    expires DATETIME,
+    player_id INT,
+    FOREIGN KEY (player_id) REFERENCES towngardia_players(id)
+);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON aureusco_games.* TO 'aureusco_glack';
+FLUSH PRIVILEGES;

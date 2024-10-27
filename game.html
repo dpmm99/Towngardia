@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Towngardia</title>
+    <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body style="background-color: black;">
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+    <div id="loadingNotice" class="fullscreen-notice">
+        Loading city...
+    </div>
+    <div id="catchUpNotice" class="fullscreen-notice" style="display: none">
+        Fast-forwarding time...
+    </div>
+
+    <div id="addFriendDialog" class="dialog" style="display: none;">
+        <h2>Add Friend</h2>
+        <div style="display: flex;">
+            <input type="text" id="friendSearchInput" placeholder="Search for a friend...">
+            <button id="searchButton">Search</button>
+        </div>
+        <div id="searchResults"></div>
+        <button id="closeDialog">Close</button>
+        <p><b>Note:</b> Friends must have signed into the game before you can add them.</p>
+    </div>
+
+    <script src="bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+export enum CityFlags { //These values are SAVED in the database, so do not add any out of order.
+    PoliceProtectionMatters,
+    FireProtectionMatters,
+    HealthcareMatters,
+    EducationMatters,
+    GreenhouseGasesMatter,
+    BlockersPointedOut,
+    FoodMatters,
+    B12Matters,
+    CitizenDietFullSwing,
+    UnlockedSlots,
+    UnlockedStarbox,
+    UnlockedGameDev,
+    UnlockedTourism,
+    UnlockedPost,
+    UnlockedMonobrynth,
+}
