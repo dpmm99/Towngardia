@@ -1107,7 +1107,7 @@ export class City {
         //Gain about 1 research point a day, or a max of around 5.4 a day for a city of 250k.
         const research = this.resources.get("research")!;
         const innovatorBonus = this.titles.get(TitleTypes.CityOfInnovators.id)?.attained ? 1.1 : 1;
-        research.amount += Math.max(1, Math.min(research.productionRate, Math.log10(this.resources.get("population")!.amount))) * innovatorBonus / LONG_TICKS_PER_DAY; //TODO: Higher education buildings would affect production rate
+        research.amount += Math.max(1, Math.min(research.productionRate, Math.log10(this.resources.get("population")!.amount) * this.getCityAverageEducation())) * innovatorBonus / LONG_TICKS_PER_DAY;
 
         //Cap the auto-buy amounts
         this.resources.forEach(resource => resource.buyableAmount = Math.min(resource.buyableAmount, resource.buyCapacity));
@@ -1304,6 +1304,13 @@ export class City {
         }
         return total / (this.height * this.width);
     }
+    getCityAverageEducation(): number { //Not the same as greenhouse gases--this only counts for residence tiles.
+        const residences = this.buildings.filter(p => p.isResidence);
+        if (!residences.length) return 0;
+
+        const total = residences.reduce((sum, residence) => sum + residence.getHighestEffect(this, EffectType.Education), 0);
+        return total / residences.length;
+    }
 
     isRoadAdjacent(x: number, y: number): boolean {
         if (x > 0 && this.grid[y][x - 1]?.isRoad) return true;
@@ -1379,6 +1386,9 @@ export class City {
         // Gradually adjust population towards target
         const populationChange = (targetPopulation - populationResource.amount) / Math.max(1, Math.min(5, populationResource.amount / 35)); //No floor or ceiling or round, because then the population can't change *at all* early in the game. Just round in the UI.
         populationResource.amount = Math.max(1, populationResource.amount + populationChange); //Can't be 0; that causes math errors. Plus the player can't move out of their own city. :)
+
+        this.runEvents(EventTickTiming.Population);
+
         this.peakPopulation = Math.max(this.peakPopulation, populationResource.amount);
 
         // Update production rate for smoother transitions (really just usable for UI purposes)
@@ -1442,37 +1452,46 @@ export class City {
 
         //Trigger notifications and unlock buildings when the city reaches certain population thresholds. Should actually trigger tutorials.
         if (this.peakPopulation >= 100 && !this.flags.has(CityFlags.PoliceProtectionMatters)) {
-            this.notify(new Notification("I Am the Law", "You've reached a population of 100! You can now build a police station to fight crime. I say 'can', but you really must, because your people will no longer be content without police coverage. I can already hear the grumblings...", "policeprotection"));
+            this.notify(new Notification("I Am the Law", "You've reached a population of 100! You can now build a police station to fight crime. I say 'can', but you really must, because your people will no longer be content without police coverage. I can already hear the grumblings... See Tutorials in the main menu for more info.", "policeprotection"));
             this.unlock(getBuildingType(PoliceBox));
             this.unlock(getBuildingType(PoliceStation));
             this.flags.add(CityFlags.PoliceProtectionMatters);
+            this.uiManager?.updateTutorialSteps();
         }
         if (this.peakPopulation >= 250 && !this.flags.has(CityFlags.FireProtectionMatters)) {
-            this.notify(new Notification("Yowza! Fiya!", "You've reached a population of 250! You can now build fire stations to fight fires. Don't let the fire win, unless we're talking about the fiery passion in your heart to keep your citizens safe.", "fireprotection"));
+            this.notify(new Notification("Yowza! Fiya!", "You've reached a population of 250! You can now build fire stations to fight fires. Don't let the fire win, unless we're talking about the fiery passion in your heart to keep your citizens safe. See Tutorials in the main menu for more info.", "fireprotection"));
             this.unlock(getBuildingType(FireBay));
             this.unlock(getBuildingType(FireStation));
             this.flags.add(CityFlags.FireProtectionMatters);
+            this.uiManager?.updateTutorialSteps();
+        }
+        if (this.peakPopulation >= 325 && !this.flags.has(CityFlags.BlockersPointedOut)) {
+            this.notify(new Notification("Metaphorical Hermit Crab", "Our city sprawls across the landscape, asphalt tendrils like roots feeding upon the lush soil, yet its healthy growth is stifled, pressured by obstructions on every side. We should consider clearing out construction blockers in the surrounding area to make room for continued expansion. The city must grow.", "environment"));
+            this.flags.add(CityFlags.BlockersPointedOut);
         }
         if (this.peakPopulation >= 400 && !this.flags.has(CityFlags.UnlockedTourism)) {
-            this.notify(new Notification("Business Booster", "You've reached a population of 400! You can now build an information center to enable tourism in your city. Tourists patronize your businesses and therefore help you earn revenue via sales tax. However, nobody's going to visit if you don't build both the information center and some proper tourist traps. You can also play the Nepotism Networking minigame in any friend's city for a shared bonus after drawing in some tourists!", "businesspresence"));
+            this.notify(new Notification("Business Booster", "You've reached a population of 400! You can now build an information center to enable tourism in your city. Tourists patronize your businesses and therefore help you earn revenue via sales tax. However, nobody's going to visit if you don't build both the information center and some proper tourist traps. You can also play the Nepotism Networking minigame in any friend's city for a shared bonus after drawing in some tourists! See Tutorials in the main menu for more info.", "businesspresence"));
             this.unlock(getBuildingType(InformationCenter));
             this.unlock(getBuildingType(SesharTower));
             this.unlock(getBuildingType(ResortHotel));
             this.unlock(getBuildingType(ConventionCenter));
             this.flags.add(CityFlags.UnlockedTourism);
+            this.uiManager?.updateTutorialSteps();
         }
         if (this.peakPopulation >= 500 && !this.flags.has(CityFlags.FoodMatters)) {
-            this.notify(new Notification("Food for Thought", "You've reached a population of 500, and they are starting to get hangry! Increase your food diversity to sate the people's hunger before they start rioting. Note: There are more than ten types of food, and it needs to be in your storage for the citizens to consume it. Food is mainly kept in Cold Storage.", "diet"));
+            this.notify(new Notification("Food for Thought", "You've reached a population of 500, and they are starting to get hangry! Increase your food diversity to sate the people's hunger before they start rioting. Note: There are more than ten types of food, and it needs to be in your storage for the citizens to consume it. Food is mainly kept in Cold Storage. See Tutorials in the main menu for more info.", "diet"));
             this.flags.add(CityFlags.FoodMatters);
+            this.uiManager?.updateTutorialSteps();
         }
         if (this.peakPopulation >= 600 && !this.flags.has(CityFlags.EducationMatters)) {
-            this.notify(new Notification("(Smart) Help Wanted", "You've reached a population of 600! You can now build schools to provide education to your citizens. They'll be unhappy without it in a town of this size, anyway. Plus, if they're smart enough, they might help you research a bit faster. Most importantly, you need to thoroughly educate your population before you can build higher-tech facilities.", "education"));
+            this.notify(new Notification("(Smart) Help Wanted", "You've reached a population of 600! You can now build schools to provide education to your citizens. They'll be unhappy without it in a town of this size, anyway. Plus, if they're smart enough, they might help you research a bit faster. Most importantly, you need to thoroughly educate your population before you can build higher-tech facilities. See Tutorials in the main menu for more info.", "education"));
             this.unlock(getBuildingType(ElementarySchool));
             this.unlock(getBuildingType(HighSchool));
             this.unlock(getBuildingType(Dorm));
             this.unlock(getBuildingType(College));
             this.unlock(getBuildingType(Playground));
             this.flags.add(CityFlags.EducationMatters);
+            this.uiManager?.updateTutorialSteps();
         }
         if (this.peakPopulation >= 750 && !this.flags.has(CityFlags.UnlockedPost)) {
             this.notify(new Notification("Mail Call", "You've reached a population of 750! You can now build a post office to help with business correspondence and package deliveries. Keep it running for a small citywide boost to sales tax revenue.", "infrastructure"));
@@ -1480,27 +1499,26 @@ export class City {
             this.flags.add(CityFlags.UnlockedPost);
         }
         if (this.peakPopulation >= 900 && !this.flags.has(CityFlags.HealthcareMatters)) {
-            this.notify(new Notification("Cough, cough", "You've reached a population of 900! You can now build healthcare facilities to keep your citizens happy and productive. Diet also affects healthcare effectiveness, so farm wisely!", "healthcare"));
+            this.notify(new Notification("Cough, cough", "You've reached a population of 900! You can now build healthcare facilities to keep your citizens happy and productive. Diet also affects healthcare effectiveness, so farm wisely! See Tutorials in the main menu for more info.", "healthcare"));
             this.unlock(getBuildingType(Clinic));
             this.unlock(getBuildingType(Hospital));
             this.flags.add(CityFlags.HealthcareMatters);
+            this.uiManager?.updateTutorialSteps();
         }
         if (this.peakPopulation >= 1200 && !this.flags.has(CityFlags.B12Matters)) {
-            this.notify(new Notification("Vitamin B12", "You've reached a population of 1200 and unlocked the Algae Farm, which produces Vitamin B12! Your citizens' health will suffer if animal products comprise less than 10% of their diet. But now you can prevent a nutritional deficiency by making just 4% of their diet Vitamin B12! By the way, they want at least 6 distinct types of food now.", "diet"));
+            this.notify(new Notification("Vitamin B12", "You've reached a population of 1200 and unlocked the Algae Farm, which produces Vitamin B12! Your citizens' health will suffer if animal products comprise less than 10% of their diet. But now you can prevent a nutritional deficiency by making just 4% of their diet Vitamin B12! By the way, they want at least 6 distinct types of food now. Reminder: you can view Tutorials in the main menu for more info about food and diet.", "diet"));
             this.unlock(getBuildingType(AlgaeFarm));
             this.flags.add(CityFlags.B12Matters);
         }
         if (this.peakPopulation >= 1800 && !this.flags.has(CityFlags.CitizenDietFullSwing)) {
-            this.notify(new Notification("Dietary Diversity", "You've reached a population of 1800, and they're hungrier than ever. Until now, they've been happy with just six types of food...but now they want them all.", "diet"));
+            this.notify(new Notification("Dietary Diversity", "You've reached a population of 1800, and they're hungrier than ever. Until now, they've been happy with just six types of food...but now they want them all. Reminder: you can view Tutorials in the main menu for more info about food and diet.", "diet"));
             this.flags.add(CityFlags.CitizenDietFullSwing);
-        }
-        if (this.peakPopulation >= 3000 && !this.flags.has(CityFlags.BlockersPointedOut)) {
-            this.notify(new Notification("Metaphorical Hermit Crab", "Our city sprawls across the landscape, asphalt tendrils like roots feeding upon the lush soil, yet its healthy growth is stifled, pressured by obstructions on every side. We should consider clearing out construction blockers in the surrounding area to make room for continued expansion. The city must grow.", "environment"));
-            this.flags.add(CityFlags.BlockersPointedOut);
+            this.uiManager?.updateTutorialSteps();
         }
         if (this.peakPopulation >= GREENHOUSE_GASES_MIN_POPULATION && !this.flags.has(CityFlags.GreenhouseGasesMatter)) {
-            this.notify(new Notification("Disastrous Change", "As our population rises, so does the concern that unchecked pollution will harm our environment and lead to more frequent severe weather. We should choose the cleaner, greener option when we have a choice, and for when we don't, we should look into technologies that can undo our damage.", "greenhousegases"));
+            this.notify(new Notification("Disastrous Change", "As our population rises, so does the concern that unchecked pollution will harm our environment and lead to more frequent severe weather. We should choose the cleaner, greener option when we have a choice, and for when we don't, we should look into technologies that can undo our damage. See Tutorials in the main menu for more info.", "greenhousegases"));
             this.flags.add(CityFlags.GreenhouseGasesMatter);
+            this.uiManager?.updateTutorialSteps();
             this.resources.get(new ResourceTypes.GreenhouseGases().type)!.amount = this.getCityAverageGreenhouseGases() * 0.1;
         }
 

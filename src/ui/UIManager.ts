@@ -322,6 +322,9 @@ export class UIManager {
         this.tutorialOverlay.showCompletedSteps();
         if (this.cityView instanceof ProvisioningView) this.toggleProvisioning();
     }
+    updateTutorialSteps() {
+        this.tutorialOverlay.updateTutorialSteps();
+    }
     toggleProvisioning() {
         if (!this.isMyCity) {
             this.cityView = new CityView(this.city, this);

@@ -4,7 +4,7 @@ import { CityFlags } from "./CityFlags.js";
 import { EffectType } from "./GridType.js";
 import { FoodSatisfaction } from "./ResourceTypes.js";
 import { Notification } from "./Notification.js";
-import { AssemblyHouse, DataCenter, ECarRental, GameDevStudio, Nanogigafactory, NuclearFuelTruck, NuclearPowerPlant, NuclearStorage, PharmaceuticalsLab, getBuildingType } from "./BuildingTypes.js";
+import { AssemblyHouse, DataCenter, ECarRental, GameDevStudio, MohoMine, Nanogigafactory, NuclearFuelTruck, NuclearPowerPlant, NuclearStorage, PharmaceuticalsLab, SpaceLaunchSite, getBuildingType } from "./BuildingTypes.js";
 
 export class HappinessCalculator {
     private effectSums: Map<EffectType, number> = new Map();
@@ -107,12 +107,12 @@ export class HappinessCalculator {
         } else qol += 0.09;
 
         if (this.city.flags.has(CityFlags.EducationMatters)) {
-            const avgEducation = Math.max(0, this.getAverageEffect(EffectType.Education));
+            const avgEducation = Math.max(0, this.city.getCityAverageEducation());
             qol += Math.sqrt(avgEducation) * 0.1; //No cap
 
             if (!this.city.flags.has(CityFlags.UnlockedGameDev) && avgEducation > 0.9) {
-                this.city.notify(new Notification("Neeerd!", "You've granted your population a grand education. As such, they are now capable of constructing higher-tech facilities relating to electronics, medicine, and nuclear energy.", "education"));
-                for (const type of [ECarRental, DataCenter, NuclearStorage, NuclearPowerPlant, NuclearFuelTruck, GameDevStudio, AssemblyHouse, Nanogigafactory, PharmaceuticalsLab])
+                this.city.notify(new Notification("Neeerd!", "You've granted your population a grand education. As such, they are now capable of constructing higher-tech facilities relating to electronics, medicine, nuclear energy, astronomy, and geology.", "education"));
+                for (const type of [ECarRental, DataCenter, NuclearStorage, NuclearPowerPlant, NuclearFuelTruck, GameDevStudio, AssemblyHouse, Nanogigafactory, PharmaceuticalsLab, MohoMine, SpaceLaunchSite])
                     this.city.unlock(getBuildingType(type));
                 this.city.flags.add(CityFlags.UnlockedGameDev);
             }

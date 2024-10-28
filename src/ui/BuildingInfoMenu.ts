@@ -178,7 +178,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 if (resource.type === 'population') {
                     text = `Housing for ${humanizeFloor(resource.capacity)}`;
                 } else if (resource.type === 'tourists') {
-                    text = `Tourism draw: ${humanizeFloor(resource.capacity)}`;
+                    text = `Tourism: ${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)}`;
                 } else if (building.x !== -1 && building.owned) { //Don't show capacity or the guaranteed-0 in-stock amount for unplaced buildings; it just isn't needed
                     text += ` (${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)})`;
                 }

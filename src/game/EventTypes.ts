@@ -171,7 +171,7 @@ export class Heist extends CityEvent {
         return shouldStart;
     }
 
-    getAverageOrganizedCrime(city: City): number { //TODO: I'd really prefer a city average here
+    getAverageOrganizedCrime(city: City): number { //TODO: I'd really prefer a city average here //TODO: OR make a business go out of business in one fell swoop
         return Math.max(0, (city.getNetOrganizedCrime(city.cityHall.x, city.cityHall.y) +
             city.getNetOrganizedCrime(city.cityHall.x + 1, city.cityHall.y) +
             city.getNetOrganizedCrime(city.cityHall.x, city.cityHall.y + 1) +
@@ -419,7 +419,7 @@ export class Epidemic extends CityEvent {
     constructor() {
         super("epidemic", "Epidemic", 7 * LONG_TICKS_PER_DAY,
             "People are clueless about how to take care of their own bodies, and your healthcare coverage is underwhelming. An epidemic has spread and is causing economic havoc.",
-            "They got better--the coughers are back to breaking their backs to fill your coffers.", "healthcare");
+            "They got better--the coughers are back to breaking their backs to fill your coffers.", "healthcare", EventTickTiming.Population);
     }
 
     override shouldStart(city: City, date: Date): boolean {
@@ -438,6 +438,7 @@ export class Epidemic extends CityEvent {
                 relevantTileCount++;
                 for (const effect of city.effectGrid[y][x]) {
                     if (effect.type === EffectType.Healthcare) effectSum += effect.getEffect(city, null, y, x);
+                    else if (effect.type === EffectType.ParticulatePollution) effectSum -= effect.getEffect(city, null, y, x);
                 }
             }
         }
@@ -453,6 +454,12 @@ export class Epidemic extends CityEvent {
     override start(city: City, date: Date): void {
         super.start(city, date);
         this.duration *= 2 - this.getAverageHealth(city); //The worse the health coverage, the longer the epidemic lasts, up to 2x for 0 coverage
+    }
+
+    override onLongTick(city: City): boolean {
+        const populationResource = city.resources.get("population");
+        if (populationResource) populationResource.amount *= 0.995; //Can lose about 13%-25% of the population over the course of the epidemic
+        return super.onLongTick(city);
     }
 }
 

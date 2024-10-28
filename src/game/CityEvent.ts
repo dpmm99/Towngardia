@@ -64,5 +64,6 @@ export class CityEvent {
 
 export enum EventTickTiming {
     Normal,
-    Tourism
+    Tourism,
+    Population
 }

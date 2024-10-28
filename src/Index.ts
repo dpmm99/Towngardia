@@ -41,6 +41,7 @@ async function initGame() {
             lastTime = performance.now(); //Consider it caught up for the moment
             game.uiManager?.draw();
             lastFocusLostTime = currentTime;
+            requestAnimationFrame(gameLoop);
             return;
         }
         if (!document.hidden) lastFocusLostTime = currentTime; //Reset that timer if the user is looking at the page

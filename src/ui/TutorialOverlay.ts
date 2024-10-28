@@ -8,6 +8,7 @@ import { CementMill, CornerStore, Farm, MountainIronMine, ObstructingGrove, Quar
 import { BIGGER_MOBILE_RATIO } from "../rendering/RenderUtil.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { StandardScroller } from "./StandardScroller.js";
+import { CityFlags } from "../game/CityFlags.js";
 
 type TutorialStep = {
     title: string;
@@ -49,10 +50,14 @@ export class TutorialOverlay implements IHasDrawable {
         this.city.unplacedBuildings.push(building.clone());
     }
 
+    public updateTutorialSteps() {
+        this.steps = this.defineTutorialSteps();
+    }
+
     //TODO: All the steps that affect the UI should be repeated when reloading the city.
     private defineTutorialSteps(): TutorialStep[] {
         // Define your tutorial steps here
-        return [
+        const steps = <TutorialStep[]>[
             {
                 title: "Welcome to Towngardia!",
                 charsPerPage: 1000,
@@ -642,6 +647,75 @@ export class TutorialOverlay implements IHasDrawable {
                 onStop: () => { this.city.timeFreeze = false; },
             },
         ];
+
+        //Extra tutorial steps that won't ever actually appear in the tutorial, only in the Tutorials menu.
+        const fieldsNotNeededForExtras = <TutorialStep>{ charsPerPage: 1000, nextButton: {}, type: "button", advancementCriteria: () => true, onStart: () => { }, onStop: () => { } };
+        if (this.city.flags.has(CityFlags.PoliceProtectionMatters)) {
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Police Protection",
+                content: {
+                    text: "Citizens demand police coverage even if there's no crime around, and happiness will suffer without it. Crime is broken into two types, petty and organized. Petty crime is more common but does less damage to citizens' happiness--and less damage to your flunds if someone burglarizes City Hall. Organized crime takes more police resources and can lead to a proper (costly!) heist. Police coverage also reduces the number of damaged buildings if the citizens riot due to low total happiness. You can slightly adjust the police budget in the budget menu, but just a 10% budget cut has closer to a 20% impact on the police protection quality. Note: city services only need to cover one tile of a building for the entire building to be considered covered.",
+                }
+            });
+        }
+        if (this.city.flags.has(CityFlags.FireProtectionMatters)) {
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Fire Protection",
+                content: {
+                    text: "Buildings are always at risk of burning down, so neither citizens nor your coffers will be happy without complete firefighting service coverage. If a fire breaks out, the building that started it will take the most damage, but it will damage several surrounding buildings as well. Note that industrial and high-tech buildings may not be sufficiently protected by a mere Fire Bay. Fire protection also reduces the amount of damage done if the citizens riot due to low total happiness. Similar to police and other city services, you have some control over the budget, but the impact on services is about twice as big as the reduction in cost.",
+                }
+            });
+        }
+        if (this.city.flags.has(CityFlags.UnlockedTourism)) {
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Tourism",
+                content: {
+                    text: "Tourism is a great way to boost your city's income and reputation, unlocked by building an Information Center. Various types of building attract tourists, including some natural formations. Tourists act as patrons in your city's businesses, drawing in flunds via sales tax. Visit a friend's city and play the Nepotism Networking minigame to boost both your and your friend's tourism by a small percentage for a few hours to days. You can see all your active tourism boosts by checking the Information Center's info bar. Tourism boosts are multiplicative and gradually decrease until their time limits, so it's more effective to pile them all on at once if your businesses can keep up!",
+                },
+            });
+        }
+        if (this.city.flags.has(CityFlags.FoodMatters)) {
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Food and Diet",
+                content: {
+                    text: "As your city grows, citizens require a greater and greater variety of food to keep them happy and healthy. Tap the pie icon in the right-side bar to view the Citizen Diet window, which shows if your food is enough to feed everyone (Sufficiency), how much it affects their happiness (Gratification), and how much it affects their health (Healthiness). Insufficient food leads to businesses--especially restaurants--producing less revenue, while your citizens will just order it from outside the city. You can only serve your citizens' diet needs by having the necessary food in your city's storage. Grain is kept in a Silo, while most other food requires Cold Storage. Random seasonal events--Drought and Cold Snap--can affect the growth rate of farmed food, so always keep a little extra in stock.",
+                }
+            });
+        }
+        if (this.city.flags.has(CityFlags.EducationMatters)) {
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Education",
+                content: {
+                    text: "Education is a key factor in your citizens' happiness, but on top of that, the higher the average education level, the more research points the city earns each day. Furthermore, many high-tech buildings require a high-quality education.",
+                }
+            });
+
+        }
+        if (this.city.flags.has(CityFlags.HealthcareMatters)) {
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Healthcare",
+                content: {
+                    text: "Healthcare coverage helps protect citizens from the harmful effects of pollution, but even if the air is clean, they still need it. A healthy diet also improves the quality of healthcare provided by Clinics and Hospitals. Low health also leads to epidemics, which can cause a hefty reduction in population over a short time period.",
+                }
+            });
+        }
+        if (this.city.flags.has(CityFlags.GreenhouseGasesMatter)) {
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Greenhouse Gases",
+                content: {
+                    text: "Greenhouse gases are a type of pollution produced by Ranches and by burning fossil fuels, such as in power plants, Steel Mills, and Space Launch Sites. Unlike other pollution and crime, greenhouse gases build up slowly over a long time, so make sure you have plenty of plant life and perhaps even Carbon Capture Plants to counteract the buildup. As greenhouse gases accumulate in your city, harmful weather events such as Heatwaves, Droughts, and Cold Snaps become more frequent and longer-lasting.",
+                }
+            });
+        }
+
+        return steps;
     }
 
     public start(): void {

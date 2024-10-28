@@ -3829,7 +3829,7 @@ export const TUTORIAL_COMPLETION_BUILDING_UNLOCKS: Set<string> = new Set([
     Junkyard, BikeRental, BusStation, Warehouse, ColdStorage, Silo, OilTank, SecureStorage, SolarFarm, OilPowerPlant, OilTruck, CoalPowerPlant, CoalTruck,
     FurnitureStore, Ranch, FishFarm, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks,
     SiliconRefinery, CrystalMine, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory,
-    ToyManufacturer, Furnifactory, LithiumMine, MohoMine, SpaceLaunchSite,
+    ToyManufacturer, Furnifactory, LithiumMine,
     IceCreamTruck, PlantMilkPlant,
     SuckasCandy, Cafe, TheLoadedDie, Whalemart, Bar, PalmNomNom, GregsGrogBarr, Casino, BlankCheckBank,
     SmallPark, MediumPark, KellyStatue, SharonStatue, SmallFountain, Greenhouse].map(getBuildingType));
