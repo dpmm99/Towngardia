@@ -125,7 +125,7 @@ export class UIManager {
         this.requestRedraw();
     }
 
-    async switchCity(newCity: City, owner: Player): Promise<void> { //Input may only be a partial city. Gotta load the full city, which game.switchCity will do.
+    async switchCity(newCity: City | string, owner: Player): Promise<void> { //Input may only be a string. Gotta load the full city, which game.switchCity will do.
         await this.game.switchCity(newCity, owner);
         this.city = newCity = this.game.visitingCity || this.game.city!;
         this.cityView = new CityView(newCity, this);
@@ -288,8 +288,12 @@ export class UIManager {
         if (this.cityView instanceof ProvisioningView) this.toggleProvisioning(); //Otherwise, it's drawn on top of the main menu.
     }
 
-    showTechMenu() {
+    async showTechMenu() {
         this.techMenu.show();
+        game.onLoadStart?.();
+        await this.techMenu.preloadImages();
+        game.onLoadEnd?.();
+        this.frameRequested = true;
         if (this.cityView instanceof ProvisioningView) this.toggleProvisioning();
         this.cityView.drawBuildings = false;
     }

@@ -1,6 +1,7 @@
 import { City } from "../game/City.js";
 import { Tech } from "../game/Tech.js";
 import { TechManager } from "../game/TechManager.js";
+import { TECH_TYPES } from "../game/TechTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -19,6 +20,7 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
     private outerExtremesPadding = 200;
     private techManager: TechManager;
     private selectedTech: Tech | null = null;
+    private preloaded: boolean = false;
 
     constructor(private city: City, private uiManager: UIManager) {
         this.techManager = city.techManager;
@@ -326,5 +328,17 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
 
     public hide(): void {
         this.shown = false;
+    }
+
+    public async preloadImages(): Promise<void> {
+        if (this.preloaded) return;
+
+        const urls: { [key: string]: string } = {};
+        for (const tech of TECH_TYPES) {
+            urls["tech/" + tech.id] = `assets/tech/${tech.id}.png`;
+        }
+
+        await this.uiManager.renderer.loadMoreSprites(this.uiManager.game.city!, urls);
+        this.preloaded = true;
     }
 }

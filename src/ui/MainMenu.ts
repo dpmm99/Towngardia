@@ -1,3 +1,4 @@
+import { City } from "../game/City.js";
 import { GameState } from "../game/GameState.js";
 import { CanvasRenderer } from "../rendering/CanvasRenderer.js";
 import { Drawable } from "./Drawable.js";
@@ -15,24 +16,24 @@ export class MainMenu implements IHasDrawable {
 
         const menu = new Drawable({
             anchors: ['centerX'],
-            x: -100,
             y: 200,
-            width: "200px",
+            centerOnOwnX: true,
+            width: "300px",
             height: "600px",
             fallbackColor: "#333333",
         });
 
-        let nextY = 20;
+        let nextY = -30;
         menu.addChild(new Drawable({
-            x: 10,
-            y: nextY,
-            width: "180px",
+            anchors: ['centerX'],
+            y: nextY += 50,
+            centerOnOwnX: true,
+            width: "calc(100% - 20px)",
             height: "40px",
             text: "Fullscreen",
             onClick: () => this.uiManager.enterFullscreen(),
         })); //TODO: Instead of putting the text on the above, we want that to be a button image and contain the text in a separate element
-        nextY += 50;
-
+        
         //Removed as I have quit maintaining the WebGL renderer and quit maintaining the HTML renderer long ago.
 //        menu.addChild(new Drawable({
 //            x: 10,
@@ -45,24 +46,60 @@ export class MainMenu implements IHasDrawable {
 //        nextY += 50;
 
         menu.addChild(new Drawable({
-            x: 10,
-            y: nextY,
-            width: "180px",
+            anchors: ['centerX'],
+            y: nextY += 50,
+            centerOnOwnX: true,
+            width: "calc(100% - 20px)",
             height: "40px",
             text: "View tutorials",
             onClick: () => this.uiManager.showTutorials(),
         }));
-        nextY += 50;
 
         menu.addChild(new Drawable({
-            x: 10,
-            y: nextY,
-            width: "180px",
+            anchors: ['centerX'],
+            y: nextY += 50,
+            centerOnOwnX: true,
+            width: "calc(100% - 20px)",
             height: "40px",
             text: (this.uiManager.drawFPS ? "Hide" : "Show") + " theoretical FPS",
             onClick: () => this.uiManager.drawFPS = !this.uiManager.drawFPS,
         }));
-        nextY += 50;
+
+        menu.addChild(new Drawable({
+            anchors: ['centerX'],
+            y: nextY += 50,
+            centerOnOwnX: true,
+            width: "calc(100% - 20px)",
+            height: "40px",
+            text: "Save city",
+            onClick: () => {
+                this.shown = false;
+                this.game.storage.saveCity(this.game.player!.id, this.game.city!);
+            }
+        }));
+
+        menu.addChild(new Drawable({
+            anchors: ['centerX'],
+            y: nextY += 50,
+            centerOnOwnX: true,
+            width: "calc(100% - 20px)",
+            height: "40px",
+            text: "Reload city",
+            onClick: () => {
+                this.shown = false;
+                this.uiManager.switchCity((this.game.visitingCity || this.game.city!).id, (this.game.visitingCity || this.game.city!).player);
+            }
+        }));
+
+        menu.addChild(new Drawable({
+            anchors: ['centerX'],
+            y: nextY += 50,
+            centerOnOwnX: true,
+            width: "calc(100% - 20px)",
+            height: "40px",
+            text: "Save on hide: " + (this.game.saveWhenHiding ? "On" : "Off"),
+            onClick: () => this.game.saveWhenHiding = !this.game.saveWhenHiding
+        }));
 
         return this.lastDrawable = menu;
     }

@@ -25,6 +25,7 @@ export class GameState {
     visitingPlayer: Player | null = null; //Not used yet
     public renderer: IRenderer | null = null;
     private buildingTypes: Building[] = [...BUILDING_TYPES.values()];
+    saveWhenHiding: boolean = true;
 
     constructor(
         public storage: IStorage,
@@ -63,13 +64,13 @@ export class GameState {
     }
 
     //Call from the UIManager's switchCity method if running in a UI.
-    async switchCity(toCity: City, owner: Player): Promise<void> {
+    async switchCity(toCity: City | string, owner: Player): Promise<void> {
         if (!this.city) throw new Error("City not yet loaded.");
 
         if (!(toCity instanceof City)) {
-            const cityID = (<any>toCity).id + "";
+            const cityID = toCity.toString();
             this.onLoadStart?.();
-            toCity = (await this.storage.loadCity(owner, cityID))!; //TODO: Make the type City | CityInfo, where the latter is just ID and name.
+            toCity = (await this.storage.loadCity(owner, cityID))!;
             this.onLoadEnd?.();
 
             //Put it in the player's city list. Add or replace.

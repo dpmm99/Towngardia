@@ -30,9 +30,20 @@ async function initGame() {
     await game.switchRenderer(); //To enable graphics
 
     // Game loop
+    let lastFocusLostTime = performance.now();
     let lastTime = performance.now();
-    function gameLoop() {
+    async function gameLoop() {
         const currentTime = performance.now();
+
+        //If it's been at least 5 minutes since the last frame, we should reload the city.
+        if (game.city && game.uiManager && currentTime - lastFocusLostTime > 1000 * 60 * 5) {
+            await game.uiManager.switchCity((game.visitingCity || game.city).id, (game.visitingCity || game.city).player);
+            lastTime = performance.now(); //Consider it caught up for the moment
+            game.uiManager?.draw();
+            return;
+        }
+        if (!document.hidden) lastFocusLostTime = currentTime; //Reset that timer if the user is looking at the page
+
         requestAnimationFrame(gameLoop);
         document.getElementById('catchUpNotice')!.style.display = game.tick() ? "flex" : "none";
         if (game.uiManager?.frameRequested) {
@@ -54,9 +65,10 @@ async function initGame() {
 
     //Save when the user looks away. Otherwise, it's currently only saving on long ticks. I WOULD like to only send the *changes* to the server at some point (see GameAction).
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden && game.city) {
+        if (document.hidden && game.city && game.saveWhenHiding) {
             game.storage.saveCity(game.player!.id, game.city);
             game.storage.updatePlayer(game.player!);
+            lastFocusLostTime = performance.now();
         }
     });
 }

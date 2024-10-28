@@ -3,6 +3,7 @@ import { BuildingCategory } from "../game/BuildingCategory.js";
 import { BLOCKER_TYPES, BUILDING_TYPES } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { FootprintType } from "../game/FootprintType.js";
+import { TECH_TYPES } from "../game/TechTypes.js";
 
 const TILE_WIDTH : number = 64;
 const TILE_HEIGHT: number = 32;
@@ -92,10 +93,8 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
         urls["ui/" + sprite] = `assets/ui/${sprite}.png`;
     }
 
-    //TODO: Techs, generically, once I have many of them made.
-    for (const tech of ["generic", "coalscrubbers", "heatpumps", "vacuumwindows", "windlattice", "geothermal", "rooftopsolar", "smarthome"]) {
-        urls["tech/" + tech] = `assets/tech/${tech}.png`;
-    }
+    //Techs are loaded when opening the tech tree menu, other than this one (it takes a moment to load and redraw upon opening the window the first time).
+    urls["tech/generic"] = "assets/tech/generic.png";
 
     for (const bg of ['grass1', 'grass2']) {
         urls["background/" + bg] = `assets/background/${bg}.png`;
