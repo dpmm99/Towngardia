@@ -40,6 +40,7 @@ async function initGame() {
             await game.uiManager.switchCity((game.visitingCity || game.city).id, (game.visitingCity || game.city).player);
             lastTime = performance.now(); //Consider it caught up for the moment
             game.uiManager?.draw();
+            lastFocusLostTime = currentTime;
             return;
         }
         if (!document.hidden) lastFocusLostTime = currentTime; //Reset that timer if the user is looking at the page

@@ -34,6 +34,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     private fallingStars: { x: number, y: number, targetY: number, color: number }[] = [];
     private preloaded: boolean = false;
     private costs = [{ type: new StarboxPlays().type, amount: 1, reddize: false }];
+    private userInputLocked: boolean = false;
 
     constructor(private city: City, private uiManager: UIManager) {
         this.initializeGame();
@@ -52,6 +53,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         this.starsDestroyedThisChain = 0;
         this.explosions = [];
         this.fallingStars = [];
+        this.userInputLocked = false;
 
         // Distribute initial 35 stars
         let starsPlaced = 0;
@@ -101,7 +103,6 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         if (this.timerTimeout) {
             clearTimeout(this.timerTimeout);
         }
-        this.gameStarted = false;
         this.winnings = [];
         const rewardFlunds = new Flunds();
         if (this.totalStarsDestroyed > 40) this.winnings.push(new Silicon(Math.min(4, Math.floor((this.totalStarsDestroyed - 30) / 10))));
@@ -120,6 +121,9 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         if (this.totalStarsDestroyed > 160) rewardFlunds.amount += 100;
         if (rewardFlunds.amount > 0) this.winnings.push(rewardFlunds);
         this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
+
+        this.userInputLocked = true;
+        setTimeout(() => { this.gameStarted = false; }, 2000); //Will wait for the user to tap to continue.
     }
 
     onResize(): void {
@@ -144,6 +148,28 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             this.drawNextPieces(mainDrawable);
             this.drawControls(mainDrawable);
             this.drawTimer(mainDrawable);
+
+            if (this.userInputLocked) {
+                //Draw a "Time's up!" message with a plain background color in the center of the grid.
+                mainDrawable.addChild(new Drawable({
+                    anchors: ['centerX'],
+                    centerOnOwnX: true,
+                    y: 100 + this.gridHeight * this.tileSize / 2 - 32,
+                    width: "300px",
+                    height: "64px",
+                    fallbackColor: '#444444',
+                    children: [
+                        new Drawable({
+                            anchors: ['centerX'],
+                            centerOnOwnX: true,
+                            y: 10,
+                            width: "100%",
+                            height: "48px",
+                            text: "Time's up!",
+                        })
+                    ]
+                }));
+            }
         }
 
         this.drawCloseButton(mainDrawable);
@@ -311,30 +337,35 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     }
 
     private moveLeft(): void {
+        if (this.userInputLocked) return;
         if (this.currentPiecePosition.x > 0 && !this.pieceCollision(-1, 0) && this.currentPiece.length > 0) {
             this.currentPiecePosition.x--;
         }
     }
 
     private moveRight(): void {
+        if (this.userInputLocked) return;
         if (this.currentPiecePosition.x < this.gridWidth - 1 && !this.pieceCollision(1, 0) && this.currentPiece.length > 0) {
             this.currentPiecePosition.x++;
         }
     }
 
     private rotateClockwise(): void {
+        if (this.userInputLocked) return;
         if (this.currentPiece.length < 3) return;
         const newPiece = [this.currentPiece[2], this.currentPiece[0], this.currentPiece[1]];
         this.currentPiece = newPiece;
     }
 
     private rotateCounterclockwise(): void {
+        if (this.userInputLocked) return;
         if (this.currentPiece.length < 3) return;
         const newPiece = [this.currentPiece[1], this.currentPiece[2], this.currentPiece[0]];
         this.currentPiece = newPiece;
     }
 
     private dropPiece(): void {
+        if (this.userInputLocked) return;
         //Stamp the piece on the board and add the whole piece to fallingStars via applyGravity
         for (let i = 0; i < this.currentPiece.length; i++) {
             this.gameBoard[i][this.currentPiecePosition.x] = this.currentPiece[i];
@@ -353,6 +384,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     }
 
     private useBlackHole(): void {
+        if (this.userInputLocked) return;
         if (this.blackHoles > 0 && this.currentPiecePosition.y === 0 && !this.fallingStars.length && this.currentPiece.length > 1) {
             this.blackHoles--;
             this.currentPiece = [8]; //The black hole...or magic 8 ball :)
