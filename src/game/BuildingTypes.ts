@@ -251,7 +251,7 @@ export class ColdStorage extends Building {
         return [{ type: "flunds", amount: 1 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { //TODO: Cold storage unpowered for too long should trigger a food spoilage event and reduce your city resource capacity until it gets powered for long enough again. "You thought you'd get away with that, didn't you?"
+    override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * (10 - 3 * city.techManager.getAdoption('heatpumps'));
     }
 }

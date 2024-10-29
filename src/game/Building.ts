@@ -59,8 +59,8 @@ export class Building implements IHasDrawable {
     builtOn: Set<Building> = new Set(); //For buildings with footprints of the "NEEDS_MINE" or "NEEDS_WATER" type. They can only be built on top of certain other buildings.
 
     //For storage facilities
-    protected readonly stores: Resource[] = [];
-    protected storeAmount: number = 0;
+    public readonly stores: Resource[] = [];
+    public storeAmount: number = 0;
 
     constructor(
         public type: string,
@@ -412,7 +412,7 @@ export class Building implements IHasDrawable {
                 city.checkAndSpendResources(requestedAmounts.map(p => ({ type: p.type, amount: p.amount * allowedFraction })));
                 this.inputResources.forEach(p => p.produce(p.consumptionRate * view.provisionTicks * allowedFraction));
                 //TODO: Show popup briefly--including if you can't afford the resources--to say how much is on the market and how much it has now.
-                //TODO: If it's a power plant, turn it on immediately at partial capacity.
+                //TODO: If it's a power plant, turn it on immediately at partial capacity. Or provide a "turn on now" button in the context menu or info panel. Calculate short ticks to the next long tick, consume that fraction of one long tick's worth of inputs, and set its lastEfficiency to 1 (minus damaged efficiency and such).
             } : () => {
                 //The view isn't supposed to show provisioning, but since we are anyway (decided it's necessary so the player doesn't forget), enter provisioning mode *instead* of providing resources to the building.
                 view.uiManager.toggleProvisioning();

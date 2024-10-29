@@ -220,7 +220,7 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
                         const newCityName = prompt("Re-entitle thy existing concrete jungle:", city.name);
                         if (newCityName) city.name = newCityName;
                     }
-                    else this.uiManager.switchCity(city, player);
+                    else this.uiManager.switchCity(city instanceof City ? city : (<any>city).id, player);
                 }
             });
 

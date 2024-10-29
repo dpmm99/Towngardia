@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { FireBay, FireStation, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, getBuildingType } from "./BuildingTypes.js";
+import { ColdStorage, FireBay, FireStation, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -463,6 +463,54 @@ export class Epidemic extends CityEvent {
     }
 }
 
+export class Spoilage extends CityEvent {
+    constructor() {
+        super("spoilage", "Spoilage", 0, //Instant event
+            "One of your Cold Storages has had insufficient power for too long, and the food inside has spoiled. You gotta keep that juice flowin'! They consume power for a reason!",
+            "", "foodsatisfaction");
+    }
+
+    private getSpoilableFoods(city: City, coldStorages: Building[]): { type: string, amountToSpoil: number }[] {
+        //Calculate how much food we have by type, how much storage we have by type, and how many Cold Storages can be completely unpowered without spoilage by type.
+        const usableCapacityFraction = 1 - coldStorages.filter(p => p.businessFailureCounter > LONG_TICKS_PER_DAY).length / coldStorages.length;
+        const foods = [...new Set(coldStorages.flatMap(p => p.stores.map(p => p.type)))].map(p => ({
+            type: p,
+            amountToSpoil: city.resources.get(p)!.amount - Math.min(city.resources.get(p)!.amount, city.resources.get(p)!.capacity * usableCapacityFraction)
+        }));
+        return foods.filter(p => p.amountToSpoil > 0);
+    }
+
+    override shouldStart(city: City, date: Date): boolean {
+        //Increasing chance each tick if a cold storage has been underpowered for at least 1 day. Track it on the Cold Storages themselves via the businessFailureCounter.
+        let anyUnpowered = false;
+        let maxBusinessFailureCounter = 0;
+        const coldStorages = city.buildings.filter(p => p.type === getBuildingType(ColdStorage));
+        coldStorages.forEach(p => {
+            if (p.lastEfficiency < 0.8) {
+                if (++p.businessFailureCounter >= LONG_TICKS_PER_DAY) {
+                    anyUnpowered = true;
+                    if (p.businessFailureCounter > maxBusinessFailureCounter) maxBusinessFailureCounter = p.businessFailureCounter;
+                }
+            } else p.businessFailureCounter = 0;
+        });
+        if (!anyUnpowered) return false;
+
+        //Use the maximum coldStorages' businessFailureCounter as the chance to trigger the event. Guaranteed by 5 days.
+        const spoilableFoods = this.getSpoilableFoods(city, coldStorages);
+        return this.checkedStart(spoilableFoods.length > 0 && Math.random() < maxBusinessFailureCounter / LONG_TICKS_PER_DAY / 5, city, date);
+    }
+
+    override start(city: City, date: Date): void {
+        super.start(city, date);
+        const coldStorages = city.buildings.filter(p => p.type === getBuildingType(ColdStorage));
+        const spoilableFoods = this.getSpoilableFoods(city, coldStorages);
+        spoilableFoods.forEach(p => {
+            const resource = city.resources.get(p.type)!;
+            resource.amount -= p.amountToSpoil;
+        });
+    }
+}
+
 //Dropped idea (since I made the Alien Monolith): Alien structure spawn event. +land value and organized crime and it produces a unique resource.
 //TODO: Earthquake can also open up a hot spring. +land value and tourism.
 //TODO: Close call - fission power plant has to shut down for a day to repair after the safety triggered
@@ -470,7 +518,7 @@ export class Epidemic extends CityEvent {
 export const EVENT_TYPES = <CityEvent[]>([
     /*Fixed seasonal events*/ Hauntymonth,
     /*Minigame-triggered events*/ TourismReward,
-    /*Random negative events*/ Drought, Heatwave, ColdSnap, PowerOutage, Burglary, Heist, Epidemic, Fire, Earthquake, Riot,
+    /*Random negative events*/ Drought, Heatwave, ColdSnap, PowerOutage, Burglary, Heist, Epidemic, Fire, Earthquake, Riot, Spoilage,
     //...but Earthquake has a positive effect, too: spawns a cheap geothermal power source.
     /*Random positive events*/ EconomicBoom,
     /*Less random events*/ EmergencyPowerAid, UrbanRenewalGrant,
