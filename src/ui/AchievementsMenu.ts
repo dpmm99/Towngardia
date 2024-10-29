@@ -69,6 +69,33 @@ export class AchievementsMenu implements IHasDrawable, IOnResizeEvent {
             }
         });
 
+        // A second close button because my click order and my draw order are different
+        menuDrawable.addChild(new Drawable({
+            x: 10,
+            y: 10,
+            anchors: ['right'],
+            width: "48px",
+            height: "48px",
+            fallbackColor: '#00000000',
+            biggerOnMobile: true,
+            onClick: () => this.hide()
+        }));
+
+        // Same for the toggle mode button
+        menuDrawable.addChild(new Drawable({
+            x: 68,
+            y: 10,
+            anchors: ['right'],
+            width: "48px",
+            height: "48px",
+            fallbackColor: '#00000000',
+            biggerOnMobile: true,
+            scaleXOnMobile: true,
+            onClick: () => {
+                this.show(this.mode === 'achievements' ? 'titles' : 'achievements');
+            }
+        }));
+
         // List achievements/titles
         let paddingAdjust = 0; //gets subtracted from when a body is expanded since, due to nesting, it would double-up the padding
         let previousItem: Drawable | null = null;

@@ -2,6 +2,7 @@ import { Building } from "../game/Building.js";
 import { BuildingCategory } from "../game/BuildingCategory.js";
 import { CityHall, InformationCenter } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
+import { CityFlags } from "../game/CityFlags.js";
 import { TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICKS_PER_LONG_TICK } from "../game/FundamentalConstants.js";
 import { Drawable } from "./Drawable.js";
@@ -166,6 +167,17 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
             const outputBonus = building.getEfficiencyEffectMultiplier(this.city); //Also appears in the efficiency number, but it's a bit confusing either way. Might need to redesign.
             for (const resource of building.outputResources) {
+                let text = `${humanizeFloor(resource.productionRate * outputBonus * LONG_TICKS_PER_DAY)} ${resource.type}/day`;
+                let grayscale = false;
+                if (resource.type === 'population') {
+                    text = `Housing for ${humanizeFloor(resource.capacity)}`;
+                } else if (resource.type === 'tourists') {
+                    if (building.x !== -1 && building.owned) text = `Tourism: ${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)}`;
+                    else text = `Tourism: up to ${humanizeFloor(resource.capacity)}`;
+                    if (!this.city.flags.has(CityFlags.UnlockedTourism)) grayscale = true;
+                } else if (building.x !== -1 && building.owned) { //Don't show capacity or the guaranteed-0 in-stock amount for unplaced buildings; it just isn't needed
+                    text += ` (${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)})`;
+                }
                 infoDrawable.addChild(new Drawable({
                     x: padding,
                     y: nextY,
@@ -173,15 +185,8 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                     height: iconSize + "px",
                     image: new TextureInfo(iconSize, iconSize, `resource/${resource.type}`),
                     id: `${infoDrawable.id}.output.${resource.type}.icon`,
+                    grayscale
                 }));
-                let text = `${humanizeFloor(resource.productionRate * outputBonus * LONG_TICKS_PER_DAY)} ${resource.type}/day`;
-                if (resource.type === 'population') {
-                    text = `Housing for ${humanizeFloor(resource.capacity)}`;
-                } else if (resource.type === 'tourists') {
-                    text = `Tourism: ${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)}`;
-                } else if (building.x !== -1 && building.owned) { //Don't show capacity or the guaranteed-0 in-stock amount for unplaced buildings; it just isn't needed
-                    text += ` (${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)})`;
-                }
                 infoDrawable.addChild(new Drawable({
                     x: padding + iconSize + 5,
                     y: nextY + 8,
@@ -189,6 +194,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                     height: iconSize + "px",
                     text: text,
                     id: `${infoDrawable.id}.output.${resource.type}.text`,
+                    grayscale
                 }));
                 nextY += iconSize + 5;
             }

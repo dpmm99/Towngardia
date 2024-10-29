@@ -1765,7 +1765,7 @@ export class TextileMill extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 200 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 200 }, { type: "wood", amount: 20 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {

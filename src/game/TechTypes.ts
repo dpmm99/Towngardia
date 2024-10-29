@@ -62,7 +62,7 @@ export class RooftopSolar extends Tech {
         super(
             'rooftopsolar',
             'Rooftop Solar Panels',
-            'Small-scale solar installations on building rooftops generate clean electricity for individual use or feeding back into the grid.',
+            'Small-scale solar installations on building rooftops generate clean electricity for feeding back into the grid. Costs less silicon if you research Perovskite-Blend Solar Cells first.',
             [{ type: 'research', amount: 30 }, { type: 'silicon', amount: 100 }, { type: 'glass', amount: 100 }],
             0.02, 0.018,
             440, 720,
@@ -112,12 +112,17 @@ export class PerovskiteSolarCells extends Tech {
         super(
             'perovskitesolar',
             'Perovskite-Blend Solar Cells',
-            'Next-generation solar cells that increase efficiency and reduce reliance on silicon, lowering production and upkeep costs.',
+            'Next-generation solar cells that increase efficiency and reduce reliance on silicon, lowering production and upkeep costs. Also affects Rooftop Solar if not yet researched.',
             [{ type: 'research', amount: 30 }, { type: 'silicon', amount: 40 }],
             0.01, 0.06,
             680, 640,
             [{ id: "windlattice", path: [] }]
         );
+    }
+
+    override applyEffects(city: City) {
+        const rooftopSolar = city.techManager.techs.get(new RooftopSolar().id);
+        if (rooftopSolar) rooftopSolar.adjustCost("silicon", -0.25, true)
     }
 }
 
@@ -506,7 +511,7 @@ export class BrainComputerInterface extends Tech {
             [{ type: 'research', amount: 150 }, { type: 'electronics', amount: 200 }],
             0.01, 0.03,
             1820, 440,
-            [{ id: "vrclassrooms", path: [] }, { id: "nanomedicine", path: [] }]
+            [{ id: "vrclassrooms", path: [] }, { id: "nanomedicine", path: [0.35, 0.32] }]
         );
     }
 }

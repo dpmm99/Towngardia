@@ -55,34 +55,22 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
             }
         });
 
-        // Menu icon
-        menuDrawable.addChild(new Drawable({
-            x: 10,
-            y: 10,
-            width: "64px",
-            height: "64px",
-            image: new TextureInfo(64, 64, "ui/notifications")
-        }));
-
-        // Menu title
-        menuDrawable.addChild(new Drawable({
-            x: 84,
-            y: 26,
-            text: "Notifications",
-            width: "130px",
-            height: "32px"
-        }));
-
-        // Close button
+        // A second close button because my click order and my draw order are different
         menuDrawable.addChild(new Drawable({
             x: 10,
             y: 10,
             anchors: ['right'],
             width: "48px",
             height: "48px",
-            image: new TextureInfo(48, 48, "ui/x"),
+            fallbackColor: '#00000000',
             biggerOnMobile: true,
             onClick: () => this.hide()
+        }));
+
+        const nonResizingTop = menuDrawable.addChild(new Drawable({
+            y: 94,
+            height: "0px",
+            fallbackColor: '#00000000',
         }));
 
         // List notifications
@@ -91,6 +79,7 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
         this.notifications.forEach((notification, index) => {
             const height = this.notificationIconSize + (this.expandedNotifications.has(notification) ? 150 : 0);
             const notificationDrawable = new Drawable({
+                anchors: ['below'],
                 x: paddingAdjust,
                 width: "100%",
                 height: `${height}px`,
@@ -107,11 +96,11 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
 
             //Add to the top level if it's the first notification; otherwise, add to the previous notification
             if (previousNotification) {
-                notificationDrawable.anchors = ['below'];
                 previousNotification.addChild(notificationDrawable);
             } else {
-                notificationDrawable.y = 100 - this.scroller.getScroll();
-                menuDrawable.addChild(notificationDrawable);
+                notificationDrawable.y = -this.scroller.getScroll();
+                notificationDrawable.scaleYOnMobile = true;
+                nonResizingTop.addChild(notificationDrawable);
             }
             previousNotification = notificationDrawable;
 
@@ -156,7 +145,44 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
             } else paddingAdjust = 0;
         });
 
-        this.scroller.setChildrenSize(this.notifications.length * (this.notificationIconSize + this.notificationPadding) + 200); //TODO: doesn't account for word wrapped text so I just added 200 arbitrarily
+        //Top bar (menu icon, title, close button)
+        const topContainer = menuDrawable.addChild(new Drawable({
+            width: "100%",
+            height: "84px",
+            fallbackColor: '#222222',
+        }));
+
+        // Menu icon
+        topContainer.addChild(new Drawable({
+            x: 10,
+            y: 10,
+            width: "64px",
+            height: "64px",
+            image: new TextureInfo(64, 64, "ui/notifications")
+        }));
+
+        // Menu title
+        topContainer.addChild(new Drawable({
+            x: 84,
+            y: 26,
+            text: "Notifications",
+            width: "130px",
+            height: "32px"
+        }));
+
+        // Close button
+        topContainer.addChild(new Drawable({
+            x: 10,
+            y: 10,
+            anchors: ['right'],
+            width: "48px",
+            height: "48px",
+            image: new TextureInfo(48, 48, "ui/x"),
+            biggerOnMobile: true,
+            onClick: () => this.hide()
+        }));
+
+        this.scroller.setChildrenSize(this.notifications.length * (this.notificationIconSize + this.notificationPadding) + 140 * this.expandedNotifications.size + 200); //TODO: doesn't account for word wrapped text so I just added 200 arbitrarily
 
         this.lastDrawable = menuDrawable;
         return menuDrawable;
