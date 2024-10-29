@@ -1,6 +1,7 @@
 //Debug functions
 
 import { LONG_TICK_TIME } from "./game/FundamentalConstants.js";
+import { Tech } from "./game/Tech.js";
 
 let cheatTypingBuffer = '';
 let cheatLastKeyTime = Date.now();
@@ -27,6 +28,10 @@ document.addEventListener('keydown', function (event) {
         cheatTypingBuffer = '';
     } else if (cheatTypingBuffer.endsWith('operation cwal')) {
         timeCheat();
+        globalThis.game.uiManager!.frameRequested = true;
+        cheatTypingBuffer = '';
+    } else if (cheatTypingBuffer.endsWith('medieval man')) {
+        techEditCheat();
         globalThis.game.uiManager!.frameRequested = true;
         cheatTypingBuffer = '';
     }
@@ -56,4 +61,33 @@ function timeCheat() {
     console.log("Cheetah!");
     globalThis.game.city!.lastShortTick -= LONG_TICK_TIME;
     globalThis.game.city!.lastLongTick -= LONG_TICK_TIME;
+}
+
+function techEditCheat() {
+    console.log("Nice tech!");
+    document.addEventListener('keydown', function (event) {
+        const tech = <Tech | undefined>(<any>game.uiManager!).techMenu?.selectedTech;
+        if (!tech) return;
+        const step = 20;
+        switch (event.key) {
+            case 'ArrowUp':
+                tech.displayY -= step;
+                break;
+            case 'ArrowDown':
+                tech.displayY += step;
+                break;
+            case 'ArrowLeft':
+                tech.displayX -= step;
+                break;
+            case 'ArrowRight':
+                tech.displayX += step;
+                break;
+            default:
+                return;
+        }
+        console.log(`${tech.name} @ (${tech.displayX}, ${tech.displayY})`);
+
+        event.preventDefault();
+        game.uiManager!.frameRequested = true;
+    });
 }

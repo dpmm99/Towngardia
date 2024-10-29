@@ -11,7 +11,11 @@ export class TechManager {
     public lastFriendVisitDate: Date | null = null;
     public lastResearchCompletionDates: Date[] = [];
     constructor(techs: Tech[] = TECH_TYPES) {
-        techs.forEach(tech => this.techs.set(tech.id, tech));
+        techs.forEach(tech => this.techs.set(tech.id, tech.clone()));
+
+        //Add any missing techs from TECH_TYPES
+        for (const tech of TECH_TYPES.filter(tech => !this.techs.has(tech.id)))
+            this.techs.set(tech.id, tech.clone());
     }
 
     updateAdoptionRates(): void {

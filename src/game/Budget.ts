@@ -10,7 +10,7 @@ export class Budget {
         public taxRates: Record<string, number> = { income: 0.1, sales: 0.1 },
         public serviceAllocations: Record<string, number> = Object.fromEntries(["fireprotection", "policeprotection", "healthcare", "education", "environment", "infrastructure"].map(id => [id, 1])),
         public powerImportLimit: number = 0.5,
-        //TODO: Environment slider still does nothing but would only affect one or two things anyway. Should affect Carbon Capture Plant at the very least.
+        //TODO: Environment slider only affects Carbon Capture Plant; could be more useful.
     ) { }
 
     calculateBalance(): number {

@@ -2,6 +2,7 @@ import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
 import { AlgaeFarm, CarbonCapturePlant, Carnicultivator, Clinic, DataCenter, Farm, FusionFuelTruck, FusionPowerPlant, GeothermalPowerPlant, Hospital, Nanogigafactory, QuantumComputingLab, ShowHome, TreeFarm, VerticalFarm, WeatherControlMachine, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
+import { CAPACITY_MULTIPLIER, Lithium } from "./ResourceTypes.js";
 import { Tech } from "./Tech.js";
 
 export class HeatPumps extends Tech {
@@ -146,7 +147,7 @@ export class FusionPower extends Tech {
             'Building unlock: Fusion power plant. Groundbreaking research into controlled nuclear fusion, paving the way for unlimited clean energy.',
             [{ type: 'research', amount: 200 }, { type: 'tritium', amount: 50 }, { type: 'lithium', amount: 20 }, { type: 'concrete', amount: 100 }],
             1, 1,
-            1000, 740,
+            900, 740,
             [{ id: "geothermal", path: [] }, { id: "perovskitesolar", path: [] }]
         );
     }
@@ -154,6 +155,28 @@ export class FusionPower extends Tech {
     override applyEffects(city: City) {
         city.unlock(getBuildingType(FusionPowerPlant));
         city.unlock(getBuildingType(FusionFuelTruck));
+    }
+}
+
+export class BreederReactor extends Tech {
+    constructor() {
+        super(
+            'breederreactor',
+            'Breeder Reactor',
+            'Advanced fusion reactor design that produces most of its own tritium, but it consumes some lithium to do so.',
+            [{ type: 'research', amount: 100 }, { type: 'tritium', amount: 20 }, { type: 'lithium', amount: 30 }],
+            1, 1,
+            1100, 740,
+            [{ id: "fusionpower", path: [] }]
+        );
+    }
+
+    override applyEffects(city: City) {
+        //affects all placed, unplaced, and template buildings directly
+        for (const building of city.buildings.concat(city.unplacedBuildings).concat(city.buildingTypes).filter(p => p instanceof FusionPowerPlant)) {
+            building.inputResources.find(p => p.type === 'tritium')!.consumptionRate *= 0.25;
+            building.inputResources.push(new Lithium(0, 0, 0.25, 0.25 * 2 * CAPACITY_MULTIPLIER)); //Twice the usual capacity since power is pretty important
+        }
     }
 }
 
@@ -524,11 +547,9 @@ export class CloudSeeding extends Tech {
     }
 }
 
-//TODO: Breeder Reactor tech, makes fusion reactors no longer consume tritium as long as they have some. (Otherwise, fusion power is strictly limited by your buy rate.)
-
 export const TECH_TYPES: Tech[] = [
-    AIDiagnostics, AILogistics, ARShopping, AdvancedRobotics, AutonomousVehicles,
-    BrainComputerInterface, CarbonCapture, CloudSeeding, CoalPowerScrubbers, DroneDelivery, FoodServiceRobots,
+    AIDiagnostics, AILogistics, ARShopping, AdvancedRobotics, AutonomousVehicles, BrainComputerInterface,
+    BreederReactor, CarbonCapture, CloudSeeding, CoalPowerScrubbers, DroneDelivery, FoodServiceRobots,
     FusionPower, GMCrops, Geothermal, GrapheneBatteries, HeatPumps, HydroponicGardens, LabGrownMeat,
     NanomedicineResearch, PerovskiteSolarCells, QuantumComputing, RetainingSoil, RooftopSolar, SmartHomeSystems,
     TelemedicineInfra, ThreeDPrinting, VRClassrooms, VacuumInsulatedWindows, VerticalFarming, WindTurbineLattice,

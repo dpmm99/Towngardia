@@ -616,7 +616,7 @@ export class City {
         building.remove(this, justMoving);
 
         if (!this.flags.has(CityFlags.UnlockedMonobrynth) && building instanceof MysteriousRubble && this.buildings.some(p => p instanceof AlienMonolith && p.owned)) {
-            this.notify(new Notification("Monobrynth Unlocked", "Beneath the mysterious rubble, we found an even more mysterious monolith. Play the Monobrynth minigame to explore it via the right sidebar."));
+            this.notify(new Notification("Monobrynth Unlocked", "Beneath the mysterious rubble, we found an even more mysterious monolith. Play the Monobrynth minigame to explore it via the right sidebar.", "monobrynth"));
             this.flags.add(CityFlags.UnlockedMonobrynth);
             const plays = this.resources.get(new ResourceTypes.MonobrynthPlays().type)!;
             plays.produce(plays.productionRate * LONG_TICKS_PER_DAY); //Freebie for the first day
@@ -740,6 +740,8 @@ export class City {
 
         //Get the cardinal-direction-adjacent buildings for the road and power connectivity checks
         const adjacentBuildings = this.getBuildingsInArea(building.x, building.y, building.width, building.height, 1, 1, true);
+        //If it's built on something, also check all around the building(s) it's built on.
+        building.builtOn.forEach(p => this.getBuildingsInArea(p.x, p.y, p.width, p.height, 1, 1, true).forEach(q => adjacentBuildings.add(q)));
         const adjacentRoads = [...adjacentBuildings].filter(b => b.isRoad);
         //TODO: This has flaws for bigger roads, but I haven't exactly decided to implement those.
 
@@ -1470,7 +1472,7 @@ export class City {
             this.flags.add(CityFlags.BlockersPointedOut);
         }
         if (this.peakPopulation >= 400 && !this.flags.has(CityFlags.UnlockedTourism)) {
-            this.notify(new Notification("Business Booster", "You've reached a population of 400! You can now build an information center to enable tourism in your city. Tourists patronize your businesses and therefore help you earn revenue via sales tax. However, nobody's going to visit if you don't build both the information center and some proper tourist traps. You can also play the Nepotism Networking minigame in any friend's city for a shared bonus after drawing in some tourists! See Tutorials in the main menu for more info.", "businesspresence"));
+            this.notify(new Notification("Business Booster", "You've reached a population of 400! You can now build an information center to enable tourism in your city. Tourists patronize your businesses and therefore help you earn revenue via sales tax. However, nobody's going to visit if you don't build both the information center and some proper tourist traps. You can also play the Nepotism Networking minigame in any friend's city for a shared bonus after drawing in some tourists! See Tutorials in the main menu for more info.", "neponet"));
             this.unlock(getBuildingType(InformationCenter));
             this.unlock(getBuildingType(SesharTower));
             this.unlock(getBuildingType(ResortHotel));
