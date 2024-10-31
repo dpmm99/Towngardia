@@ -66,10 +66,14 @@ async function initGame() {
     gameLoop();
 
     //Save when the user looks away. Otherwise, it's currently only saving on long ticks. I WOULD like to only send the *changes* to the server at some point (see GameAction).
-    document.addEventListener('visibilitychange', () => {
+    document.addEventListener('visibilitychange', async () => {
         if (document.hidden && game.city && game.saveWhenHiding) {
-            game.storage.saveCity(game.player!.id, game.city);
-            game.storage.updatePlayer(game.player!);
+            try {
+                await game.storage.saveCity(game.player!.id, game.city);
+                await game.storage.updatePlayer(game.player!);
+            } catch (err) {
+                game.uiManager?.showWarning("Save failed. Check your connection and open a new tab to log in again, then save via the menu. Tap this message to hide it.");
+            }
             lastFocusLostTime = performance.now();
         }
     });

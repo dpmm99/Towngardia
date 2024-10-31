@@ -123,14 +123,28 @@ export class BuildTypeBar implements IHasDrawable, IOnResizeEvent {
             //If we have any unplaced copies of the building, put that number at the top-right of the building icon
             const countInStock = this.city.getUnplacedBuildingCount(buildingType);
             if (countInStock > 0) {
-                buildingIconDrawable.addChild(new Drawable({
+                const circle = buildingIconDrawable.addChild(new Drawable({
                     anchors: ['right'],
-                    width: this.buildingIconSize + "px",
-                    height: "20px",
-                    text: countInStock.toString(),
+                    x: -10,
+                    y: -10,
+                    width: "40px",
+                    height: "40px",
                     rightAlign: true,
                     cssClasses: ['building-count'],
                     biggerOnMobile: true,
+                    scaleXOnMobile: true,
+                    scaleYOnMobile: true,
+                    image: new TextureInfo(40, 40, "ui/resourceborder"),
+                }));
+                circle.addChild(new Drawable({
+                    anchors: ['centerX'],
+                    y: 13,
+                    centerOnOwnX: true,
+                    width: "40px",
+                    height: "20px",
+                    text: countInStock.toString(),
+                    biggerOnMobile: true,
+                    scaleYOnMobile: true,
                 }));
             }
 

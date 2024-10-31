@@ -458,9 +458,20 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         const durationBonus = this.gridState.lockedInBonuses.filter(b => b === 'duration').length; //1 tick each, max 4 ticks total
         const quantityBonus = this.gridState.lockedInBonuses.filter(b => b === 'quantity').length * 0.01; //1% each, max 5% total
         const event = new TourismReward(ticks + durationBonus, quantity + quantityBonus);
+        this.sendAssist(event);
         this.city.events.push(event);
-        this.uiManager.game.sendAssist(new Assist(this.friendCity.id, event, Date.now(), this.friendCity.player.id.toString()));
         this.winnings = event;
+    }
+
+    private sendAssist(event: TourismReward) {
+        try {
+            this.uiManager.game.sendAssist(new Assist(this.friendCity.id, event, Date.now(), this.friendCity.player.id.toString()));
+        } catch {
+            //Couldn't send the winnings to the other player.
+            if (confirm("Failed to send your assistance to the other player. This is expected if you just got prompted to log in again. Press OK to try again once you've confirmed that you're connected and logged in...or press cancel to be greedy. :)")) {
+                this.sendAssist(event);
+            }
+        }
     }
 
     public handleTileClick(x: number, y: number): void {

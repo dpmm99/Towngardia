@@ -31,9 +31,11 @@ import { TechTreeMenu } from "./TechTreeMenu.js";
 import { TopBar } from "./TopBar.js";
 import { TutorialOverlay } from "./TutorialOverlay.js";
 import { ViewsBar } from "./ViewsBar.js";
+import { WarningWindow } from "./WarningWindow.js";
 
 export class UIManager {
     //Elements - all with ! because they're set in the constructor, but by calling another function that the TypeScript compiler doesn't look into
+    private warningWindow!: WarningWindow;
     private bottomBar!: BottomBar;
     private buildTypeBar!: BuildTypeBar;
     private topBar!: TopBar;
@@ -169,6 +171,7 @@ export class UIManager {
 
         //This overlay has to be instantiated after bottomBar.shown is set, because the tutorial hides the bottom bar.
         this.windows.push(this.tutorialOverlay = new TutorialOverlay(this.game.player!, this.game.city!, this)); //Also NEVER changes cities/players
+        this.windows.push(this.warningWindow = new WarningWindow());
     }
 
     get isMyCity(): boolean {
@@ -197,6 +200,7 @@ export class UIManager {
             if (wasSingleTap) return false;
             return this.checkClickComponent(this.renderOnlyWindow, x, y);
         }
+        if (this.checkClickComponent(this.warningWindow, x, y)) return true;
 
         if (this.tutorialOverlay.isShown() && !wasSingleTap && this.checkClickComponent(this.tutorialOverlay, x, y)) return true;
         //TODO: Start using that renderOnlyWindow field for these windows
@@ -426,6 +430,11 @@ export class UIManager {
     showRepairBuildingDialog(building: Building) {
         this.contextMenu.update(this.city, building.x, building.y);
         this.contextMenu.repairing = true;
+    }
+
+    showWarning(text: string) {
+        this.warningWindow.text = text;
+        this.frameRequested = true;
     }
 
     showAddFriendDialog() {

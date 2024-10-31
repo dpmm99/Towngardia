@@ -70,7 +70,16 @@ export class GameState {
         if (!(toCity instanceof City)) {
             const cityID = toCity.toString();
             this.onLoadStart?.();
-            toCity = (await this.storage.loadCity(owner, cityID))!;
+            try {
+                toCity = (await this.storage.loadCity(owner, cityID))!;
+            } catch (err) {
+                console.error('Failed to load city:', err);
+                if (err?.toString().includes("SyntaxError")) {
+                    if (confirm("Your session expired or the server is down. Open the login page in another tab?")) window.open("index.html"); //Need to log back in
+                    else throw err; //Prevent the UIManager from switching cities.
+                }
+                return;
+            }
             this.onLoadEnd?.();
 
             //Put it in the player's city list. Add or replace.
@@ -114,7 +123,15 @@ export class GameState {
     }
 
     async sendAssist(assist: Assist): Promise<void> {
-        await this.storage.sendAssist(assist);
+        try {
+            await this.storage.sendAssist(assist);
+        } catch (err) {
+            console.error('Failed to send assist:', err);
+            if (err?.toString().includes("SyntaxError")) {
+                if (confirm("Your session expired or the server is down. Open the login page in another tab?")) window.open("index.html"); //Need to log back in
+            }
+            throw err;
+        }
     }
 
     rebuildCanvas() {
@@ -247,8 +264,15 @@ export class GameState {
 
             this.city.onLongTick();
             if (now - this.city.lastLongTick < LONG_TICK_TIME) { //Don't save while fast-forwarding.
-                this.storage.saveCity(this.player!.id, this.city);
-                this.storage.updatePlayer(this.player!);
+                try {
+                    this.storage.saveCity(this.player!.id, this.city);
+                    this.storage.updatePlayer(this.player!);
+                } catch (err) {
+                    if (err?.toString().includes("SyntaxError")) {
+                        if (confirm("Your session expired or the server is down. Open the login page in another tab?")) window.open("index.html"); //Need to log back in
+                    }
+                    this.uiManager?.showWarning("Save failed. Open a new tab to log in again, then save via the menu. Tap this message to hide it.");
+                }
             }
             if (this.uiManager) this.uiManager.frameRequested = true;
         }

@@ -33,7 +33,7 @@ export class MainMenu implements IHasDrawable {
             text: "Fullscreen",
             onClick: () => this.uiManager.enterFullscreen(),
         })); //TODO: Instead of putting the text on the above, we want that to be a button image and contain the text in a separate element
-        
+
         //Removed as I have quit maintaining the WebGL renderer and quit maintaining the HTML renderer long ago.
 //        menu.addChild(new Drawable({
 //            x: 10,
@@ -45,15 +45,17 @@ export class MainMenu implements IHasDrawable {
 //        }));
 //        nextY += 50;
 
-        menu.addChild(new Drawable({
-            anchors: ['centerX'],
-            y: nextY += 50,
-            centerOnOwnX: true,
-            width: "calc(100% - 20px)",
-            height: "40px",
-            text: "View tutorials",
-            onClick: () => this.uiManager.showTutorials(),
-        }));
+        if (this.uiManager.isMyCity) { //I visited a friend city, went to the main menu, hit View Tutorials, and lost my friend button. This should fix that! ;)
+            menu.addChild(new Drawable({
+                anchors: ['centerX'],
+                y: nextY += 50,
+                centerOnOwnX: true,
+                width: "calc(100% - 20px)",
+                height: "40px",
+                text: "View tutorials",
+                onClick: () => this.uiManager.showTutorials(),
+            }));
+        }
 
         menu.addChild(new Drawable({
             anchors: ['centerX'],
