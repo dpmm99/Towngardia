@@ -44,7 +44,7 @@ export class WarningWindow implements IHasDrawable {
             scaleYOnMobile: true,
         }));
 
-        return window;
+        return this.lastDrawable = window;
     }
 
     getLastDrawable(): Drawable | null {
