@@ -3,6 +3,7 @@ import { BuildingCategory } from "../game/BuildingCategory.js";
 import { City } from "../game/City.js";
 import { GameState } from "../game/GameState.js";
 import { Player } from "../game/Player.js";
+import { Tech } from "../game/Tech.js";
 import { MemoryMixology } from "../minigame/MemoryMixology.js";
 import { Monobrynth } from "../minigame/Monobrynth.js";
 import { NepotismNetworking } from "../minigame/NepotismNetworking.js";
@@ -20,6 +21,7 @@ import { BusinessPresenceView, CityView, EducationView, FireProtectionView, Gree
 import { ConstructMenu } from "./ConstructMenu.js";
 import { ContextMenu } from "./ContextMenu.js";
 import { Drawable } from "./Drawable.js";
+import { FriendVisitWindow } from "./FriendVisitWindow.js";
 import { FriendsMenu } from "./FriendsMenu.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -52,6 +54,7 @@ export class UIManager {
     private notificationsMenu!: NotificationsMenu;
     private buildingInfoMenu!: BuildingInfoMenu;
     private friendsMenu!: FriendsMenu;
+    private friendVisitWindow!: FriendVisitWindow;
     private tutorialOverlay!: TutorialOverlay;
     private cityView!: CityView; //Set in switchRenderer, called by the constructor, but TypeScript compiler doesn't know that
     private worldCoordinateDrawables: IHasDrawable[] = [];
@@ -148,6 +151,7 @@ export class UIManager {
             this.notificationsMenu = new NotificationsMenu(this.game.player!, this.game.city!, this), //NEVER changes cities/players
             this.buildingInfoMenu = new BuildingInfoMenu(newCity, this),
             this.friendsMenu = new FriendsMenu(this.game.player!, this),
+            this.friendVisitWindow = new FriendVisitWindow(),
         ];
         this.worldCoordinateDrawables = [
             this.constructMenu = new ConstructMenu(),
@@ -172,6 +176,15 @@ export class UIManager {
         //This overlay has to be instantiated after bottomBar.shown is set, because the tutorial hides the bottom bar.
         this.windows.push(this.tutorialOverlay = new TutorialOverlay(this.game.player!, this.game.city!, this)); //Also NEVER changes cities/players
         this.windows.push(this.warningWindow = new WarningWindow());
+
+        //If visiting a friend, possibly grant research points and show the friend visit window
+        if (!this.isMyCity) {
+            const grantPoints = 2; //TODO: How do we want to determine number of points?
+            const [tech, bonusClaimed] = this.city.techManager.grantFreePoints(this.game.city!, this.game.visitingCity!, grantPoints, Date.now());
+            if (tech) await this.techMenu.preloadImages();
+            this.showFriendVisitWindow(tech, grantPoints, bonusClaimed); //TODO: also let the player choose to buy specific resources from this city (if this city has sold them recently)
+            this.frameRequested = true;
+        }
     }
 
     get isMyCity(): boolean {
@@ -201,6 +214,7 @@ export class UIManager {
             return this.checkClickComponent(this.renderOnlyWindow, x, y);
         }
         if (this.checkClickComponent(this.warningWindow, x, y)) return true;
+        if (this.friendVisitWindow.isShown() && this.checkClickComponent(this.friendVisitWindow, x, y)) return true;
 
         if (this.tutorialOverlay.isShown() && !wasSingleTap && this.checkClickComponent(this.tutorialOverlay, x, y)) return true;
         //TODO: Start using that renderOnlyWindow field for these windows
@@ -435,6 +449,10 @@ export class UIManager {
     showWarning(text: string) {
         this.warningWindow.text = text;
         this.frameRequested = true;
+    }
+
+    showFriendVisitWindow(tech: Tech | null, techPoints: number, bonusClaimed: boolean) {
+        this.friendVisitWindow.show(tech, techPoints, bonusClaimed);
     }
 
     showAddFriendDialog() {

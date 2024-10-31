@@ -55,28 +55,30 @@ export class TechManager {
      * @param otherCity Friend's city
      * @param points Number of research points to award (other resource costs are reduced proportionally)
      * @param visitTime The time of the visit to the friend's city--Date.now() normally, but it's a parameter for repeating the logic on the server side
-     * @returns The tech that was chosen to grand research points for, or null if none was.
+     * @returns An array. First element is the tech that was chosen to grand research points for, or null if none was. Second element is true if bonus already claimed today, or false otherwise.
      */
-    grantFreePoints(city: City, otherCity: City, points: number, visitTime: number): Tech | null {
-        if (this.lastFriendVisitDate && this.lastFriendVisitDate.getTime() > visitTime - 24 * 60 * 60 * 1000) return null; //Only once per day (or whatever period I decide on)
-        this.lastFriendVisitDate = new Date();
+    grantFreePoints(city: City, otherCity: City, points: number, visitTime: number): [Tech | null, boolean] {
+        if (this.lastFriendVisitDate && this.lastFriendVisitDate.getDate() === new Date(visitTime).getDate()
+            && this.lastFriendVisitDate.getMonth() === new Date(visitTime).getMonth() && this.lastFriendVisitDate.getFullYear() === new Date(visitTime).getFullYear())
+            return [null, true]; //Only once per day (for now; may consider 5x every 5 days like most things, but then I kinda want to track *which* friends were visited already each day and require 5 distinct friend visits every 5 days)
 
         //Pick a tech
         const friendResearchedTechsSet = new Set([...otherCity.techManager.techs.values()].filter(p => p.researched).map(p => p.id)); //Techs they have researched
         const researchableTechs = Array.from(this.techs.values()).filter(tech => friendResearchedTechsSet.has(tech.id) && !tech.researched && this.prereqsAreResearched(tech)); //Tentative rules. Techs you don't have but COULD be researching now.
-        if (!researchableTechs.length) return null;
+        if (!researchableTechs.length) return [null, false];
         inPlaceShuffle(researchableTechs);
         const tech = researchableTechs[0];
 
         //Calculate what fraction of the entire remaining cost the given number of points (research points) represents, based on the research resource in the costs.
         const cost = tech.costs.find(cost => cost.type === new Research().type);
-        if (!cost) return null;
+        if (!cost) return [null, false];
         const remainingFraction = 1 - Math.min(1, points / cost.amount);
         tech.costs.forEach(p => p.amount *= remainingFraction);
 
         //Possibly *complete* the tech research
         if (tech.costs.every(p => p.amount < 1)) this.researchTech(city, tech); //Be EXTRA nice. :)
-        return tech;
+        this.lastFriendVisitDate = new Date();
+        return [tech, false];
     }
 
     randomFreeResearch(city: City, fractionToGrant: number): Tech | null {

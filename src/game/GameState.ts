@@ -92,8 +92,6 @@ export class GameState {
             this.visitingCity = null;
             this.visitingPlayer = null;
         } else {
-            this.city.techManager.grantFreePoints(this.city, toCity, 3, Date.now()); //TODO: How do we want to determine number of points?
-            //TODO: show a popup about the free research points and let the player choose to buy specific resources from this city (if this city has sold them recently)
             this.visitingCity = toCity;
             this.visitingPlayer = owner;
         }
