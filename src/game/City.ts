@@ -977,7 +977,7 @@ export class City {
         const increments = [1000, 3000, 6000, 10000, 15000, 21000, 28000, 36000, 45000, 55000, 66000, 78000, 91000];
         const incrementValue = 5;
         for (const increment of increments) {
-            if (this.peakPopulation < increment) return buyCapacity;
+            if (this.peakPopulation < increment) break;
             buyCapacity += incrementValue;
         }
 
