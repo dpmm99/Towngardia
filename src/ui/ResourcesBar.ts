@@ -6,13 +6,14 @@ import { ResourceSlider } from "./ResourceSlider.js";
 import { StandardScroller } from "./StandardScroller.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { UIManager } from "./UIManager.js";
-import { humanizeFloor } from "./UIUtil.js";
+import { humanizeCeil, humanizeFloor } from "./UIUtil.js";
 
 export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
     private scroller = new StandardScroller(true, true);
     shown: boolean = false;
     showSettings: boolean = false;
+    private page: number = 0; //Tentative design for showing info in place of the buy/sell sliders
     private lastTouched: { resourceType: string, side: "buy" | "sell" } = { resourceType: "", side: "sell" };
 
     constructor(private city: City, private uiManager: UIManager) {
@@ -51,14 +52,40 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
         if (this.uiManager.isMyCity) {
             if (this.showSettings) {
                 barDrawable.addChild(new Drawable({
-                    x: 170 + padding,
+                    x: 320,
                     y: nextY + 12,
+                    centerOnOwnX: true,
                     width: 300 - 2 * padding + "px",
                     height: "32px",
-                    text: "Auto-buy/sell",
+                    text: this.page === 0 ? "Auto-buy/sell" : this.page === 1 ? "Market prices" : "Market supply",
                     id: barDrawable.id + ".tradesettings.text",
                     biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
                 }));
+
+                if (this.page > 0)
+                    barDrawable.addChild(new Drawable({
+                        x: 170 + padding,
+                        y: nextY + 44,
+                        width: "150px",
+                        height: "32px",
+                        text: "<",
+                        id: barDrawable.id + ".tradesettings.left",
+                        biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                        onClick: () => this.page = Math.max(0, this.page - 1),
+                    }));
+                if (this.page < 2)
+                    barDrawable.addChild(new Drawable({
+                        anchors: ['right'],
+                        rightAlign: true,
+                        x: padding,
+                        y: nextY + 44,
+                        width: "150px",
+                        height: "32px",
+                        text: ">",
+                        id: barDrawable.id + ".tradesettings.right",
+                        biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                        onClick: () => this.page = Math.min(2, this.page + 1), //0 for auto-trade level sliders, 1 for buy/sell prices, 2 for market quantities and limits.
+                    }));
             }
             nextY += padding + buttonSize;
             //TODO: Left/right buttons by that, to switch between auto-buy/sell sliders, viewing buy and sell prices, and viewing amounts for sale on the market + limits
@@ -115,28 +142,52 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
             }));
 
             if (this.showSettings) {
-                const slider = barDrawable.addChild(new ResourceSlider({
-                    x: padding * 3 + iconSize * 3.5,
-                    y: nextY,
-                    id: "resourceSlider",
-                }, resource, this.uiManager.inTutorial(), this.lastTouched)); //Lock during the tutorial so they can't softlock themselves.
-                slider.scaleXOnMobile = slider.scaleYOnMobile = true;
+                if (this.page === 0) {
+                    const slider = barDrawable.addChild(new ResourceSlider({
+                        x: padding * 3 + iconSize * 3.5,
+                        y: nextY,
+                        id: "resourceSlider",
+                    }, resource, this.uiManager.inTutorial(), this.lastTouched)); //Lock during the tutorial so they can't softlock themselves.
+                    slider.scaleXOnMobile = slider.scaleYOnMobile = true;
 
-                //Exact number and percentage for whichever handle was last touched
-                if (this.lastTouched.resourceType === resource.type) {
-                    lastTouchedSliderInfo.width = slider.width;
-                    lastTouchedSliderInfo.x = slider.x;
-                    lastTouchedSliderInfo.y = nextY + 32 /*barHeight*/ + 10;
-                    lastTouchedSliderInfo.addChild(new Drawable({
-                        x: 3,
-                        y: 3,
-                        width: "calc(100% - 6px)",
-                        height: "24px",
-                        text: (this.lastTouched.side === "buy")
-                            ? 'Buy < ' + (resource.autoBuyBelow * 100).toFixed(0) + '% (' + humanizeFloor(resource.autoBuyBelow * resource.capacity) + ')'
-                            : 'Sell > ' + (resource.autoSellAbove * 100).toFixed(0) + '% (' + humanizeFloor(resource.autoSellAbove * resource.capacity) + ')',
-                        id: 'autobuytext',
-                        biggerOnMobile: true,
+                    //Exact number and percentage for whichever handle was last touched
+                    if (this.lastTouched.resourceType === resource.type) {
+                        lastTouchedSliderInfo.width = slider.width;
+                        lastTouchedSliderInfo.x = slider.x;
+                        lastTouchedSliderInfo.y = nextY + 32 /*barHeight*/ + 10;
+                        lastTouchedSliderInfo.addChild(new Drawable({
+                            x: 3,
+                            y: 3,
+                            width: "calc(100% - 6px)",
+                            height: "24px",
+                            text: (this.lastTouched.side === "buy")
+                                ? 'Buy < ' + (resource.autoBuyBelow * 100).toFixed(0) + '% (' + humanizeFloor(resource.autoBuyBelow * resource.capacity) + ')'
+                                : 'Sell > ' + (resource.autoSellAbove * 100).toFixed(0) + '% (' + humanizeFloor(resource.autoSellAbove * resource.capacity) + ')',
+                            id: 'autobuytext',
+                            biggerOnMobile: true,
+                        }));
+                    }
+                } else if (this.page === 1) {
+                    //Show buy and sell prices
+                    barDrawable.addChild(new Drawable({
+                        x: padding * 3 + iconSize * 3.5,
+                        y: nextY + 12,
+                        width: "300px",
+                        height: "32px",
+                        text: "Buy: " + humanizeCeil(resource.buyPrice * resource.buyPriceMultiplier) + "; sell: " + humanizeFloor(resource.sellPrice * resource.sellPriceMultiplier),
+                        id: barDrawable.id + "." + resource.type + ".buyprice",
+                        biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                    }));
+                } else if (this.page === 2) {
+                    //Show market quantities and limits
+                    barDrawable.addChild(new Drawable({
+                        x: padding * 3 + iconSize * 3.5,
+                        y: nextY + 12,
+                        width: "300px",
+                        height: "32px",
+                        text: "For sale: " + humanizeFloor(resource.buyableAmount) + "/" + humanizeFloor(this.city.getBuyCapacity(resource)),
+                        id: barDrawable.id + "." + resource.type + ".buyable",
+                        biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
                     }));
                 }
             }

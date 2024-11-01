@@ -179,8 +179,8 @@ export class BreederReactor extends Tech {
     override applyEffects(city: City) {
         //affects all placed, unplaced, and template buildings directly
         for (const building of city.buildings.concat(city.unplacedBuildings).concat(city.buildingTypes).filter(p => p instanceof FusionPowerPlant)) {
-            building.inputResources.find(p => p.type === 'tritium')!.consumptionRate *= 0.25;
-            building.inputResources.push(new Lithium(0, 0, 0.25, 0.25 * 2 * CAPACITY_MULTIPLIER)); //Twice the usual capacity since power is pretty important
+            building.inputResources.find(p => p.type === 'tritium')!.consumptionRate *= 0.125;
+            building.inputResources.push(new Lithium(0, 0, 0.125, 0.125 * 2 * CAPACITY_MULTIPLIER)); //Twice the usual capacity since power is pretty important
         }
     }
 }

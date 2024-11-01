@@ -1795,8 +1795,8 @@ export class ApparelFactory extends Building {
             2, 2, 0,
             0.35,
         );
-        this.inputResources.push(new Textiles(0, 0, 2));
-        this.outputResources.push(new Clothing(0, 1));
+        this.inputResources.push(new Textiles(0, 0, 1.5));
+        this.outputResources.push(new Clothing(0, 0.5)); //Trying to kinda balance with the minigame that uses it
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
     }

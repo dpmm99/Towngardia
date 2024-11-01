@@ -575,7 +575,7 @@ export class Furniture extends Resource {
         super(
             "furniture", "Furniture",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 5, 3
+            false, 7, 6
         );
     }
 }
@@ -585,7 +585,7 @@ export class Clothing extends Resource {
         super(
             "clothing", "Clothing",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 2, 1
+            false, 6, 5
         );
     }
 }

@@ -972,18 +972,21 @@ export class City {
         for (const building of this.drawInFrontBuildings) yield building;
     }
 
-    getBuyCapacity() { //Amount of each resource that you're allowed to buy in a 5-day period (rolling)
-        let buyCapacity = 30;
-        if (this.peakPopulation < 1000) return buyCapacity;
-        buyCapacity += 10;
-        if (this.peakPopulation < 5000) return buyCapacity;
-        buyCapacity += 10;
-        if (this.peakPopulation < 15000) return buyCapacity;
-        buyCapacity += 10;
-        if (this.peakPopulation < 35000) return buyCapacity;
-        buyCapacity += 10;
-        if (this.peakPopulation < 50000) return buyCapacity;
-        return buyCapacity + 10;
+    getBuyCapacity(type: Resource) { //Amount of each resource that you're allowed to buy in a 5-day period (rolling)
+        let buyCapacity = 20;
+        const increments = [1000, 3000, 6000, 10000, 15000, 21000, 28000, 36000, 45000, 55000, 66000, 78000, 91000];
+        const incrementValue = 5;
+        for (const increment of increments) {
+            if (this.peakPopulation < increment) return buyCapacity;
+            buyCapacity += incrementValue;
+        }
+
+        //Price changes the market limits a bit. I should really just have rarity instead, but I'm not unhappy with how it works out. Main problem is buying uranium/tritium, so I'll *increase* that limit instead.
+        if (type.buyPrice >= 9 && this.peakPopulation >= 6000) buyCapacity += Math.ceil(Math.log(this.peakPopulation - 5999)); //You really need to be able to afford your late-game power producers--uranium and tritium cannot be produced.
+        else if (type.buyPrice >= 6) buyCapacity *= 0.6; //12, 15, 18, ... or per day, 3, 3.75, 4.5, 5.25, ...
+        else if (type.buyPrice >= 4) buyCapacity *= 0.8; //16, 20, 24, ... or per day, 3, 4, 5, 6, 7...
+
+        return buyCapacity;
     }
 
     autoSell(resource: Resource): void {
@@ -1031,10 +1034,9 @@ export class City {
 
     onLongTick(): void {
         //Increase auto-buy amount availability first, but to be nice to the player, don't cap it until the end of the tick
-        const maxBuyCapacity = this.getBuyCapacity();
         this.resources.forEach(resource => {
             if (resource.isSpecial) return; //Can't buy happiness. :) ...or flunds, population, tourists, water and power (except as allowed by the hard-coded mechanism), pollution (!?), health, education, crime (!?!?), or research (okay, that's sort-of feasible, but no)
-            if (resource.capacity) resource.buyCapacity = Math.min(maxBuyCapacity, resource.capacity);
+            if (resource.capacity) resource.buyCapacity = Math.min(this.getBuyCapacity(resource), resource.capacity);
             resource.buyableAmount = Math.min(resource.buyCapacity, resource.buyableAmount + resource.buyCapacity * 0.2 / LONG_TICKS_PER_DAY);
         });
 

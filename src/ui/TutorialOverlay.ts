@@ -410,7 +410,7 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 content: {
                     x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", scaleYOnMobile: true,
-                    text: "Short on resources? No sweat! Your city's got a freight line, and it's not afraid to use it. As you place buildings, you'll see the REAL cost, including the flunds for any materials you're about to auto-buy from the market. But don't go crazy, because the market restocks slower than a sloth on vacation (5 days to fully restock). It's also not bottomless--the initial limit is a measly 30 of each resource. Tap anywhere to continue.",
+                    text: "Short on resources? No sweat! Your city's got a freight line, and it's not afraid to use it. As you place buildings, you'll see the REAL cost, including the flunds for any materials you're about to auto-buy from the market. But don't go crazy, because the market restocks slower than a sloth on vacation (5 days to fully restock). It's also not bottomless--the initial limit is a measly 20 for most resources. You can find this data in the auto-trade section of the resources bar. Tap anywhere to continue.",
                 },
                 nextButton: {
                     text: "Cash: the universal resource!",
