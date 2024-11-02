@@ -53,38 +53,27 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
             }
         });
 
-        // Menu icon
-        menuDrawable.addChild(new Drawable({
-            x: 10,
-            y: 10,
-            width: "64px",
-            height: "64px",
-            image: new TextureInfo(64, 64, "ui/friends")
-        }));
-
-        // Menu title
-        menuDrawable.addChild(new Drawable({
-            x: 84,
-            y: 26,
-            text: "Friends and Cities",
-            width: "300px",
-            height: "32px",
-        }));
-
-        // Close button
+        // A second close button because my click order and my draw order are different
         menuDrawable.addChild(new Drawable({
             x: 10,
             y: 10,
             anchors: ['right'],
             width: "48px",
             height: "48px",
-            image: new TextureInfo(48, 48, "ui/x"),
+            fallbackColor: '#00000000',
             biggerOnMobile: true,
             onClick: () => this.hide()
         }));
 
+        const nonResizingTop = menuDrawable.addChild(new Drawable({
+            y: 94,
+            height: "0px",
+            fallbackColor: '#00000000',
+        }));
+
         let yOffset = 100 - this.scroller.getScroll();
-        
+        let baseY = yOffset;
+
         // Add current player's cities
         yOffset = this.addPlayerCities(menuDrawable, this.player, yOffset, true);
 
@@ -151,7 +140,44 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
         menuDrawable.addChild(newCityContainer);
         yOffset += this.friendIconSize + this.itemPadding;
 
-        this.scroller.setChildrenSize(yOffset + 50); // Add some extra padding at the bottom
+        this.scroller.setChildrenSize(yOffset - baseY + 130); // Add some extra padding at the bottom
+
+        //Top bar (menu icon, title, close button)
+        const topContainer = menuDrawable.addChild(new Drawable({
+            width: "100%",
+            height: "84px",
+            fallbackColor: '#222222',
+        }));
+
+        // Menu icon
+        menuDrawable.addChild(new Drawable({
+            x: 10,
+            y: 10,
+            width: "64px",
+            height: "64px",
+            image: new TextureInfo(64, 64, "ui/friends")
+        }));
+
+        // Menu title
+        menuDrawable.addChild(new Drawable({
+            x: 84,
+            y: 26,
+            text: "Friends and Cities",
+            width: "300px",
+            height: "32px",
+        }));
+
+        // Close button
+        menuDrawable.addChild(new Drawable({
+            x: 10,
+            y: 10,
+            anchors: ['right'],
+            width: "48px",
+            height: "48px",
+            image: new TextureInfo(48, 48, "ui/x"),
+            biggerOnMobile: true,
+            onClick: () => this.hide()
+        }));
 
         this.lastDrawable = menuDrawable;
         return menuDrawable;

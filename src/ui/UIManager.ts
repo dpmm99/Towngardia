@@ -144,7 +144,6 @@ export class UIManager {
             this.bottomBar = new BottomBar(newCity, this), //No reason to appear in other players' cities
             this.buildTypeBar = new BuildTypeBar(newCity, this), //No reason to appear in other players' cities
             this.topBar = new TopBar(newCity, this),
-            this.mainMenu = new MainMenu(this.game, this),
             this.techMenu = new TechTreeMenu(newCity, this),
             this.budgetMenu = new BudgetMenu(newCity, this),
             this.citizenDietWindow = new CitizenDietWindow(newCity, this),
@@ -176,6 +175,7 @@ export class UIManager {
 
         //This overlay has to be instantiated after bottomBar.shown is set, because the tutorial hides the bottom bar.
         this.windows.push(this.tutorialOverlay = new TutorialOverlay(this.game.player!, this.game.city!, this)); //Also NEVER changes cities/players
+        this.windows.push(this.mainMenu = new MainMenu(this.game, this)); //Needs to be on top, so I moved it down here below tutorial overlay
         this.windows.push(this.warningWindow = new WarningWindow());
 
         //If visiting a friend, possibly grant research points and show the friend visit window
@@ -739,7 +739,7 @@ export class UIManager {
         canvas.addEventListener('touchend', this.onTouchEnd.bind(this));
         canvas.addEventListener('click', (e) => {
             const wasSingleTap = Math.abs(e.clientX * DEVICE_PIXEL_RATIO - this.initialX) >= 10 || Math.abs(e.clientY * DEVICE_PIXEL_RATIO - this.initialY) >= 10;
-            this.handleClick(e.clientX * DEVICE_PIXEL_RATIO, e.clientY * DEVICE_PIXEL_RATIO, wasSingleTap);
+            if (!wasSingleTap) this.handleClick(e.clientX * DEVICE_PIXEL_RATIO, e.clientY * DEVICE_PIXEL_RATIO, wasSingleTap);
             if (!wasSingleTap && this.tutorialOverlay.isShown()) this.tutorialOverlay.onAction();
             this.requestRedraw();
         });
