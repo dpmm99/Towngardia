@@ -372,24 +372,24 @@ export class ContextMenu implements IHasDrawable {
         nextY += 56; //Assuming it's two lines
 
         //Cost is a fraction of the original building materials plus flunds. Note: buildings with increasing costs as you build more of them would have much higher repair costs, too.
-        const cost = building.getCosts(this.city!).map(p => ({ type: p.type, amount: Math.floor((1 - building.damagedEfficiency) ** 1.5 * p.amount) + (p.type === 'flunds' ? 10 : 0) }));
+        const costs = building.getCosts(this.city!).map(p => ({ type: p.type, amount: Math.floor((1 - building.damagedEfficiency) ** 1.5 * p.amount) + (p.type === 'flunds' ? 10 : 0) })).filter(p => p.amount > 0);
         confirmation.addChild(new Drawable({
             anchors: ['right', 'bottom'],
             x: 10,
             y: 10,
             width: "48px",
             height: "48px",
-            image: new TextureInfo(48, 48, this.city?.hasResources(cost) ? "ui/ok" : "ui/x"),
+            image: new TextureInfo(48, 48, this.city?.hasResources(costs) ? "ui/ok" : "ui/x"),
             id: confirmation.id + ".confirm",
             onClick: () => {
-                if (this.city?.checkAndSpendResources(cost)) building.repair(this.city);
+                if (this.city?.checkAndSpendResources(costs)) building.repair(this.city);
                 this.building = null;
                 this.repairing = false;
             },
         }));
 
         nextY += 24;
-        addResourceCosts(confirmation, cost, 10, nextY, false, false, false, 32, 4, 24, 4, false, !this.city!.hasResources(cost), this.city!);
+        addResourceCosts(confirmation, costs, 10, nextY, false, false, false, 32, 4, 24, 4, false, !this.city!.hasResources(costs), this.city!);
         nextY += 70; //resource icon size (32) + padding (4) + font height (24) + some more padding
         confirmation.height = nextY - 6 + "px";
 

@@ -920,17 +920,26 @@ export class OilTruck extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1.5 }]; }
 
+    override placed(city: City) {
+        this.onLongTick(city);
+        (this.builtOn.values().next().value as Building)?.immediatePowerOn(city);
+    }
+
     override onLongTick(city: City): void {
+        this.lastEfficiency = 0;
         const oilPowerPlant = this.builtOn.values().next().value as OilPowerPlant;
         if (!oilPowerPlant) return;
 
         //First, calculate how much the power plant needs in order to run for a whole long tick. (That part is obvious; the complication is you have to consider how much oil it has NOW.)
         //The * 2 is to make it so it always has one tick's worth (this always runs in the same tick right before the built-on power plant's onLongTick), causing the provisioning arrow to (normally) be hidden.
         const neededAmount = Math.min(oilPowerPlant.inputResources[0].consumptionRate * 2, oilPowerPlant.inputResources[0].consumptionRate * 2 - oilPowerPlant.inputResources[0].amount);
+        this.lastEfficiency = 1;
         if (neededAmount <= 0) return;
 
         //Spend the resources/flunds as needed and allowed, then put the oil into the power plant.
-        const oilToGrant = neededAmount * city.calculateAffordablePortion([{ type: "oil", amount: neededAmount }], false);
+        const affordableFraction = Math.min(this.damagedEfficiency, city.calculateAffordablePortion([{ type: "oil", amount: neededAmount }], false));
+        this.lastEfficiency = affordableFraction;
+        const oilToGrant = neededAmount * affordableFraction;
         city.checkAndSpendResources([{ type: "oil", amount: oilToGrant }], false);
         oilPowerPlant.inputResources[0].produce(oilToGrant);
     }
@@ -997,16 +1006,25 @@ export class CoalTruck extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1.5 }]; }
 
+    override placed(city: City) {
+        this.onLongTick(city);
+        (this.builtOn.values().next().value as Building)?.immediatePowerOn(city);
+    }
+
     override onLongTick(city: City): void {
+        this.lastEfficiency = 0;
         const coalPowerPlant = this.builtOn.values().next().value as CoalPowerPlant;
         if (!coalPowerPlant) return;
 
         //First, calculate how much the power plant needs in order to run for a whole long tick. (That part is obvious; the complication is you have to consider how much coal it has NOW.)
         const neededAmount = Math.min(coalPowerPlant.inputResources[0].consumptionRate * 2, coalPowerPlant.inputResources[0].consumptionRate * 2 - coalPowerPlant.inputResources[0].amount);
+        this.lastEfficiency = 1;
         if (neededAmount <= 0) return;
 
         //Spend the resources/flunds as needed and allowed, then put the coal into the power plant.
-        const coalToGrant = neededAmount * city.calculateAffordablePortion([{ type: "coal", amount: neededAmount }], false);
+        const affordableFraction = Math.min(this.damagedEfficiency, city.calculateAffordablePortion([{ type: "coal", amount: neededAmount }], false));
+        this.lastEfficiency = affordableFraction;
+        const coalToGrant = neededAmount * affordableFraction;
         city.checkAndSpendResources([{ type: "coal", amount: coalToGrant }], false);
         coalPowerPlant.inputResources[0].produce(coalToGrant);
     }
@@ -1070,16 +1088,25 @@ export class NuclearFuelTruck extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 2.5 }]; }
 
+    override placed(city: City) {
+        this.onLongTick(city);
+        (this.builtOn.values().next().value as Building)?.immediatePowerOn(city);
+    }
+
     override onLongTick(city: City): void {
+        this.lastEfficiency = 0;
         const nuclearPowerPlant = this.builtOn.values().next().value as NuclearPowerPlant;
         if (!nuclearPowerPlant) return;
 
         //First, calculate how much the power plant needs in order to run for a whole long tick. (That part is obvious; the complication is you have to consider how much uranium it has NOW.)
         const neededAmount = Math.min(nuclearPowerPlant.inputResources[0].consumptionRate * 2, nuclearPowerPlant.inputResources[0].consumptionRate * 2 - nuclearPowerPlant.inputResources[0].amount);
+        this.lastEfficiency = 1;
         if (neededAmount <= 0) return;
 
         //Spend the resources/flunds as needed and allowed, then put the uranium into the power plant.
-        const uraniumToGrant = neededAmount * city.calculateAffordablePortion([{ type: "uranium", amount: neededAmount }], false);
+        const affordableFraction = Math.min(this.damagedEfficiency, city.calculateAffordablePortion([{ type: "uranium", amount: neededAmount }], false));
+        this.lastEfficiency = affordableFraction;
+        const uraniumToGrant = neededAmount * affordableFraction;
         city.checkAndSpendResources([{ type: "uranium", amount: uraniumToGrant }], false);
         nuclearPowerPlant.inputResources[0].produce(uraniumToGrant);
     }
@@ -1131,7 +1158,13 @@ export class FusionFuelTruck extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 2 }]; }
 
+    override placed(city: City) {
+        this.onLongTick(city);
+        (this.builtOn.values().next().value as Building)?.immediatePowerOn(city);
+    }
+
     override onLongTick(city: City): void {
+        this.lastEfficiency = 0;
         const fusionPowerPlant = this.builtOn.values().next().value as FusionPowerPlant;
         if (!fusionPowerPlant) return;
         const inputResources = fusionPowerPlant.inputResources;
@@ -1139,11 +1172,13 @@ export class FusionFuelTruck extends Building {
         //First, calculate how much the power plant needs in order to run for a whole long tick. (That part is obvious; the complication is you have to consider how much tritium/lithium it has NOW.)
         const neededTritium = Math.min(inputResources[0].consumptionRate * 2, inputResources[0].consumptionRate * 2 - inputResources[0].amount);
         const neededLithium = inputResources.length === 1 ? 0 : Math.min(inputResources[1].consumptionRate * 2, inputResources[1].consumptionRate * 2 - inputResources[1].amount);
+        this.lastEfficiency = 1;
         if (neededTritium <= 0 && neededLithium <= 0) return;
 
         //Spend the resources/flunds as needed and allowed, then put the tritium and/or lithium into the power plant.
-        const allowedFraction = city.calculateAffordablePortion([{ type: "tritium", amount: Math.max(0, neededTritium) }, { type: "lithium", amount: Math.max(0, neededLithium) }], false);
-        const grants = [{ type: "tritium", amount: neededTritium * allowedFraction }, { type: "lithium", amount: neededLithium * allowedFraction }];
+        const affordableFraction = Math.min(this.damagedEfficiency, city.calculateAffordablePortion([{ type: "tritium", amount: Math.max(0, neededTritium) }, { type: "lithium", amount: Math.max(0, neededLithium) }], false));
+        this.lastEfficiency = affordableFraction;
+        const grants = [{ type: "tritium", amount: neededTritium * affordableFraction }, { type: "lithium", amount: neededLithium * affordableFraction }];
         city.checkAndSpendResources(grants, false);
         if (grants[0].amount > 0) inputResources[0].produce(grants[0].amount);
         if (grants[1].amount > 0) inputResources[1].produce(grants[1].amount);

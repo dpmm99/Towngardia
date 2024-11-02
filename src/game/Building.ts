@@ -7,6 +7,7 @@ import { BuildingCategory } from "./BuildingCategory.js";
 import { City } from "./City.js";
 import { Effect } from "./Effect.js";
 import { FootprintType } from "./FootprintType.js";
+import { SHORT_TICKS_PER_LONG_TICK, SHORT_TICK_TIME } from "./FundamentalConstants.js";
 import { EffectType } from "./GridType.js";
 import { Resource } from "./Resource.js";
 import { CAPACITY_MULTIPLIER } from "./ResourceTypes.js";
@@ -141,7 +142,9 @@ export class Building implements IHasDrawable {
         }
         //Inheritors would do building type-specific actions like applying effects to surrounding buildings/tiles here (via city.spreadEffect).
     }
-    placed(city: City) { } //Called after adding to the city grid
+
+    //Called after adding to the city grid
+    placed(city: City) { }
 
     //Call City.removeBuilding instead of this (except in City, of course). This happens after removeFromGrid, so we clear builtOn here.
     remove(city: City, justMoving: boolean = false): void {
@@ -309,10 +312,28 @@ export class Building implements IHasDrawable {
             this.lastEfficiency *= this.getEfficiencyEffectMultiplier(city); //I guess I'm not going to make *bonuses* affect upkeep or input costs.
             this.outputResources.forEach(resource => {
                 //For some building types, we'll put the produced resources into the city.resources directly.
-                //TODO: Could also do this if the player unlocks a "you don't need to collect Item X anymore" tech. Might need to be allowed to automate some production so you can leave the game for a while and not run out of money. (It should be HARD to have a budget surplus without accounting for selling off resources.)
+                //Note: Could also do this if the player unlocks a "you don't need to collect Item X anymore" tech. Might need to be allowed to automate some production so you can leave the game for a while and not run out of money. (It should be HARD to have a budget surplus without accounting for selling off resources.)
                 if (resource.autoCollect) city.produce(resource.type, resource.amount);
                 else resource.produce(resource.productionRate * this.lastEfficiency);
             });
+        }
+    }
+
+    //If getPowerProduction is nonzero, then the building is a power plant. In that case, turn it on immediately at whatever capacity you can manage.
+    immediatePowerOn(city: City) {
+        const efficiencyCap = Math.min(1, this.damagedEfficiency);
+        if (this.lastEfficiency < efficiencyCap && (this.roadConnected || !this.needsRoad) && this.getPowerProduction(city, true) > 0) {
+            //Calculate short ticks to the next long tick.
+            const shortTicksToNextLongTick = Math.floor((city.lastShortTick - city.lastLongTick) / SHORT_TICK_TIME);
+            //Get affordability of that fraction of the input resources. Account for lastEfficiency--if it's above 0, then we've already consumed some resources this long tick.
+            const fractionOfLongTick = shortTicksToNextLongTick / SHORT_TICKS_PER_LONG_TICK * (efficiencyCap - this.lastEfficiency);
+            const allowedFraction = Math.min(1, ...this.inputResources.map(p => p.amount / p.consumptionRate / fractionOfLongTick));
+            if (allowedFraction > 0) {
+                //Consume the affordable fraction of that fraction of the input resources.
+                this.inputResources.forEach(p => p.consume(p.consumptionRate * fractionOfLongTick * allowedFraction));
+                //Add the affordable fraction times the remaining efficiency deficit to lastEfficiency.
+                this.lastEfficiency += allowedFraction * (efficiencyCap - this.lastEfficiency);
+            }
         }
     }
 
@@ -412,7 +433,8 @@ export class Building implements IHasDrawable {
                 city.checkAndSpendResources(requestedAmounts.map(p => ({ type: p.type, amount: p.amount * allowedFraction })));
                 this.inputResources.forEach(p => p.produce(p.consumptionRate * view.provisionTicks * allowedFraction));
                 //TODO: Show popup briefly--including if you can't afford the resources--to say how much is on the market and how much it has now.
-                //TODO: If it's a power plant, turn it on immediately at partial capacity. Or provide a "turn on now" button in the context menu or info panel. Calculate short ticks to the next long tick, consume that fraction of one long tick's worth of inputs, and set its lastEfficiency to 1 (minus damaged efficiency and such).
+
+                this.immediatePowerOn(city);
             } : () => {
                 //The view isn't supposed to show provisioning, but since we are anyway (decided it's necessary so the player doesn't forget), enter provisioning mode *instead* of providing resources to the building.
                 view.uiManager.toggleProvisioning();

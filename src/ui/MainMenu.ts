@@ -33,7 +33,7 @@ export class MainMenu implements IHasDrawable {
             height: "40px",
             text: "Fullscreen",
             onClick: () => this.uiManager.enterFullscreen(),
-        })); //TODO: Instead of putting the text on the above, we want that to be a button image and contain the text in a separate element
+        }));
 
         //Removed as I have quit maintaining the WebGL renderer and quit maintaining the HTML renderer long ago.
 //        menu.addChild(new Drawable({

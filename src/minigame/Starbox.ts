@@ -224,8 +224,8 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             this.starsDestroyedThisChain += matches.length;
             this.totalStarsDestroyed += matches.length;
 
-            // Add time based on simultaneous matches //TODO: I told it to use a map, not a formula.
-            const timeToAdd = Math.max(0, Math.min(matches.length - 3, 9)); // Max 12 matches at once, so max 9 seconds added
+            // Add time based on simultaneous matches
+            const timeToAdd = Math.max(0, Math.min(matches.length - 3, 9)); // Max 14 matches at once, so max 11 seconds added
             this.timer = Math.min(this.timer + timeToAdd, this.maxTime);
 
             // Create explosions
@@ -746,7 +746,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
                 anchors: ['centerX', 'bottom'],
                 centerOnOwnX: true,
                 x: -20,
-                y: -this.tileSize * 1.2, //TODO: why is all the spacing so busted?
+                y: -this.tileSize * 1.2,
                 width: (this.tileSize * 1.4) + "px",
                 height: (this.tileSize * 1.4) + "px",
                 image: new TextureInfo(64, 64, "minigame/star8"),
