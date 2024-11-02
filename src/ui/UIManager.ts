@@ -4,6 +4,7 @@ import { City } from "../game/City.js";
 import { GameState } from "../game/GameState.js";
 import { Player } from "../game/Player.js";
 import { Tech } from "../game/Tech.js";
+import { TechManager } from "../game/TechManager.js";
 import { MemoryMixology } from "../minigame/MemoryMixology.js";
 import { Monobrynth } from "../minigame/Monobrynth.js";
 import { NepotismNetworking } from "../minigame/NepotismNetworking.js";
@@ -180,7 +181,7 @@ export class UIManager {
         //If visiting a friend, possibly grant research points and show the friend visit window
         if (!this.isMyCity) {
             const grantPoints = 2; //TODO: How do we want to determine number of points?
-            const [tech, bonusClaimed] = this.city.techManager.grantFreePoints(this.game.city!, this.game.visitingCity!, grantPoints, Date.now());
+            const [tech, bonusClaimed] = TechManager.grantFreePoints(this.game.city!, this.game.visitingCity!, grantPoints, Date.now());
             if (tech) await this.techMenu.preloadImages();
             this.showFriendVisitWindow(tech, grantPoints, bonusClaimed); //TODO: also let the player choose to buy specific resources from this city (if this city has sold them recently)
             this.frameRequested = true;

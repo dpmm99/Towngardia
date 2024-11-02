@@ -57,14 +57,14 @@ export class TechManager {
      * @param visitTime The time of the visit to the friend's city--Date.now() normally, but it's a parameter for repeating the logic on the server side
      * @returns An array. First element is the tech that was chosen to grand research points for, or null if none was. Second element is true if bonus already claimed today, or false otherwise.
      */
-    grantFreePoints(city: City, otherCity: City, points: number, visitTime: number): [Tech | null, boolean] {
-        if (this.lastFriendVisitDate && this.lastFriendVisitDate.getDate() === new Date(visitTime).getDate()
-            && this.lastFriendVisitDate.getMonth() === new Date(visitTime).getMonth() && this.lastFriendVisitDate.getFullYear() === new Date(visitTime).getFullYear())
+    static grantFreePoints(city: City, otherCity: City, points: number, visitTime: number): [Tech | null, boolean] {
+        if (city.techManager.lastFriendVisitDate && city.techManager.lastFriendVisitDate.getDate() === new Date(visitTime).getDate()
+            && city.techManager.lastFriendVisitDate.getMonth() === new Date(visitTime).getMonth() && city.techManager.lastFriendVisitDate.getFullYear() === new Date(visitTime).getFullYear())
             return [null, true]; //Only once per day (for now; may consider 5x every 5 days like most things, but then I kinda want to track *which* friends were visited already each day and require 5 distinct friend visits every 5 days)
 
         //Pick a tech
         const friendResearchedTechsSet = new Set([...otherCity.techManager.techs.values()].filter(p => p.researched).map(p => p.id)); //Techs they have researched
-        const researchableTechs = Array.from(this.techs.values()).filter(tech => friendResearchedTechsSet.has(tech.id) && !tech.researched && this.prereqsAreResearched(tech)); //Tentative rules. Techs you don't have but COULD be researching now.
+        const researchableTechs = Array.from(city.techManager.techs.values()).filter(tech => friendResearchedTechsSet.has(tech.id) && !tech.researched && city.techManager.prereqsAreResearched(tech)); //Tentative rules. Techs you don't have but COULD be researching now.
         if (!researchableTechs.length) return [null, false];
         inPlaceShuffle(researchableTechs);
         const tech = researchableTechs[0];
@@ -76,8 +76,8 @@ export class TechManager {
         tech.costs.forEach(p => p.amount *= remainingFraction);
 
         //Possibly *complete* the tech research
-        if (tech.costs.every(p => p.amount < 1)) this.researchTech(city, tech); //Be EXTRA nice. :)
-        this.lastFriendVisitDate = new Date();
+        if (tech.costs.every(p => p.amount < 1)) city.techManager.researchTech(city, tech); //Be EXTRA nice. :)
+        city.techManager.lastFriendVisitDate = new Date();
         return [tech, false];
     }
 
