@@ -31,7 +31,7 @@ export class City {
     public drawInFrontBuildings: Building[] = []; //Just for UI purposes, to make it easy to see one or more buildings the player is actively working with
     public readonly buildingTypesByCategory: Map<BuildingCategory, Building[]> = new Map();
     public readonly constructionResourceTypes: Set<string> = new Set([new ResourceTypes.Steel().type, new ResourceTypes.Iron().type, new ResourceTypes.Stone().type, new ResourceTypes.Wood().type, new ResourceTypes.Lumber().type, new ResourceTypes.Glass().type]);
-    private residenceSpawner: ResidenceSpawningSystem; //No persistent data other than constants
+    public residenceSpawner: ResidenceSpawningSystem; //No persistent data other than constants
     public citizenDietSystem: CitizenDietSystem; //No persistent data other than constants and lastDietComposition
     public trafficPrecalculation: number = 0;
     public roadUpkeepPrecalculation: number = 0;

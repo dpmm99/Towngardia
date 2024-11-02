@@ -54,7 +54,7 @@ export class MainMenu implements IHasDrawable {
                 width: "calc(100% - 20px)",
                 height: "40px",
                 text: "View tutorials",
-                onClick: () => this.uiManager.showTutorials(),
+                onClick: () => { this.uiManager.showTutorials(); this.shown = false; },
             }));
         }
 

@@ -210,13 +210,13 @@ export class Building implements IHasDrawable {
     }
 
     //Calculate the given type of effect for each cell the building covers and return the highest one.
-    getHighestEffect(city: City, type: EffectType): number {
+    getHighestEffect(city: City, type: EffectType, atX: number = this.x, atY: number = this.y): number {
         let maxEffect = 0;
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
-                const effects = city.effectGrid[this.y + y][this.x + x].filter(p => p.type === type);
+                const effects = city.effectGrid[atY + y][atX + x].filter(p => p.type === type);
                 if (effects.length) {
-                    const effect = effects.reduce((a, b) => a + b.getEffect(city, this, this.x + x, this.y + y), 0);
+                    const effect = effects.reduce((a, b) => a + b.getEffect(city, this, atX + x, atY + y), 0);
                     if (effect > maxEffect) maxEffect = effect;
                 }
             }

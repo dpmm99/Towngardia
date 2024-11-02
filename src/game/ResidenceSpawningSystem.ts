@@ -1,12 +1,17 @@
 import { Building } from "./Building.js";
 import { FurnitureStore, Highrise, Quadplex, Skyscraper, SmallApartment, SmallHouse } from "./BuildingTypes.js";
 import { City } from "./City.js";
+import { EffectType } from "./GridType.js";
 import { Happiness, Population } from "./ResourceTypes.js";
 
+const MIN_GLOBAL_CHANCE_FOR_UPGRADE = 0.6;
+const MIN_DENSITY_FOR_UPGRADE = 0.35;
+const MIN_DENSITY_FOR_HIGHRISE = 0.4;
+const MIN_DENSITY_FOR_SKYSCRAPER = 0.5;
 export class ResidenceSpawningSystem {
     private city: City;
     private residenceTypes: Building[];
-    private globalSpawnChance: number;
+    public globalSpawnChance: number = 0; //Now serialized so it can be checked in the UI
     private populationResource: Population;
 
     constructor(city: City) {
@@ -19,7 +24,6 @@ export class ResidenceSpawningSystem {
             new Skyscraper(),
             //TODO: maybe a few others like a rich person's mansion (max 1 per city)
         ];
-        this.globalSpawnChance = 0.1; // Base chance, adjust as needed
         this.populationResource = <Population>city.resources.get(new Population().type)!;
     }
 
@@ -82,8 +86,8 @@ export class ResidenceSpawningSystem {
 
     private upgradeResidences() {
         //Pick a random house and see if it can upgrade to an apartment. Has a minimum happiness requirement, and the chance increases as happiness increases, but limited to 1 per long tick.
-        if (this.globalSpawnChance > 0.6 && Math.random() < this.globalSpawnChance) {
-            const houses = this.city.buildings.filter(p => p.isResidence && !p.residenceLevel && this.city.getBusinessDensity(p.x, p.y) >= 0.4); //Higher minimum density than normal apartment spawning
+        if (this.globalSpawnChance > MIN_GLOBAL_CHANCE_FOR_UPGRADE && Math.random() < this.globalSpawnChance) {
+            const houses = this.city.buildings.filter(p => p.isResidence && !p.residenceLevel && this.city.getBusinessDensity(p.x, p.y) >= MIN_DENSITY_FOR_UPGRADE); //Higher minimum density than normal apartment spawning
             const house = houses[Math.floor(Math.random() * houses.length)];
             if (house) {
                 const upgradeTo = this.selectResidenceType(house.x, house.y, true);
@@ -92,7 +96,7 @@ export class ResidenceSpawningSystem {
 
             //Upgrade apartments to bigger ones as well. Note: theoretically possible to upgrade the one we JUST upgraded from a house.
             //Warning: This specifically checks for SmallApartments, so if you add more apartment types, you'll need to adjust this.
-            const upgradableApartments = this.city.buildings.filter(p => p.isResidence && p.residenceLevel && p instanceof SmallApartment && this.city.getBusinessDensity(p.x, p.y) >= 0.4);
+            const upgradableApartments = this.city.buildings.filter(p => p.isResidence && p.residenceLevel && (p instanceof SmallApartment || p instanceof Quadplex) && this.city.getBusinessDensity(p.x, p.y) >= MIN_DENSITY_FOR_HIGHRISE);
             const apartment = upgradableApartments[Math.floor(Math.random() * upgradableApartments.length)];
             if (apartment) {
                 const upgradeTo = this.selectResidenceType(apartment.x, apartment.y, true); //Basically only a 50% chance to upgrade. I like that, so not changing the interface.
@@ -100,7 +104,7 @@ export class ResidenceSpawningSystem {
             }
 
             //Same for Highrise.
-            const upgradableHighrises = this.city.buildings.filter(p => p.isResidence && p.residenceLevel && p instanceof Highrise && this.city.getBusinessDensity(p.x, p.y) >= 0.5);
+            const upgradableHighrises = this.city.buildings.filter(p => p.isResidence && p.residenceLevel && p instanceof Highrise && this.city.getBusinessDensity(p.x, p.y) >= MIN_DENSITY_FOR_SKYSCRAPER);
             const highrise = upgradableHighrises[Math.floor(Math.random() * upgradableHighrises.length)];
             if (highrise) {
                 const upgradeTo = this.selectResidenceType(highrise.x, highrise.y, true); //Basically only a 50% chance to upgrade. I like that, so not changing the interface.
@@ -167,15 +171,27 @@ export class ResidenceSpawningSystem {
         }
     }
 
-    private selectResidenceType(x: number, y: number, forceApartment: boolean = false): { type: Building, x: number, y: number } | undefined {
-        const allowedTypesAndPositions = this.residenceTypes.filter(p => forceApartment ? p.residenceLevel : true)
+    private getAllowedTypesAndPositions(x: number, y: number, minLevel: number = 0): { type: Building, x: number, y: number }[] {
+        return this.residenceTypes.filter(p => p.residenceLevel >= minLevel)
             .flatMap(type => type.width === 1 && type.height === 1
                 ? { type, x, y } //One tile; be faster
-                : [{ type, x, y }, { type, x: x - type.width + 1, y: y }, { type, x: x, y: y - type.height + 1 }, { type, x: x - type.width + 1, y: y - type.height + 1 }]) //The four corners
+                : [{ type, x, y }, { type, x: x - type.width + 1, y }, { type, x, y: y - type.height + 1 }, { type, x: x - type.width + 1, y: y - type.height + 1 }]) //The four corners
             .filter(tp => tp.type.canPlace(this.city, tp.x, tp.y, true));
+    }
+
+    public getWillUpgrade(building: Building): boolean {
+        if (this.globalSpawnChance <= MIN_GLOBAL_CHANCE_FOR_UPGRADE) return false;
+
+        const allowedTypesAndPositions = this.getAllowedTypesAndPositions(building.x, building.y, building.residenceLevel + 1);
+        const businessDensity = Math.max(...allowedTypesAndPositions.map(p => p.type.getHighestEffect(this.city, EffectType.BusinessPresence, p.x, p.y)));
+        return businessDensity > MIN_DENSITY_FOR_UPGRADE;
+    }
+
+    private selectResidenceType(x: number, y: number, forceApartment: boolean = false): { type: Building, x: number, y: number } | undefined {
+        const allowedTypesAndPositions = this.getAllowedTypesAndPositions(x, y, forceApartment ? 1 : 0);
         let isApartment = forceApartment;
         if (!forceApartment) {
-            const businessDensity = this.city.getBusinessDensity(x, y);
+            const businessDensity = Math.max(...allowedTypesAndPositions.map(p => p.type.getHighestEffect(this.city, EffectType.BusinessPresence, p.x, p.y)));
             const apartmentChance = businessDensity * 0.5;
             isApartment = businessDensity >= 0.25 && Math.random() < apartmentChance;
         }

@@ -87,7 +87,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
         /*NotificationsMenu*/ 'unread', 'notice',
         /*Events (could be automatic/generic)*/ 'coldsnap', 'blackout',
         /*Views bar*/ 'residentialdesirability', 'landvalue', 'luxury', 'businesspresence', 'pettycrime', 'organizedcrime', 'noise', 'particulatepollution', 'greenhousegases', 'placementgrid', 'hidebuildings', 'fadebuildings', //Others Copilot spat out, some of which I likely do want: 'firehazard', 'healthhazard', 'unemployment', 'traffic', 'infrastructure', 'happiness', 'population'
-        /*errors and view-specific icons on any building*/ 'noroad', 'nopower', 'outage', 'fire', 'provision', 'cannotprovision', 'reopen', 'errorbackdrop', 'warningbackdrop', 'collectionbackdrop', 'resourceborder'
+        /*errors and view-specific icons on any building*/ 'noroad', 'nopower', 'outage', 'fire', 'provision', 'cannotprovision', 'reopen', 'errorbackdrop', 'warningbackdrop', 'collectionbackdrop', 'resourceborder', 'willupgrade',
     ];
     for (const sprite of otherSprites) {
         urls["ui/" + sprite] = `assets/ui/${sprite}.png`;

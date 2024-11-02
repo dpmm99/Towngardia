@@ -1,6 +1,7 @@
 import { Building } from "../game/Building.js";
 import { City } from "../game/City.js";
 import { FootprintType } from "../game/FootprintType.js";
+import { EffectType } from "../game/GridType.js";
 import { CityView } from "../ui/CityView.js";
 import { Drawable } from "../ui/Drawable.js";
 import { IHasDrawable } from "../ui/IHasDrawable.js";
@@ -22,6 +23,7 @@ export class CanvasRenderer implements IRenderer {
     private zoom: number = 1;
     private fadeBuildingsBasedOnY: boolean = false;
     private yFadeZone: number = 0;
+    private postTileDrawables: { x: number, y: number, width: number, height: number, drawable: Drawable }[] = []; //A weird one... stuff I want to draw on buildings but *after* the buildings and grid tiles are drawn.
     public setVisibilityMode(fade: boolean) { this.fadeBuildingsBasedOnY = fade; }
     public getVisibilityMode() { return this.fadeBuildingsBasedOnY; }
 
@@ -107,7 +109,15 @@ export class CanvasRenderer implements IRenderer {
         if (view.drawHealthCoverage) this.drawTiles(city, city.getHealthcare);
         if (view.drawEducation) this.drawTiles(city, city.getEducation);
         if (view.drawGrid) this.drawGridTiles(city);
-        
+
+        for (const drawable of this.postTileDrawables) { //TODO: Clean up if you can by putting the final position and size into the Drawable instead of having it relative to the building position.
+            this.ctx.save();
+            this.ctx.translate(drawable.x, drawable.y);
+            this.renderDrawable(drawable.drawable, drawable.width, drawable.height);
+            this.ctx.restore();
+        }
+        this.postTileDrawables.length = 0;
+
         this.drawWorldCoordinateDrawables(city);
         this.ctx.restore();
         this.drawWindows();
@@ -241,6 +251,28 @@ export class CanvasRenderer implements IRenderer {
                 resources.y = (height - TILE_HEIGHT) / 2;
                 this.renderDrawable(resources, width, height);
             }
+        }
+        if (view.drawBusiness && building.isResidence && city.residenceSpawner.getWillUpgrade(building)) {
+            const willUpgradeIcon = new Drawable({
+                anchors: ['bottom'],
+                x: width / 2 - 16,
+                y: height / 2 - 16,
+                width: "32px",
+                height: "32px",
+                image: new TextureInfo(64, 64, "ui/willupgrade"),
+            });
+            this.postTileDrawables.push({ x: x, y: y - height, width, height, drawable: willUpgradeIcon});
+        }
+        if (view.drawFireCoverage && building.owned && building.fireHazard > building.getHighestEffect(city, EffectType.FirePrevention)) {
+            const dangerIcon = new Drawable({
+                anchors: ['bottom'],
+                x: width / 2 - 16,
+                y: height / 2 - 16,
+                width: "32px",
+                height: "32px",
+                image: new TextureInfo(64, 64, "ui/fire"),
+            });
+            this.postTileDrawables.push({ x: x, y: y - height, width, height, drawable: dangerIcon });
         }
         
         this.ctx.restore();

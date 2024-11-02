@@ -171,12 +171,12 @@ export class UIManager {
         this.monobrynth = new Monobrynth(this.game.city!, this);
         this.neponet = new NepotismNetworking(this.game.city!, newCity, this); //Affects BOTH your city and the other player's
 
-        if (this.renderer) this.switchRenderer(this.renderer);
-
         //This overlay has to be instantiated after bottomBar.shown is set, because the tutorial hides the bottom bar.
         this.windows.push(this.tutorialOverlay = new TutorialOverlay(this.game.player!, this.game.city!, this)); //Also NEVER changes cities/players
         this.windows.push(this.mainMenu = new MainMenu(this.game, this)); //Needs to be on top, so I moved it down here below tutorial overlay
         this.windows.push(this.warningWindow = new WarningWindow());
+
+        if (this.renderer) this.switchRenderer(this.renderer);
 
         //If visiting a friend, possibly grant research points and show the friend visit window
         if (!this.isMyCity) {

@@ -53,7 +53,8 @@ export class CitySerializer {
             st: o.lastShortTick,
             tf: o.timeFreeze || undefined,
             ts: o.tutorialStepIndex == -1 ? undefined : o.tutorialStepIndex,
-            as: this.assists(o.assists)
+            as: this.assists(o.assists),
+            gc: o.residenceSpawner?.globalSpawnChance ?? undefined,
         };
 
         return r;
@@ -271,6 +272,7 @@ export class CityDeserializer {
         r.timeFreeze = o.tf || false;
         if (o.ts !== undefined) r.tutorialStepIndex = o.ts;
         if (o.as) r.assists = this.assists(o.as, r);
+        if (o.gc) r.residenceSpawner.globalSpawnChance = o.gc;
         return r;
     }
 
