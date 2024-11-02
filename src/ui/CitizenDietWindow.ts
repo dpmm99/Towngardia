@@ -1,5 +1,5 @@
 import { City } from "../game/City.js";
-import { FoodHealth, FoodSatisfaction, FoodSufficiency } from "../game/ResourceTypes.js";
+import { FoodHealth, FoodSatisfaction, FoodSufficiency, RESOURCE_TYPES } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -155,7 +155,7 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
         parent.addChild(new Drawable({
             x: 68,
             y: y + 8,
-            text: food.type, //TODO: pretty name
+            text: RESOURCE_TYPES.find(p => p.type === food.type)?.displayName ?? food.type,
             width: "150px",
             height: "32px"
         }));

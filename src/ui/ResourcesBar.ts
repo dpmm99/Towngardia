@@ -88,7 +88,6 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
                     }));
             }
             nextY += padding + buttonSize;
-            //TODO: Left/right buttons by that, to switch between auto-buy/sell sliders, viewing buy and sell prices, and viewing amounts for sale on the market + limits
         }
 
         const lastTouchedSliderInfo = new Drawable({

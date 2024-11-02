@@ -206,7 +206,7 @@ export class BuildTypeBar implements IHasDrawable, IOnResizeEvent {
         const costs = building.getCosts(this.city);
         nextX = Math.max(nextX + this.expandedCategoryHeight + this.extraTextWidth * 2 + this.buildingPadding * 2, addResourceCosts(expandedDrawable, costs, nextX, this.buildingPadding + 32, true, true, true, 32, 10, 32, 8, grayscale, reddize, this.city));
 
-        //Show the "rolling purchase limit" for each resource as well //TODO: Keep thinking about how much I should show and how I can show it. I want to show the nominal price, the amount for sale, the amount you'll have to buy, the amount you pay per unit, and the total amount you'll have to pay...
+        //Show the "rolling purchase limit" for each resource as well
         if (costs.some(p => p.type !== 'flunds')) {
             expandedDrawable.addChild(new Drawable({
                 x: nextX,

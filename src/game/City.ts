@@ -497,7 +497,7 @@ export class City {
 
         if (building instanceof PostOffice) this.postOffice = building;
 
-        //TODO: Achievement checks and such
+        //Achievement/title checks that depend on building presence
         if (building.isRestaurant) this.checkAndAwardTitle(TitleTypes.CulinaryCapital.id);
         if (building instanceof SmallPark || building instanceof MediumPark && !this.player.achievements.find(p => p.id === AchievementTypes.OopsAllParks.id)?.attained) {
             //Check that ANY 5x5 area around this park has NO empty tiles and ONLY park buildings--a near-optimal way to check if the player just earned this achievement.
@@ -698,10 +698,6 @@ export class City {
 
         //Also check if this building was built on another. Note that either the building beneath or the building atop could be the one that's directly connected to the road--and if the top one doesn't fully cover the other, then both could be.
         if (building.builtOn.size) building.builtOn.forEach(p => this.setRoadConnected(p, isConnected, true));
-
-        //If we were disconnecting, but the building beneath is still connected, we need to stay connected.
-        //TODO: But that depends on the building beneath being tested before *or* calling setRoadConnected again on the buildings atop it afterward.
-        //if (building.builtOn.size && building.builtOn.values().next().value.roadConnected) building.roadConnected = true;
     }
 
     placeOnGrid(building: Building): void {
@@ -999,7 +995,7 @@ export class City {
     }
 
     autoBuy(resource: Resource): void {
-        //Buy up to the auto-buy amount, but don't go into debt for it. //TODO: Should you buy up to this amount when provisioning, too?
+        //Buy up to the auto-buy amount, but don't go into debt for it.
         if (resource.amount < Math.floor(resource.autoBuyBelow * resource.capacity) && this.flunds.amount > 0) {
             const needed = Math.floor(resource.autoBuyBelow * resource.capacity) - resource.amount;
             if (resource.buyPrice === 0 || resource.buyPriceMultiplier === 0) throw new Error("Resource " + resource.type + " has a buy price of 0.");

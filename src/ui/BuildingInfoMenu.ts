@@ -445,7 +445,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             y: nextY,
             width: (barWidth - padding * 2) + "px",
             height: "24px",
-            text: "Expenses: " + humanizeCeil(expenses) + "/day", //TODO: Would really like a bit of a breakdown--power imports, upkeep, auto-buys.
+            text: "Expenses: " + humanizeCeil(expenses) + "/day", //Breakdown is in the budget menu
             id: `${infoDrawable.id}.output.budget.expenses`,
         }));
         nextY += 28;
@@ -476,7 +476,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         nextY += 28;
         if (this.timeout) clearTimeout(this.timeout);
         this.timeout = setTimeout(() => { this.uiManager.frameRequested = true; }, 1000); //Only redraw automatically for this one building.
-        return nextY; //TODO: More details
+        return nextY;
     }
 
     private addTourismInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, barWidth: number): number {

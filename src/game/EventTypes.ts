@@ -85,7 +85,7 @@ export class Heatwave extends CityEvent {
             "The heatwave has ended. Power usage has returned to normal levels.", "greenhousegases");
     }
 
-    override shouldStart(city: City, date: Date): boolean { //TODO: The population numbers here and in updateHappiness are way high with the current state of the game.
+    override shouldStart(city: City, date: Date): boolean {
         //0.5% chance if the city has >1.5k people and >300 flunds and it hasn't happened in at least 20 days, with an increasing chance based on collected greenhouse gases (5% at 0.9 greenhouse gases)
         return this.checkedStart(date.getMonth() > 3 && date.getMonth() < 9 && city.peakPopulation >= 4000 && this.skippedStarts > this.maxDuration + 20 * LONG_TICKS_PER_DAY && city.flunds.amount > 300
             && Math.random() < 0.05 * (city.resources.get(new GreenhouseGases().type)!.amount + 0.1) && !city.events.some(p => p.type === this.type), city, date);

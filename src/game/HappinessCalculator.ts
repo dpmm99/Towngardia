@@ -63,7 +63,7 @@ export class HappinessCalculator {
         let safety = 0;
 
         if (this.city.flags.has(CityFlags.PoliceProtectionMatters)) {
-            const policePresence = this.getAverageEffect(EffectType.PolicePresence); //TODO: I probably should have considered the net effect on individual tiles...oh, well.
+            const policePresence = this.getAverageEffect(EffectType.PolicePresence); //Note: since it's not a linear factor, it would make a little bit more sense to sum the net of individual tiles (e.g., high-crime areas should be more important than having decent overall coverage)
             const pettyCrime = this.getAverageEffect(EffectType.PettyCrime);
             const organizedCrime = this.getAverageEffect(EffectType.OrganizedCrime);
             const difference = Math.sqrt(Math.max(0, policePresence)) - pettyCrime - 2 * organizedCrime;

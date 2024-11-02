@@ -76,6 +76,18 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
                 if (i === 0) grid[i][j].visibility = 'seen';
             }
         }
+
+        //Ensure there are at least 7 treasures. If not, add more to random tiles without treasure.
+        let treasureCount = grid.flat().reduce((acc, tile) => acc + tile.content.filter(p => p === 'treasure').length, 0);
+        while (treasureCount < 7) {
+            const x = Math.floor(Math.random() * GRID_WIDTH);
+            const y = Math.floor(Math.random() * GRID_HEIGHT);
+            if (!grid[y][x].content.filter(p => p === 'treasure').length) {
+                grid[y][x].content.push('treasure');
+                treasureCount++;
+            }
+        }
+
         return grid;
     }
 

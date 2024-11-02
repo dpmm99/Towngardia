@@ -59,7 +59,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
     private preloaded: boolean = false;
     private costs = [{ type: new BarPlays().type, amount: 1, reddize: false }];
 
-    private readonly countdownSteps = [5, 4, 3, 2, 1, "GO"];
+    private readonly countdownSteps = [8, 7, 6, 5, 4, 3, 2, 1, "GO"];
     private countdownStep = 0;
 
     constructor(private city: City, private uiManager: UIManager) { }

@@ -23,7 +23,6 @@ export function worldToScreenCoordinates(city: City, x: number, y: number, width
     const baseY = (x + y) * TILE_HEIGHT / 2;
 
     const cityOffsetX = (city.width + city.height) * TILE_WIDTH / 4;
-    //TODO: This is fine for square buildings and now also 2x3 ones, but I haven't tried 3x2 or other shapes.
     const offsetX = dimensionsInTiles ? (height - 1) * TILE_WIDTH / 2 : 0;
     const offsetY = dimensionsInTiles ? (width - 1) * -TILE_HEIGHT + (width - height) * TILE_HEIGHT / 2 : height;
 

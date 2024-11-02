@@ -322,7 +322,7 @@ export class CanvasRenderer implements IRenderer {
         let sprite: HTMLImageElement | HTMLCanvasElement | undefined | "" = (drawable.image?.id && this.sprites.get(drawable.image.id)) || (drawable.fallbackImage?.id && this.sprites.get(drawable.fallbackImage.id));
 
         let sumHeight: number | null = null;
-        let moreLinesOfTextSprites: (HTMLImageElement | HTMLCanvasElement | undefined)[] = []; //TODO: Didn't implement any of this new text stuff in the WebGL renderer (wordWrap, noXStretch, rightAlign, keepParentWidth)
+        let moreLinesOfTextSprites: (HTMLImageElement | HTMLCanvasElement | undefined)[] = []; //Note: Didn't implement any of this new text stuff in the WebGL renderer (wordWrap, noXStretch, rightAlign, keepParentWidth)
         if (drawable.text) {
             if (drawable.wordWrap) {
                 const wordWrapInfo = this.textRenderer.calculateWordWrap(drawable.text, "bolder 18px verdana,arial", drawable.getWidth(null, parentWidth) * (drawable.biggerOnMobile ? INVERSE_BIGGER_MOBILE_RATIO : 1)); //TODO: Cache this
@@ -356,7 +356,6 @@ export class CanvasRenderer implements IRenderer {
         this.ctx.save();
         this.ctx.translate(x, y);
 
-        //TODO: implement borderImages
         if (sprite && (sprite instanceof HTMLCanvasElement || sprite.src)) {
             this.renderSprite(drawable, sprite, width, height, parentWidth, parentHeight);
             if (moreLinesOfTextSprites.length) { //This loop is solely because of word wrap

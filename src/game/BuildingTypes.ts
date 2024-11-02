@@ -552,7 +552,7 @@ export class PostOffice extends Building {
         return super.isBuyable(city, bySpawner) && (bySpawner || !city.buildings.some(p => p.type === this.type));
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; } //TODO: Affect citywide stuff based on its lastEfficiency.
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 }
 
 //# Residences
@@ -620,7 +620,7 @@ export class SmallApartment extends Building {
         this.stampFootprint[0][1] = FootprintType.RESIDENCE;
         this.stampFootprint[1][0] = FootprintType.RESIDENCE;
         this.stampFootprint[1][1] = FootprintType.RESIDENCE;
-        this.outputResources.push(new Population(0, 35)); //TODO: Bigger residences need to have 500-1k people to make it possible to reach hundreds of thousands of citizens.
+        this.outputResources.push(new Population(0, 35)); //Note: Bigger residences need to have 500-1k people to make it possible to reach hundreds of thousands of citizens.
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
@@ -2437,7 +2437,7 @@ export class PalmNomNom extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 220 }, { type: "wood", amount: 20 }, { type: "sand", amount: 10 }]; //TODO: Need a sandy area on the map and a very cheap sand collector building.
+        return [{ type: "flunds", amount: 220 }, { type: "wood", amount: 20 }, { type: "sand", amount: 10 }];
     }
 
     override place(city: City, x: number, y: number): void {
@@ -2453,7 +2453,6 @@ export class PalmNomNom extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
 }
 
-//TODO: I think I want the effect of service coverage on happiness to be square rooted (diminishing returns on better coverage) so the clinic only being 0.5 health isn't as painful.
 export class GregsGrogBarr extends Building {
     constructor() {
         super(
@@ -3074,7 +3073,7 @@ export class PoliceBox extends Building {
 
     //Doesn't cost the maximum amount of upkeep unless there are 10 buildings in the area.
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ //TODO: Record the upkeep costs for each service so they can be displayed in the budget window. city.budget.lastServiceCosts["policeprotection"] and the like.
+        return [{
             type: "flunds", amount: 2 * (atEfficiency ||
                 (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10))
         }];
@@ -3219,7 +3218,6 @@ export class FireStation extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 }
 
-//TODO: Backdrop for collectible resources. Need a warning icon on buildings with no inputs. Need a "footprints only" view. Need an agri-factory textile producer. Definitely need a silicon producer--maybe just make the iron mine produce a few resources at once? Hmmm... upgrade it? Multiple mines on the same mountain? 1x1 police box. More public transport (still lots of noise pollution after upgrading and placing a few bus stations). Constructing certain buildings should auto-enable their respective views (fire, police, health). Need natural land value.
 export class Clinic extends Building {
     private upgradedRadius = 9;
     constructor() {

@@ -36,7 +36,7 @@ export class TutorialOverlay implements IHasDrawable {
     constructor(private player: Player, private city: City, private uiManager: UIManager) {
         this.steps = this.defineTutorialSteps();
         if (!player.finishedTutorial) this.start();
-        else if (city.timeFreeze) { //Must be a new city. Needs things unlocked. //TODO: Ensure players can't start a new city during their tutorial.
+        else if (city.timeFreeze) { //Must be a new city. Needs things unlocked.
             this.start();
             while (this.city.tutorialStepIndex !== -1) this.nextStep(true); //The final step will still save the city and player data.
         }

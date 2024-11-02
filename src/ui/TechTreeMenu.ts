@@ -28,8 +28,6 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
 
     onResize(): void { this.scrollerX.onResize(); this.scrollerY.onResize(); }
 
-    //TODO: Icons for all the techs
-
     asDrawable(): Drawable {
         if (!this.shown) return this.lastDrawable = new Drawable({ width: "0px" }); //Nothing
 

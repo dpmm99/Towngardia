@@ -32,7 +32,6 @@ export class Drawable {
     isDiamond: boolean = false; //for drawing a city tile instead of a rectangle (but assumes you gave the rectangle dimensions)
 
     cssClasses: string[] = [];
-    borderImages: TextureInfo[] = []; // For 9-slice scaling //TODO: use a flag to enable this. The images would be in English book-reading order; the corners would not tile; all the others would tile.
     screenArea: number[] = []; // [left, top, right, bottom] in screen coordinates, set by the IRenderer
     onClick: (() => void) | null = null; //If null, it's not clickable and should ignore clicks in its area.
     onLongTap: (() => void) | null = null; //Only works if onClick is also set.

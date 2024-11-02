@@ -12,7 +12,7 @@ export class ContextMenu implements IHasDrawable {
     private city: City | null = null;
     public building: Building | null = null;
     private lastDrawable: Drawable | null = null;
-    public copying: boolean = false; //TODO: Check in the UIManager class
+    public copying: boolean = false;
     public moving: boolean = false;
     public demolishing: boolean = false;
     public reopening: boolean = false;
