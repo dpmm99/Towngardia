@@ -4,6 +4,7 @@ USE aureusco_games;
 CREATE TABLE IF NOT EXISTS towngardia_players (
     id INT AUTO_INCREMENT PRIMARY KEY,
     discord_id VARCHAR(255) UNIQUE,
+    google_id VARCHAR(255) UNIQUE,
     facebook_id VARCHAR(255) UNIQUE,
     avatar VARCHAR(255),
     display_name VARCHAR(255),

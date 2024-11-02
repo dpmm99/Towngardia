@@ -693,7 +693,7 @@ export class City {
 
         //Check if this building has been built on. If it has, the road connectivity should match for the others that are built on it.
         this.getBuildingsInArea(building.x, building.y, building.width, building.height, 0, 0).forEach(b => {
-            if (b !== building && b.builtOn.has(building)) this.setRoadConnected(b, isConnected, true);
+            if (b !== building && b.builtOn.has(building) && b.owned && building.owned) this.setRoadConnected(b, isConnected, true);
         });
 
         //Also check if this building was built on another. Note that either the building beneath or the building atop could be the one that's directly connected to the road--and if the top one doesn't fully cover the other, then both could be.
@@ -741,7 +741,7 @@ export class City {
         //Get the cardinal-direction-adjacent buildings for the road and power connectivity checks
         const adjacentBuildings = this.getBuildingsInArea(building.x, building.y, building.width, building.height, 1, 1, true);
         //If it's built on something, also check all around the building(s) it's built on.
-        building.builtOn.forEach(p => this.getBuildingsInArea(p.x, p.y, p.width, p.height, 1, 1, true).forEach(q => adjacentBuildings.add(q)));
+        building.builtOn.forEach(p => { if (p.owned) this.getBuildingsInArea(p.x, p.y, p.width, p.height, 1, 1, true).forEach(q => adjacentBuildings.add(q)); });
         const adjacentRoads = [...adjacentBuildings].filter(b => b.isRoad);
         //TODO: This has flaws for bigger roads, but I haven't exactly decided to implement those.
 
@@ -837,8 +837,8 @@ export class City {
                         //If the adjacent building is built on something else, we need to check that NONE of its built-on buildings are connected-road-adjacent instead of just checking that one building.
                         const adjacentBuildings = this.getBuildingsInArea(x, y, 1, 1, 1, 1, true, true);
                         adjacentBuildings.forEach(b => {
-                            if (b.builtOn.size) {
-                                if (b.roadConnected && ![...b.builtOn].some(p => [...this.getBuildingsInArea(p.x, p.y, p.width, p.height, 1, 1, true, false)].filter(q => q.isRoad && q.roadConnected).length)) this.setRoadConnected(b, false);
+                            if (b.builtOn.size && [...b.builtOn].some(p => p.owned)) {
+                                if (b.roadConnected && ![...b.builtOn].some(p => p.owned && [...this.getBuildingsInArea(p.x, p.y, p.width, p.height, 1, 1, true, false)].filter(q => q.isRoad && q.roadConnected).length)) this.setRoadConnected(b, false);
                             } else {
                                 if (b.roadConnected && ![...this.getBuildingsInArea(b.x, b.y, b.width, b.height, 1, 1, true, false)].filter(p => p.isRoad && p.roadConnected).length) this.setRoadConnected(b, false);
                             }

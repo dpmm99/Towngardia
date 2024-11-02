@@ -1,6 +1,7 @@
 import { City } from "../game/City.js";
 import { GameState } from "../game/GameState.js";
 import { CanvasRenderer } from "../rendering/CanvasRenderer.js";
+import { NetworkStorage } from "../storage/NetworkStorage.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { UIManager } from "./UIManager.js";
@@ -102,6 +103,20 @@ export class MainMenu implements IHasDrawable {
             text: "Save on hide: " + (this.game.saveWhenHiding ? "On" : "Off"),
             onClick: () => this.game.saveWhenHiding = !this.game.saveWhenHiding
         }));
+
+        if (this.game.storage instanceof NetworkStorage) {
+            menu.addChild(new Drawable({
+                anchors: ['centerX'],
+                y: nextY += 50,
+                centerOnOwnX: true,
+                width: "calc(100% - 20px)",
+                height: "40px",
+                text: "Log out",
+                onClick: () => {
+                    (this.game.storage as NetworkStorage).logOut();
+                }
+            }));
+        }
 
         return this.lastDrawable = menu;
     }

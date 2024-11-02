@@ -79,6 +79,7 @@ export class Road extends Building {
 
     override placed(city: City): void {
         this.determineVariant(city, true); //This road and any roads adjacent to it should switch their variant image according to connectivity.
+        this.powered = this.powerConnected;
     }
 
     override remove(city: City, justMoving: boolean = false): void {

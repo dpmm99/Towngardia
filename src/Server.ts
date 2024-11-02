@@ -34,14 +34,12 @@ app.get(urlRootPath + '/bundle.js', (req, res) => {
 
 // Middleware to check if user is authenticated
 const isAuthenticated = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const sessionId = req.cookies.sessionId;
+    const sessionId = <string | null>req.cookies.sessionId;
     if (!sessionId) {
         return res.redirect(urlRootPath + '/');
     }
 
-    const sessions = await db.loadSessions();
-    const session = sessions.find(s => s.sessionId === sessionId && new Date(s.expires) > new Date());
-
+    const session = await db.loadSession(sessionId);
     if (!session) {
         res.clearCookie('sessionId');
         return res.redirect(urlRootPath + '/');
@@ -65,7 +63,15 @@ app.get('/', (req, res) => { //Redirect for when it's not behind a reverse proxy
     res.redirect(urlRootPath + '/');
 });
 
-app.get(urlRootPath + '/', (req, res) => {
+app.get(urlRootPath + '/', async (req, res) => {
+    //If you're still logged in, redirect to game.html.
+    const sessionId = <string | null>req.cookies.sessionId;
+    if (sessionId) {
+        const session = await db.loadSession(sessionId);
+        if (session) {
+            return res.redirect(urlRootPath + '/game.html');
+        }
+    }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
@@ -75,6 +81,11 @@ app.get(urlRootPath + '/index.html', (req, res) => {
 
 app.get(urlRootPath + '/game.html', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'game.html'));
+});
+
+app.get(urlRootPath + '/auth/logout', (req: any, res: any) => {
+    res.clearCookie('sessionId', { httpOnly: true, secure: true });
+    res.redirect(urlRootPath + '/index.html');
 });
 
 app.post(urlRootPath + '/auth/discord', asyncHandler(async (req: any, res: any) => {
@@ -90,6 +101,16 @@ app.post(urlRootPath + '/auth/discord', asyncHandler(async (req: any, res: any) 
 app.post(urlRootPath + '/auth/facebook', asyncHandler(async (req: any, res: any)  => {
     const { id, name, email } = req.body;
     const playerId = await db.upsertFacebookPlayer({ id, name, email });
+    const sessionId = uuidv4();
+    const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 1 week from now
+    await db.upsertSession({ sessionId, expires, playerId });
+    res.cookie('sessionId', sessionId, { httpOnly: true, secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.redirect(urlRootPath + '/game.html');
+}));
+
+app.post(urlRootPath + '/auth/google', asyncHandler(async (req: any, res: any) => {
+    const { id, name, picture } = req.body;
+    const playerId = await db.upsertGooglePlayer({ id, name, picture });
     const sessionId = uuidv4();
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 1 week from now
     await db.upsertSession({ sessionId, expires, playerId });
@@ -182,6 +203,9 @@ const DISCORD_CLIENT_SECRET = process.env.TOWNGARDIA_DISCORD_SECRET;
 const FACEBOOK_APP_ID = process.env.TOWNGARDIA_FACEBOOK_ID;
 const FACEBOOK_APP_SECRET = process.env.TOWNGARDIA_FACEBOOK_SECRET;
 
+const GOOGLE_APP_ID = process.env.TOWNGARDIA_GOOGLE_ID;
+const GOOGLE_APP_SECRET = process.env.TOWNGARDIA_GOOGLE_SECRET;
+
 if (process.env.OS === "Windows_NT") { //ONLY for local development
     const options = {
         key: fs.readFileSync('private-key.pem'),
@@ -207,6 +231,11 @@ function getDiscordCallbackUri(req: express.Request): string {
 function getFacebookCallbackUri(req: express.Request): string {
     const offline = req.headers.host?.includes("127.0.0.1") || req.headers.host?.includes("localhost");
     return offline ? `http://${req.headers.host}${urlRootPath}/auth/facebook/callback` : `https://${req.headers.host}${urlRootPath}/auth/facebook/callback`;
+}
+
+function getGoogleCallbackUri(req: express.Request): string {
+    const offline = req.headers.host?.includes("127.0.0.1") || req.headers.host?.includes("localhost");
+    return offline ? `http://${req.headers.host}${urlRootPath}/auth/google/callback` : `https://${req.headers.host}${urlRootPath}/auth/google/callback`;
 }
 
 // Discord login route
@@ -281,7 +310,7 @@ app.get(urlRootPath + '/auth/discord/callback', asyncHandler(async (req: any, re
 
 // Facebook login route
 app.get(urlRootPath + '/auth/facebook', (req, res) => {
-    const authorizeUrl = `https://www.facebook.com/v12.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(getFacebookCallbackUri(req))}&scope=email`;
+    const authorizeUrl = `https://www.facebook.com/v12.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(getFacebookCallbackUri(req))}&scope=public_profile`;
     res.redirect(authorizeUrl);
 });
 
@@ -317,13 +346,64 @@ app.get(urlRootPath + '/auth/facebook/callback', asyncHandler(async (req: any, r
 
         // Create session
         const sessionId = uuidv4();
-        const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(); // 1 week from now
+        const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " "); // 1 week from now
         await db.upsertSession({ sessionId, expires, playerId });
 
         res.cookie('sessionId', sessionId, { httpOnly: true, secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
         res.redirect(urlRootPath + '/game.html');
     } catch (error) {
         console.error('Facebook authentication error:', error);
+        res.status(500).send('Authentication failed');
+    }
+}));
+
+// Google login route
+app.get(urlRootPath + '/auth/google', (req, res) => {
+    const authorizeUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_APP_ID}&redirect_uri=${encodeURIComponent(getGoogleCallbackUri(req))}&response_type=code&scope=profile`;
+    res.redirect(authorizeUrl);
+});
+
+// Google callback route
+app.get(urlRootPath + '/auth/google/callback', asyncHandler(async (req: any, res: any)  => {
+    const { code } = req.query;
+
+    try {
+        // Exchange code for access token
+        const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', new URLSearchParams(<Record<string, string>>{
+            client_id: GOOGLE_APP_ID,
+            client_secret: GOOGLE_APP_SECRET,
+            code: code as string,
+            grant_type: 'authorization_code',
+            redirect_uri: getGoogleCallbackUri(req),
+        }), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
+
+        const { access_token } = tokenResponse.data;
+
+        // Use access token to get user info
+        const userResponse = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo', {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        });
+
+        const { id, name, picture } = userResponse.data;
+
+        // Upsert player in database
+        const playerId = await db.upsertGooglePlayer({ id, name, picture });
+
+        // Create session
+        const sessionId = uuidv4();
+        const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace("T", " "); // 1 week from now
+        await db.upsertSession({ sessionId, expires, playerId });
+
+        res.cookie('sessionId', sessionId, { httpOnly: true, secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.redirect(urlRootPath + '/game.html');
+    } catch (error) {
+        console.error('Google authentication error:', error);
         res.status(500).send('Authentication failed');
     }
 }));

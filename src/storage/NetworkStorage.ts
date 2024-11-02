@@ -16,7 +16,7 @@ export class NetworkStorage implements IStorage {
 
         if (response.status === 401) {
             // Handle unauthorized access (e.g., redirect to login page)
-            window.location.href = '/';
+            window.location.href = 'index.html';
         }
 
         return response;
@@ -101,5 +101,10 @@ export class NetworkStorage implements IStorage {
     async getQueuedActions(): Promise<GameAction[]> {
         console.warn('getQueuedActions is not implemented yet');
         return [];
+    }
+
+    async logOut(): Promise<void> {
+        //Just navigate to the logout page
+        window.location.href = 'auth/logout';
     }
 }

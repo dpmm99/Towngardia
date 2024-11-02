@@ -121,7 +121,9 @@ export class Database implements IStorage {
         const sql = `
         SELECT p.id, 
                CASE WHEN p.facebook_id IS NOT NULL THEN p.name ELSE p.display_name END AS name,
-               CASE WHEN p.avatar IS NOT NULL THEN CONCAT('https://cdn.discordapp.com/avatars/', p.discord_id, '/', p.avatar) ELSE '' END AS avatar,
+               CASE WHEN p.avatar IS NOT NULL THEN
+                   CASE WHEN p.discord_id IS NOT NULL THEN CONCAT('https://cdn.discordapp.com/avatars/', p.discord_id, '/', p.avatar) ELSE p.avatar END
+               ELSE '' END AS avatar,
                c.id AS city_id,
                c.name AS city_name,
                p.other_public,
@@ -220,6 +222,18 @@ export class Database implements IStorage {
         return response[0][response[0].length - 1][0].insertId + "";
     }
 
+    //Same, but for Google sign-in
+    async upsertGooglePlayer(googleUserObject: { id: string, name: string, picture: string }): Promise<string> {
+        const response = await this.query(`
+        SET @google_id = ?;
+        SELECT id INTO @id FROM towngardia_players WHERE google_id = @google_id;
+        INSERT INTO towngardia_players (id, google_id, display_name, avatar) VALUES (@id, @google_id, ?, ?)
+        ON DUPLICATE KEY UPDATE display_name=VALUES(display_name), avatar=VALUES(avatar);
+        SELECT COALESCE(@id, LAST_INSERT_ID()) as insertId;
+    `, [googleUserObject.id, googleUserObject.name, googleUserObject.picture]);
+        return response[0][response[0].length - 1][0].insertId + "";
+    }
+
     //For saving the player JSON data
     async updatePlayer(player: Player): Promise<void> {
         const s = new PlayerSerializer();
@@ -239,6 +253,16 @@ export class Database implements IStorage {
      */
     async loadSessions(): Promise<{ sessionId: string, expires: string, playerId: string }[]> {
         return (await this.query("SELECT id AS sessionId, expires, player_id AS playerId FROM towngardia_sessions WHERE expires > UTC_DATE();", []))[0];
+    }
+
+    /**
+     * Load just the given session from the database, unless it's expired.
+     * @param {string} sessionId The session ID to load
+     * @returns The session object if it exists and is not expired, or null if it does not exist or is expired.
+     */
+    async loadSession(sessionId: string): Promise<{ sessionId: string, expires: string, playerId: string } | null> {
+        const [rows] = await this.query("SELECT id AS sessionId, expires, player_id AS playerId FROM towngardia_sessions WHERE id = ? AND expires > UTC_DATE();", [sessionId]);
+        return rows[0] ?? null;
     }
 
     async searchPlayers(name: string): Promise<Array<{ id: string, name: string }>> {
