@@ -1552,7 +1552,7 @@ export class Quarry extends Building {
 
     override getCosts(city: City): { type: string, amount: number }[] {
         const costs = [{ type: "flunds", amount: 100 }];
-        if (city.ownedBuildingCount.get(this.type)) costs.push({ type: "iron", amount: 20 }); //Costs more if you already own one
+        if (city.presentBuildingCount.get(this.type)) costs.push({ type: "iron", amount: 20 }); //Costs more if you already own one
         return costs;
     }
 
@@ -2661,7 +2661,7 @@ export class ResortHotel extends Building {
         );
         this.businessPatronCap = 650;
         this.businessValue = 1350;
-        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.outputResources.push(new Tourists(5, 5, 0, 200)); //Brings in 200 tourists per long tick, but it takes 10 days to get up to full steam.
         this.isRestaurant = true;
@@ -2674,8 +2674,8 @@ export class ResortHotel extends Building {
 
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.1, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY); //Affects apartment spawn chance
+        city.spreadEffect(new Effect(EffectType.Luxury, 0.1, this), this.areaIndicatorRadiusX - 1, this.areaIndicatorRadiusY - 1, this.areaIndicatorRounded);
+        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded); //Affects apartment spawn chance
     }
 
     override remove(city: City, justMoving: boolean = false): void {
@@ -2684,6 +2684,49 @@ export class ResortHotel extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 35; }
+}
+
+export class HotSpringInn extends Building {
+    constructor() {
+        super(
+            "hotspringinn", "Hot Spring Inn", "Must be built on a Hot Spring.",
+            BuildingCategory.COMMERCIAL,
+            3, 3, 0,
+            0.3,
+        );
+        this.businessPatronCap = 350;
+        this.businessValue = 850;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
+        this.areaIndicatorRounded = true;
+        this.outputResources.push(new Tourists(6.25, 6.25, 0, 250)); //Brings in 250 tourists per long tick, but it takes 10 days to get up to full steam. Heheh. Steam.
+        this.isRestaurant = true;
+        this.isEntertainment = true;
+        //The weirdest footprint yet: it must fully cover the Hot Spring, but the inn itself (y=0) shouldn't be on top of the hot spring.
+        this.checkFootprint[1][0] = this.checkFootprint[1][2] = this.checkFootprint[2][0] = this.checkFootprint[2][2] = FootprintType.HOT_SPRING | FootprintType.EMPTY | FootprintType.RESIDENCE;
+        this.checkFootprint[1][1] = this.checkFootprint[2][1] = FootprintType.HOT_SPRING;
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 700 }, { type: "wood", amount: 25 }, { type: "stone", amount: 10 }];
+    }
+
+    override place(city: City, x: number, y: number): void {
+        super.place(city, x, y);
+        city.spreadEffect(new Effect(EffectType.Luxury, 0.1, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
+        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded); //Affects apartment spawn chance
+    }
+
+    override placed(city: City): void {
+        (this.builtOn.values().next().value as HotSpring).variant = 1; //won't draw anymore since max variant is 0
+    }
+
+    override remove(city: City, justMoving: boolean = false): void {
+        (this.builtOn.values().next().value as HotSpring).variant = 0; //allowed to draw again (this must be before the call to super.remove)
+        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
+        super.remove(city, justMoving);
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 22; }
 }
 
 export class ConventionCenter extends Building {
@@ -2764,7 +2807,7 @@ export class HauntymonthGrave extends Building {
 
     override getCosts(city: City): { type: string, amount: number }[] {
         //Costs rise for each copy you've already bought.
-        return [{ type: "flunds", amount: 20 + 200 * (city.ownedBuildingCount.get(this.type) ?? 0) }, { type: "stone", amount: 3 }];
+        return [{ type: "flunds", amount: 20 + 200 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "stone", amount: 3 }];
     }
 
     override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
@@ -2796,7 +2839,7 @@ export class HauntymonthLamp extends Building {
 
     override getCosts(city: City): { type: string, amount: number }[] {
         //Costs rise for each copy you've already bought.
-        return [{ type: "flunds", amount: 25 + 250 * (city.ownedBuildingCount.get(this.type) ?? 0) }, { type: "iron", amount: 5 }];
+        return [{ type: "flunds", amount: 25 + 250 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "iron", amount: 5 }];
     }
 
     override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
@@ -2831,7 +2874,7 @@ export class HauntymonthHouse extends Building {
 
     override getCosts(city: City): { type: string, amount: number }[] {
         //Costs rise for each copy you've already bought.
-        return [{ type: "flunds", amount: 50 + 500 * (city.ownedBuildingCount.get(this.type) ?? 0) }, { type: "wood", amount: 20 }];
+        return [{ type: "flunds", amount: 50 + 500 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "wood", amount: 20 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
@@ -3135,6 +3178,47 @@ export class PoliceStation extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
+}
+
+export class PoliceUAVHub extends Building {
+    constructor() {
+        super(
+            "policeuavhub", "Police UAV Hub", "The meat and potatoes of a dystopian police state, but it's not so bad once you get past the initial shock! This police station uses aerial drones to cover a wider area, but it isn't quite as effective as boots on the ground.",
+            BuildingCategory.GOVERNMENT,
+            2, 2, 0,
+            0.3,
+        );
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
+        this.serviceAllocationType = "policeprotection";
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 620 }, { type: "batteries", amount: 15 }, { type: "steel", amount: 10 }];
+    }
+
+    //Doesn't cost the maximum amount of upkeep unless there are 10 buildings in the area.
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{
+            type: "flunds", amount: 6 * (atEfficiency ||
+                (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10))
+        }];
+    }
+
+    //Includes the city police budget allocation; the effect is squared so 80% budget is only 64% effectiveness and 90% budget is 81% effectiveness.
+    override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
+
+    override place(city: City, x: number, y: number): void {
+        super.place(city, x, y);
+        city.spreadEffect(new Effect(EffectType.PolicePresence, 0.75, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
+        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, false, true).size;
+    }
+
+    override remove(city: City, justMoving: boolean = false): void {
+        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
+        super.remove(city, justMoving);
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
 }
 
 export class FireBay extends Building {
@@ -3743,6 +3827,32 @@ export class PondFilth extends Building {
     getDemolitionCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 350 }, { type: "iron", amount: -3 }]; }
 }
 
+export class HotSpring extends Building {
+    constructor() {
+        super(
+            "hotspring", "Hot Spring", "A fount of hot mineral water formed by an earthquake. Keep out if you don't want to be turned into spicy human soup. With a little work, it could become a tourist attraction: you can build a Hot Spring Inn on it.",
+            BuildingCategory.NATURAL_RESOURCE,
+            2, 2, 0,
+            0,
+            false,
+        );
+        this.stampFootprint[0][0] = this.stampFootprint[0][1] = this.stampFootprint[1][0] = this.stampFootprint[1][1] = FootprintType.HOT_SPRING;
+        this.owned = this.needsPower = this.needsRoad = false;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
+        this.areaIndicatorRounded = true;
+    }
+
+    override place(city: City, x: number, y: number): void {
+        super.place(city, x, y);
+        city.spreadEffect(new Effect(EffectType.LandValue, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
+    }
+
+    override remove(city: City, justMoving: boolean = false): void {
+        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
+        super.remove(city, justMoving);
+    }
+}
+
 export class AlienMonolith extends Building {
     constructor() {
         super(
@@ -3844,18 +3954,18 @@ export class SandBar extends Building {
 
 export const BLOCKER_TYPES: Map<string, Building> = new Map([
     SmallBoulder, MediumBoulder, BigBoulder, ObstructingGrove, PondFilth, MysteriousRubble,
-    Mountain, CrystalMountain, LithiumPlateau, PrettyPond, CleanPond, AlienMonolith, OilSeep, GeothermalVent, SandBar
+    Mountain, CrystalMountain, LithiumPlateau, PrettyPond, CleanPond, AlienMonolith, OilSeep, GeothermalVent, HotSpring, SandBar
     ].map(p => new p()).map(p => [p.type, p]));
 
 export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Residential*/ SmallHouse, Quadplex, SmallApartment, Highrise, Skyscraper, Dorm, ShowHome,
-    /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, Casino, GameDevStudio, BlankCheckBank, ResortHotel, ConventionCenter,
+    /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, Casino, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter,
     /*Industrial*/ MountainIronMine, Quarry, CementMill, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks, SiliconRefinery, CrystalMine, AssemblyHouse, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory, ToyManufacturer, Furnifactory, LithiumMine, MohoMine, Nanogigafactory, PharmaceuticalsLab, SpaceLaunchSite,
     /*Power*/ StarterSolarPanel, WindTurbine, SolarFarm, OilPowerPlant, OilTruck, GeothermalPowerPlant, CoalPowerPlant, CoalTruck, NuclearPowerPlant, NuclearFuelTruck, FusionPowerPlant, FusionFuelTruck,
     /*Agriculture*/ TreeFarm, Farm, Ranch, FishFarm, AlgaeFarm, PlantMilkPlant, VerticalFarm, Carnicultivator,
     /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, DataCenter, NuclearStorage,
     /*Government*/ CityHall, InformationCenter, PostOffice,
-    /*Services (also government)*/ PoliceBox, PoliceStation, FireBay, FireStation, Clinic, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, QuantumComputingLab, WeatherControlMachine,
+    /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, QuantumComputingLab, WeatherControlMachine,
     /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse,
     /*Luxury (Recreation/Decorations)*/ SmallPark, MediumPark, KellyStatue, SharonStatue, SmallFountain, Greenhouse, Playground, SesharTower,
     ].map(p => new p()).map(p => [p.type, p]));

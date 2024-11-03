@@ -43,12 +43,12 @@ export class City {
     public postOffice: PostOffice | null = null;
 
     //These really matter
-    public ownedBuildingCount: Map<string, number> = new Map(); //Number of buildings of each type that the player has built but has not demolished.
+    public presentBuildingCount: Map<string, number> = new Map(); //Number of buildings of each type that the player has built (or that naturally formed) but has not demolished.
     public resources: Map<string, Resource> = new Map();
     public desiredPower: number = 50; //Used for buying enough power for a fraction of your buildings. Initialized to 50 so you can always import up to 25 MW if needed and if you have the money.
     public createdDate: Date = new Date(); //Could be used for certain fixed events--like the first earthquake that makes geothermal power available to research
     public notifications: Notification[] = [];
-    public assists: Assist[] = []; //TODO: Serialize and deserialize
+    public assists: Assist[] = [];
 
     public lastImportedPowerCost: number = 0;
     public recentConstructionResourcesSold: number = 0;
@@ -481,7 +481,7 @@ export class City {
         this.buildings.push(building);
         building.place(this, x ?? building.x, y ?? building.y);
         this.placeOnGrid(building);
-        this.ownedBuildingCount.set(building.type, (this.ownedBuildingCount.get(building.type) ?? 0) + 1);
+        this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) + 1);
         building.placed(this);
 
         //Ensure the thing built on top is always listed BEFORE the thing it's built on, in case the built-on-top one needs to fuel the other.
@@ -611,7 +611,7 @@ export class City {
     removeBuilding(building: Building, demolish: boolean = false, justMoving: boolean = false): void { //Demolition costs go elsewhere.
         this.buildings.splice(this.buildings.findIndex(p => p == building), 1);
         if (!demolish) this.unplacedBuildings.push(building); //Store for later.
-        else this.ownedBuildingCount.set(building.type, (this.ownedBuildingCount.get(building.type) ?? 0) - 1); //Demolish = no longer owned.
+        else this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) - 1); //Demolish = no longer owned.
         this.removeFromGrid(building);
         building.remove(this, justMoving);
 
@@ -1225,7 +1225,7 @@ export class City {
             const plays = this.resources.get(new ResourceTypes.NepotismNetworkingPlays().type)!;
             plays.produce(plays.productionRate);
         }
-        if (this.peakPopulation >= 400 && this.ownedBuildingCount.get(new Casino().type)) { //Only matters whether or not you've built a casino--not if it's place, not how many you have.
+        if (this.peakPopulation >= 400 && this.presentBuildingCount.get(new Casino().type)) { //Only matters whether or not you've built a casino--not if it's place, not how many you have.
             const plays = this.resources.get(new ResourceTypes.SlotsPlays().type)!;
             plays.produce(plays.productionRate);
             if (!this.flags.has(CityFlags.UnlockedSlots)) {

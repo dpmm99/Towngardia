@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { ColdStorage, FireBay, FireStation, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, getBuildingType } from "./BuildingTypes.js";
+import { ColdStorage, FireBay, FireStation, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HotSpring, HotSpringInn, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -233,8 +233,9 @@ export class Earthquake extends CityEvent {
 
     override start(city: City, date: Date): void {
         super.start(city, date);
+        this.startMessage = new Earthquake().startMessage;
         //If you didn't start with a geothermal vent, the first earthquake should create one. Otherwise, a diminishing chance for each vent you have. 0 -> 100%, 1 -> 33%, 2 -> 20%, 3 -> 14%, 4 -> 11%, 5 -> 9%...
-        if (Math.random() < 1 / ((city.ownedBuildingCount.get(getBuildingType(GeothermalVent)) ?? 0) * 2 + 1)) {
+        if (Math.random() < 1 / ((city.presentBuildingCount.get(getBuildingType(GeothermalVent)) ?? 0) * 2 + 1)) {
             //Select random coordinates and try to find a spot without a building there
             let x: number;
             let y: number;
@@ -242,9 +243,26 @@ export class Earthquake extends CityEvent {
             do {
                 x = 1 + Math.floor((city.width - 2) * Math.random()); //Can't be on any edge of the map because it wouldn't be accessible.
                 y = 1 + Math.floor((city.height - 2) * Math.random());
-            } while (city.grid[y][x] && --tries > 0 && city.getBuildingsInArea(x, y, 1, 1, 1, 1).size === 0); //Also don't place adjacent to an oil seep or mountain or other geothermal vent (or other immovable object). But I just said no buildings nearby of any type.
+            } while (--tries > 0 && city.getBuildingsInArea(x, y, 1, 1, 1, 1).size); //Also don't place adjacent to any immovable object or it'll be unusable. But I opted to just check that there are no buildings nearby of any type.
             if (!city.grid[y][x]) {
                 city.addBuilding(new GeothermalVent(), x, y);
+                this.startMessage += " The earthquake formed a new geothermal vent in the region, which could be a source of cheap, reliable, eco-friendly power.";
+            }
+        }
+
+        //Also produce a hot spring on the first earthquake, no random factor and no second hot spring. Will not spawn within 8 tiles of the map edges.
+        if ((city.presentBuildingCount.get(getBuildingType(HotSpring)) ?? 0) === 0) {
+            let x: number;
+            let y: number;
+            let tries: number = 30;
+            do {
+                x = 8 + Math.floor((city.width - 10) * Math.random());
+                y = 8 + Math.floor((city.height - 10) * Math.random());
+            } while (--tries > 0 && city.getBuildingsInArea(x, y, 2, 2, 0, 0).size);
+            if (!city.grid[y][x]) {
+                city.addBuilding(new HotSpring(), x, y);
+                city.unlock(getBuildingType(HotSpringInn));
+                this.startMessage += " It also formed a hot spring, which we can turn into a tourist trap--Hot Spring Inn is now available.";
             }
         }
 
@@ -512,14 +530,13 @@ export class Spoilage extends CityEvent {
 }
 
 //Dropped idea (since I made the Alien Monolith): Alien structure spawn event. +land value and organized crime and it produces a unique resource.
-//TODO: Earthquake can also open up a hot spring. +land value and tourism.
 //TODO: Close call - fission power plant has to shut down for a day to repair after the safety triggered
 
 export const EVENT_TYPES = <CityEvent[]>([
     /*Fixed seasonal events*/ Hauntymonth,
     /*Minigame-triggered events*/ TourismReward,
     /*Random negative events*/ Drought, Heatwave, ColdSnap, PowerOutage, Burglary, Heist, Epidemic, Fire, Earthquake, Riot, Spoilage,
-    //...but Earthquake has a positive effect, too: spawns a cheap geothermal power source.
+    //...but Earthquake has positive effects, too: spawns a cheap geothermal power source sometimes, and spawns a hot spring the first time.
     /*Random positive events*/ EconomicBoom,
     /*Less random events*/ EmergencyPowerAid, UrbanRenewalGrant,
 ].map(p => new p()));

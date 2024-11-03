@@ -24,7 +24,7 @@ export class CitySerializer {
         const r: any = {
             bu: o.buildings.map(p => this.building(p)),
             ub: o.unplacedBuildings.map(p => this.building(p)),
-            ob: [...o.ownedBuildingCount], //A map. Could easily just be recalculated at startup. It's meant to be an optimization anyway.
+            ob: [...o.presentBuildingCount], //A map. Could easily just be recalculated at startup. It's meant to be an optimization anyway.
             re: Array.from(o.resources).map(p => this.resource(p[1])), //Is a map, but the keys are repeats.
             ri: o.regionID,
             rv: o.regionVersion,
@@ -252,7 +252,7 @@ export class CityDeserializer {
 
         const r = new City(player, o.id + "", o.na, o.wi, o.he, [...this.buildingTypes.values()], o.re.map((p: any) => this.resource(p)), unplacedBuildings, events,
             techManager, budget, undefined, titles, grid, [...eventTypes.values()], effectGrid, buildings, o.lt, o.st, o.nb, o.ri, o.rv, o.fl ? new Set(o.fl) : new Set());
-        r.ownedBuildingCount = new Map(o.ob);
+        r.presentBuildingCount = new Map(o.ob);
         r.desiredPower = o.dp;
         r.createdDate = new Date(o.cd);
         r.notifications = o.no.map((p: any) => new Notification(p.title, p.body, p.icon, new Date(p.date), p.seen));

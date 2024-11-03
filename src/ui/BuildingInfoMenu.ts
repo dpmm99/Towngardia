@@ -208,7 +208,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         //These apply to your own buildings excluding a few special cases
         if (building.x !== -1 && building.owned) {
             //Efficiency
-            if (!(building instanceof CityHall || building instanceof InformationCenter)) { //Hide efficiency for City Hall and Information Center because it's meaningless
+            if (!(building instanceof CityHall || building instanceof InformationCenter || building.isRoad)) { //Hide efficiency for City Hall and Information Center because it's meaningless
                 infoDrawable.addChild(new Drawable({
                     x: padding,
                     y: nextY,
@@ -225,6 +225,8 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             if (building.businessPatronCap && (building.roadConnected || !building.needsRoad)) {
                 nextY = this.addBusinessStats(infoDrawable, padding, nextY, building, barWidth, true);
             }
+
+            //TODO: Effects they spread--exact numbers would be great. Business presence, luxury, land value, pollution types, crime types at least. Can reuse the icons from the views bar. Really requires a generic way of storing effects in Building instead of always just calling spreadEffect in place().
 
             //Warnings
             const warnings: {icon: string, text: string}[] = [];

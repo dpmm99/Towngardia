@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { AlgaeFarm, CarbonCapturePlant, Carnicultivator, Clinic, DataCenter, Farm, FusionFuelTruck, FusionPowerPlant, GeothermalPowerPlant, Hospital, Nanogigafactory, QuantumComputingLab, ShowHome, TreeFarm, VerticalFarm, WeatherControlMachine, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, CarbonCapturePlant, Carnicultivator, Clinic, DataCenter, Farm, FusionFuelTruck, FusionPowerPlant, GeothermalPowerPlant, Hospital, Nanogigafactory, PoliceUAVHub, QuantumComputingLab, ShowHome, TreeFarm, VerticalFarm, WeatherControlMachine, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CAPACITY_MULTIPLIER, Lithium } from "./ResourceTypes.js";
 import { Tech } from "./Tech.js";
@@ -362,12 +362,16 @@ export class AutonomousVehicles extends Tech {
         super(
             'autonomousvehicles',
             'Autonomous Vehicles',
-            'Self-driving vehicles that reduce traffic congestion and improve transportation efficiency.',
+            'Self-driving vehicles that reduce traffic congestion and improve transportation efficiency. Also unlocks Police UAV Hub.',
             [{ type: 'research', amount: 100 }, { type: 'electronics', amount: 150 }, { type: 'batteries', amount: 30 }],
             0.05, 0.025, //~10 days to fully adopt
             1820, 140,
             [{ id: "graphenebattery", path: [] }]
         );
+    }
+
+    override applyEffects(city: City) {
+        city.unlock(getBuildingType(PoliceUAVHub));
     }
 }
 
