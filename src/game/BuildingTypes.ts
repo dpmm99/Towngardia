@@ -2689,7 +2689,7 @@ export class ResortHotel extends Building {
 export class HotSpringInn extends Building {
     constructor() {
         super(
-            "hotspringinn", "Hot Spring Inn", "Must be built on a Hot Spring.",
+            "hotspringinn", "Hot Spring Inn", "A rustic retreat where you can soak your troubles away, along with one or two layers of skin. Our five-star accommodations perfectly complement nature's own crockpot, balancing comfort and controlled danger. Don't worry: we keep it cool enough that it won't cook people--but we do poach eggs in it for your dinner. Must be built on a Hot Spring.",
             BuildingCategory.COMMERCIAL,
             3, 3, 0,
             0.3,
