@@ -126,9 +126,9 @@ export class CitizenDietSystem {
         this.city.resources.get(new FoodSufficiency().type)!.amount = foodRatio; //Business value effect
 
         // Consume food (4x a day)
-        const foodToConsume = availableFood.map(food => ({
+        const foodToConsume = dietComposition.map(food => ({
             type: food.type,
-            amount: food.amount
+            amount: food.ratio * foodNeeded * foodRatio
         }));
         this.city.checkAndSpendResources(foodToConsume, true);
 
