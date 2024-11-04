@@ -16,7 +16,7 @@ import { Assist } from "../game/Assist.js";
 // Constants
 const GRID_WIDTH = 4;
 const GRID_HEIGHT = 5;
-const TOTAL_ROWS = 40;
+const TOTAL_ROWS = 48;
 const TILE_SIZE = 96;
 const MAX_FACES_PER_ROW = 8;
 const SHIFT_ANIMATION_FRAMES = 10;
