@@ -39,11 +39,11 @@ Main remaining features:
 Regions
 Some more UI work, like maybe showing an unobtrusive pop-up when you collect resources
 aaand probably being able to buy things (particularly the resources that aren't in every region) more easily if your friends are selling them. I was thinking sales go into a list for 5 days, but then you have to load and affect the other players' city data...
-Otherwise, I'm pretty well down to just making buildings, events, techs (though I already have 30), and titles/achievements. 
+Otherwise, I'm pretty well down to just making buildings, events, techs (though I already have 31), and titles/achievements. 
+December pseudo-minigame event: each day, a present spawns in a friend's city and stays there for 5 days (including past the end of the event). It always spawns in the biggest city on your friends list, and you have to find it and tap it to receive an assortment of random resources totaling a value of 25 flunds. The data would actually save to your own city, so if you have multiple cities, you get multiple packages a day (you have to cycle through your own cities to get them all). Even better if it came with some sort of treasure map telling you to follow some roads/landmarks to find it...
 
 Coolest open ideas:
 the regions I described above (ancient ocean, delta, tundra, volcanic yard)
-Could have events that make you change your city layout a bit, like "a hot spring opened up at this location, so you should build a resort there."
 disasters like snow accumulation, fission 'close call'
 "corporate enticement"
 construction image until a building activates

@@ -55,6 +55,8 @@ export class CitySerializer {
             ts: o.tutorialStepIndex == -1 ? undefined : o.tutorialStepIndex,
             as: this.assists(o.assists),
             gc: o.residenceSpawner?.globalSpawnChance ?? undefined,
+            hb: [...o.happinessBreakdown],
+            hx: [...o.happinessMaxima],
         };
 
         return r;
@@ -273,6 +275,8 @@ export class CityDeserializer {
         if (o.ts !== undefined) r.tutorialStepIndex = o.ts;
         if (o.as) r.assists = this.assists(o.as, r);
         if (o.gc) r.residenceSpawner.globalSpawnChance = o.gc;
+        if (o.hb) r.happinessBreakdown = new Map(o.hb);
+        if (o.hx) r.happinessMaxima = new Map(o.hx);
         return r;
     }
 

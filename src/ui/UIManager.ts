@@ -24,6 +24,7 @@ import { ContextMenu } from "./ContextMenu.js";
 import { Drawable } from "./Drawable.js";
 import { FriendVisitWindow } from "./FriendVisitWindow.js";
 import { FriendsMenu } from "./FriendsMenu.js";
+import { HappinessFactorsWindow } from "./HappinessFactorsWindow.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
 import { MainMenu } from "./MainMenu.js";
@@ -54,6 +55,7 @@ export class UIManager {
     private achievementsMenu!: AchievementsMenu;
     private notificationsMenu!: NotificationsMenu;
     private buildingInfoMenu!: BuildingInfoMenu;
+    private happinessFactorsWindow!: HappinessFactorsWindow;
     private friendsMenu!: FriendsMenu;
     private friendVisitWindow!: FriendVisitWindow;
     private tutorialOverlay!: TutorialOverlay;
@@ -144,6 +146,7 @@ export class UIManager {
             this.bottomBar = new BottomBar(newCity, this), //No reason to appear in other players' cities
             this.buildTypeBar = new BuildTypeBar(newCity, this), //No reason to appear in other players' cities
             this.topBar = new TopBar(newCity, this),
+            this.happinessFactorsWindow = new HappinessFactorsWindow(newCity),
             this.techMenu = new TechTreeMenu(newCity, this),
             this.budgetMenu = new BudgetMenu(newCity, this),
             this.citizenDietWindow = new CitizenDietWindow(newCity, this),
@@ -215,7 +218,6 @@ export class UIManager {
             return this.checkClickComponent(this.renderOnlyWindow, x, y);
         }
         if (this.checkClickComponent(this.warningWindow, x, y)) return true;
-        if (this.friendVisitWindow.isShown() && this.checkClickComponent(this.friendVisitWindow, x, y)) return true;
 
         if (this.tutorialOverlay.isShown() && !wasSingleTap && this.checkClickComponent(this.tutorialOverlay, x, y)) return true;
         //TODO: Start using that renderOnlyWindow field for these windows
@@ -225,6 +227,9 @@ export class UIManager {
         if (this.achievementsMenu.isShown()) return this.checkClickComponent(this.achievementsMenu, x, y);
         if (this.citizenDietWindow.isShown()) return this.checkClickComponent(this.citizenDietWindow, x, y);
         if (this.notificationsMenu.isShown()) return this.checkClickComponent(this.notificationsMenu, x, y);
+
+        if (this.friendVisitWindow.isShown() && this.checkClickComponent(this.friendVisitWindow, x, y)) return true;
+        if (this.happinessFactorsWindow.isShown() && this.checkClickComponent(this.happinessFactorsWindow, x, y)) return true;
 
         //CityViews
         for (const drawable of this.cityView.getLastWindowDrawables()) {
@@ -450,6 +455,11 @@ export class UIManager {
     showWarning(text: string) {
         this.warningWindow.text = text;
         this.frameRequested = true;
+    }
+
+    toggleHappinessFactorsWindow() {
+        if (this.happinessFactorsWindow.isShown()) this.happinessFactorsWindow.hide();
+        else this.happinessFactorsWindow.show();
     }
 
     showFriendVisitWindow(tech: Tech | null, techPoints: number, bonusClaimed: boolean) {

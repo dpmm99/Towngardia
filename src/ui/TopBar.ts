@@ -82,7 +82,8 @@ export class TopBar implements IHasDrawable, IOnResizeEvent {
             image: new TextureInfo(iconSize, iconSize, "resource/happiness"),
             id: barDrawable.id + ".happiness",
             biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
-        })); //TODO: On click, show a breakdown of the happiness factors. Safety, environment, economy, QoL, power outage penalty.
+            onClick: () => this.uiManager.toggleHappinessFactorsWindow(),
+        }));
         barDrawable.addChild(new Drawable({
             x: nextX + iconSize + padding,
             y: padding + 10,
@@ -93,6 +94,7 @@ export class TopBar implements IHasDrawable, IOnResizeEvent {
             id: barDrawable.id + ".happinessBg",
             image: new TextureInfo(100, 20, "ui/progressbg"),
             biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+            onClick: () => this.uiManager.toggleHappinessFactorsWindow(),
             children: [
                 new Drawable({
                     x: 0,

@@ -24,7 +24,9 @@ export class HappinessCalculator {
         happiness += this.calculateEnvironmentHappiness();
         happiness += this.calculateEconomyHappiness();
         happiness += this.calculateQualityOfLifeHappiness();
-        happiness -= this.calculateResidentialBlackoutPenalty(); //A big effect--caps at 1.0
+        happiness += this.calculateResidentialBlackoutPenalty(); //A big effect--caps at 1.0
+
+        this.setDisplayStats("Other", happiness - [...this.city.happinessBreakdown].filter(p => p[0] != "Other").reduce((a, b) => a + b[1], 0));
 
         // Normalize happiness to be between 0 and 1
         return Math.max(0, Math.min(1, happiness));
@@ -59,6 +61,12 @@ export class HappinessCalculator {
         return this.relevantTileCount > 0 ? (this.effectSums.get(effectType) || 0) / this.relevantTileCount : 0;
     }
 
+    private setDisplayStats(name: string, current: number, maximum?: number | undefined) {
+        this.city.happinessBreakdown.set(name, current);
+        if (maximum !== undefined) this.city.happinessMaxima.set(name, maximum);
+        else this.city.happinessMaxima.delete(name);
+    }
+
     private calculateSafetyHappiness(): number {
         let safety = 0;
 
@@ -68,47 +76,63 @@ export class HappinessCalculator {
             const organizedCrime = this.getAverageEffect(EffectType.OrganizedCrime);
             const difference = Math.sqrt(Math.max(0, policePresence)) - pettyCrime - 2 * organizedCrime;
             safety += Math.min(0.5, difference) * (difference > 0 ? 0.1 : 0.15); //Caps at +0.05, no cap in the other direction, but even worse impact if below zero
-        } else safety += 0.09;
+            this.setDisplayStats("Police and crime", safety, 0.05);
+        } else safety += 0.04;
 
         if (this.city.flags.has(CityFlags.FireProtectionMatters)) {
-            safety += Math.min(1, Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.FirePrevention)))) * 0.05; //Caps at +0.05, no cap in the other direction
+            const fire = Math.min(1, Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.FirePrevention)))) * 0.05; //Caps at +0.05, no cap in the other direction
+            this.setDisplayStats("Fire protection", fire, 0.05);
+            safety += fire;
         } else safety += 0.045;
 
         return safety;
     }
 
     private calculateEnvironmentHappiness(): number {
-        let environment = 0;
-        environment -= this.getAverageEffect(EffectType.ParticulatePollution) * 0.12;
-        environment -= this.getAverageEffect(EffectType.Noise) * 0.07;
+        const particulate = this.getAverageEffect(EffectType.ParticulatePollution) * -0.12;
+        this.setDisplayStats("Particulate pollution", particulate);
+        const noise = this.getAverageEffect(EffectType.Noise) * -0.07;
+        this.setDisplayStats("Noise", noise);
 
+        let environment = particulate + noise;
         if (this.city.flags.has(CityFlags.GreenhouseGasesMatter)) {
-            environment -= this.getAverageEffect(EffectType.GreenhouseGases) * 0.05;
+            const greenhouse = this.getAverageEffect(EffectType.GreenhouseGases) * -0.05;
+            environment += greenhouse;
+            this.setDisplayStats("Greenhouse gases", greenhouse);
         }
 
         return environment;
     }
 
     private calculateEconomyHappiness(): number {
-        let economy = 0;
-        economy += Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.BusinessPresence))) * 0.05; //No cap
-        economy += this.getAverageEffect(EffectType.LandValue) * 0.05; //No cap
-        economy -= (this.city.budget.taxRates["income"] - 0.09) * 3; //9%, 10%, 11% -> deductions of 0, 0.03, 0.06
-        economy -= (this.city.budget.taxRates["sales"] - 0.09) * 2; //0, 0.02, 0.04
-        return economy;
+        const businessPresence = Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.BusinessPresence))) * 0.05; //No cap
+        this.setDisplayStats("Business presence", businessPresence);
+        const landValue = this.getAverageEffect(EffectType.LandValue) * 0.05; //No cap
+        this.setDisplayStats("Land value", landValue);
+        const incomeTax = (this.city.budget.taxRates["income"] - 0.09) * -3; //9%, 10%, 11% -> deductions of 0, 0.03, 0.06
+        this.setDisplayStats("Income tax", incomeTax, 0);
+        const salesTax = (this.city.budget.taxRates["sales"] - 0.09) * -2; //0, 0.02, 0.04
+        this.setDisplayStats("Sales tax", salesTax, 0);
+        return businessPresence + landValue + incomeTax + salesTax;
     }
 
     private calculateQualityOfLifeHappiness(): number {
         let qol = 0;
-        qol += Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.Luxury))) * 0.12; //No cap
+        const luxury = Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.Luxury))) * 0.12; //No cap
+        this.setDisplayStats("Luxury", luxury);
+        qol += luxury;
 
         if (this.city.flags.has(CityFlags.HealthcareMatters)) {
-            qol += Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.Healthcare))) * 0.1; //No cap
+            const healthcare = Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.Healthcare))) * 0.1; //No cap
+            this.setDisplayStats("Healthcare", healthcare);
+            qol += healthcare;
         } else qol += 0.09;
 
         if (this.city.flags.has(CityFlags.EducationMatters)) {
             const avgEducation = Math.max(0, this.city.getCityAverageEducation());
-            qol += Math.sqrt(avgEducation) * 0.1; //No cap
+            const education = Math.sqrt(avgEducation) * 0.1; //No cap
+            this.setDisplayStats("Education", education);
+            qol += education;
 
             if (!this.city.flags.has(CityFlags.UnlockedGameDev) && avgEducation > 0.9) {
                 this.city.notify(new Notification("Neeerd!", "You've granted your population a grand education. As such, they are now capable of constructing higher-tech facilities relating to electronics, medicine, nuclear energy, astronomy, and geology.", "education"));
@@ -119,7 +143,9 @@ export class HappinessCalculator {
         } else qol += 0.09;
 
         //Food satisfaction
-        qol += this.city.resources.get(new FoodSatisfaction().type)!.amount * 0.13;
+        const food = this.city.resources.get(new FoodSatisfaction().type)!.amount * 0.13;
+        this.setDisplayStats("Food satisfaction", food, 0.13); //Food satisfaction itself has a cap of 1
+        qol += food;
 
         return qol;
     }
@@ -135,6 +161,8 @@ export class HappinessCalculator {
             }
         });
 
-        return totalPowerNeeded > 0 ? 1 - totalPowerReceived / totalPowerNeeded : 0;
+        const blackoutPenalty = totalPowerNeeded > 0 ? -1 + totalPowerReceived / totalPowerNeeded : 0;
+        this.setDisplayStats("Power outages", blackoutPenalty, 0);
+        return blackoutPenalty;
     }
 }

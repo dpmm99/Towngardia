@@ -49,6 +49,8 @@ export class City {
     public createdDate: Date = new Date(); //Could be used for certain fixed events--like the first earthquake that makes geothermal power available to research
     public notifications: Notification[] = [];
     public assists: Assist[] = [];
+    public happinessBreakdown: Map<string, number> = new Map();
+    public happinessMaxima: Map<string, number> = new Map();
 
     public lastImportedPowerCost: number = 0;
     public recentConstructionResourcesSold: number = 0;

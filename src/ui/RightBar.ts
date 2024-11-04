@@ -73,7 +73,7 @@ export class RightBar implements IHasDrawable, IOnResizeEvent {
             }
             //TODO: Do I want a 'minigames' button instead? I made an icon. But then I'd need a tray for the minigames to pop into.
         } else { //Not my city--show shared reward minigames
-            if (this.city?.flags.has(CityFlags.UnlockedTourism)) {
+            if (this.uiManager.game.city!.flags.has(CityFlags.UnlockedTourism)) {
                 buttons.push({ id: 'neponet', onClick: () => this.uiManager.showNeponetMinigame(), resourceType: new NepotismNetworkingPlays().type });
             }
         }
@@ -94,7 +94,7 @@ export class RightBar implements IHasDrawable, IOnResizeEvent {
             //Draw zero to nine boxes on top of the resource icon (3x3 covering it up) based on city.resources.get(type).amount divided by resourceAmount and floored.
             if (button.resourceType) {
                 const resourceAmount = button.resourceAmount ?? 1;
-                const resourceCount = this.city?.resources.get(button.resourceType)?.amount ?? 0;
+                const resourceCount = this.uiManager.game.city!.resources.get(button.resourceType)?.amount ?? 0;
                 const resourceBoxes = Math.min(9, Math.floor(resourceCount / resourceAmount)); //Number of plays available
                 for (let i = 0; i < resourceBoxes; i++) {
                     barDrawable.addChild(new Drawable({
