@@ -129,6 +129,11 @@ export class UIManager {
             this.renderer.addWindow(this.renderOnlyWindow);
         }
 
+        if (!this.isMyCity) {
+            this.buildTypeBar.expandedCategory = this.buildTypeBar.selectedBuilding = null;
+            this.cityView.showCollectibles = this.cityView.showProvisioning = false;
+        }
+
         this.addEventListeners();
         this.requestRedraw();
     }
@@ -162,10 +167,6 @@ export class UIManager {
         ];
 
         this.bottomBar.shown = this.isMyCity;
-        if (!this.isMyCity) {
-            this.buildTypeBar.expandedCategory = this.buildTypeBar.selectedBuilding = null;
-            this.cityView.showCollectibles = this.cityView.showProvisioning = false;
-        }
 
         //Minigames never change cities/players
         this.memoryMixology = new MemoryMixology(this.game.city!, this);
