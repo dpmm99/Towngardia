@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, Dorm, ElementarySchool, FireBay, FireStation, GameDevStudio, GregsGrogBarr, HighSchool, Hospital, InformationCenter, MediumPark, Mountain, MysteriousRubble, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, Dorm, ElementarySchool, FireBay, FireStation, GregsGrogBarr, HighSchool, Hospital, InformationCenter, MediumPark, Mountain, MysteriousRubble, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -33,8 +33,6 @@ export class City {
     public readonly constructionResourceTypes: Set<string> = new Set([new ResourceTypes.Steel().type, new ResourceTypes.Iron().type, new ResourceTypes.Stone().type, new ResourceTypes.Wood().type, new ResourceTypes.Lumber().type, new ResourceTypes.Glass().type]);
     public residenceSpawner: ResidenceSpawningSystem; //No persistent data other than constants
     public citizenDietSystem: CitizenDietSystem; //No persistent data other than constants and lastDietComposition
-    public trafficPrecalculation: number = 0;
-    public roadUpkeepPrecalculation: number = 0;
     public canBuildResources: boolean = false; //Is set to true by the construction cheat so I can lay out 'regions'
     //Just aliases
     public flunds: Resource;
@@ -43,6 +41,8 @@ export class City {
     public postOffice: PostOffice | null = null;
 
     //These really matter
+    public trafficPrecalculation: number = 0;
+    public roadUpkeepPrecalculation: number = 0;
     public presentBuildingCount: Map<string, number> = new Map(); //Number of buildings of each type that the player has built (or that naturally formed) but has not demolished.
     public resources: Map<string, Resource> = new Map();
     public desiredPower: number = 50; //Used for buying enough power for a fraction of your buildings. Initialized to 50 so you can always import up to 25 MW if needed and if you have the money.

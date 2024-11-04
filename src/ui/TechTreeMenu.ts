@@ -1,7 +1,8 @@
+import { getBuildingType, GeothermalVent } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { Tech } from "../game/Tech.js";
 import { TechManager } from "../game/TechManager.js";
-import { TECH_TYPES } from "../game/TechTypes.js";
+import { Geothermal, TECH_TYPES } from "../game/TechTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -139,7 +140,7 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
             height: "64px",
             image: new TextureInfo(64, 64, "ui/research")
         }));
-        const points = humanizeFloor(this.city.resources.get("research")!.amount);
+        const points = humanizeFloor(Math.max(0, this.city.resources.get("research")!.amount));
         techTreeDrawable.addChild(new Drawable({
             x: 84,
             y: 26,
@@ -318,6 +319,9 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
         this.scrollerX.resetScroll();
         this.scrollerY.resetScroll();
         this.shown = true;
+
+        //Fixing a past mistake, in case anyone already had an Earthquake occur
+        if ((this.city.presentBuildingCount.get(getBuildingType(GeothermalVent)) ?? 0) > 0) this.techManager.techs.get(new Geothermal().id)!.unavailable = false;
     }
 
     public isShown(): boolean {

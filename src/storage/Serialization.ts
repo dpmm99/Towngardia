@@ -57,6 +57,8 @@ export class CitySerializer {
             gc: o.residenceSpawner?.globalSpawnChance ?? undefined,
             hb: [...o.happinessBreakdown],
             hx: [...o.happinessMaxima],
+            tp: o.trafficPrecalculation,
+            ru: o.roadUpkeepPrecalculation,
         };
 
         return r;
@@ -103,7 +105,7 @@ export class CitySerializer {
             ag: o.adoptionGrowth, //affected by a title
             co: o.costs, //trivial serialization is fine, maybe just a bit wordy, but really unimportant
             re: o.researched || undefined,
-            un: o.unavailable || undefined,
+            un: o.unavailable,
         };
     }
 
@@ -262,6 +264,8 @@ export class CityDeserializer {
         r.recentConstructionResourcesSold = o.cs;
         r.peakPopulation = o.pp;
         r.citizenDietSystem.lastDietComposition = dietComposition;
+        r.trafficPrecalculation = o.tp || 0;
+        r.roadUpkeepPrecalculation = o.ru || 0;
 
         //Old defunct storage of some flags
         if (o.pm) r.flags.add(CityFlags.PoliceProtectionMatters);
