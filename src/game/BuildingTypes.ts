@@ -23,7 +23,7 @@ export function getBuildingType<T extends { new(...args: any[]): {} }>(cls: T): 
 
 //# Infrastructure
 export class Road extends Building {
-    protected trafficQuantity: number = 0;
+    public trafficQuantity: number = 0;
 
     constructor() {
         super(

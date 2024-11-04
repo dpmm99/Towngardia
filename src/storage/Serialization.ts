@@ -190,6 +190,7 @@ export class CitySerializer {
                 va: o.variant || undefined,
                 bo: this.buildingSet(o.builtOn),
             });
+            if ("trafficQuantity" in o) r.tq = o.trafficQuantity;
 
             //Fields that only apply to PLACED buildings
             if (o.x !== -1) {
@@ -409,7 +410,8 @@ export class CityDeserializer {
         }
         if (o.va !== undefined) r.variant = o.va;
         if ("storeAmount" in r) (<any>r).storeAmount = o.sa;
-        
+        if ("trafficQuantity" in r) (<any>r).trafficQuantity = o.tq || 0;
+
         if (isTemplate) { //Leave the values alone for some fields if it's a template
             if (o.lo !== undefined) r.locked = o.lo;
             r.isHidden = o.ih || r.isHidden;
