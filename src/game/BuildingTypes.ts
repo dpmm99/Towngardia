@@ -415,7 +415,7 @@ export class CityHall extends Building {
         const baseRevenuePerCapita = city.budget.taxRates["income"] * (city.peakPopulation >= 1000 ? 35 : (15 + 0.02 * city.peakPopulation)); //Scale up slowly until you hit 1k population. Don't want to give way too many resources too early.
         city.budget.lastRevenue["income"] = Math.floor(10 + Math.pow(population, 0.6) * baseRevenuePerCapita); //Comes out to about 42 for 10 people, 60 for 46, 114 for 258, 357 for 2.5k, 1335 for 25k, 2553 for 75k, 3855 for 150k...
 
-        //TODO: not sure about property tax... but the grand total should probably be just a bit more than the above formula. It should barely pay for upkeep in bigger, balanced cities.
+        //TODO: not sure about property tax... but the grand total should probably be just a bit more than the above formula. It should barely pay for upkeep in bigger, balanced cities. Or maybe it could just be a tax on residences equal to their level squared (0 for houses, 1 for apartments/quadplexes, 4 for highrises, 9 for skyscrapers). That'd be 97 in a city of ~3k where income tax is 1.8k, sales tax is 1.3k, healthcare costs 538 (...wait, why? it should be 32x3=96).
 
         //NOTE: Sales tax is on a one-long-tick delay because lastEfficiency isn't calculated until after the City Hall's onLongTick is called.
         //city.budget.lastRevenue["sales"] = city.budget.taxRates["sales"] * 10 * city.buildings.reduce((sum, building) => sum + building.lastEfficiency * building.businessValue, 0);
@@ -3108,6 +3108,7 @@ export class PoliceBox extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.serviceAllocationType = "policeprotection";
+        this.upkeepScales = true;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3117,8 +3118,8 @@ export class PoliceBox extends Building {
     //Doesn't cost the maximum amount of upkeep unless there are 10 buildings in the area.
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{
-            type: "flunds", amount: 2 * (atEfficiency ||
-                (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10))
+            type: "flunds", amount: 2 * (atEfficiency || this.poweredTimeDuringLongTick)
+                * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10
         }];
     }
 
@@ -3149,6 +3150,7 @@ export class PoliceStation extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 7;
         this.serviceAllocationType = "policeprotection";
+        this.upkeepScales = true;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3158,8 +3160,8 @@ export class PoliceStation extends Building {
     //Doesn't cost the maximum amount of upkeep unless there are 10 buildings in the area.
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{
-            type: "flunds", amount: 5 * (atEfficiency ||
-                (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10))
+            type: "flunds", amount: 5 * (atEfficiency || this.poweredTimeDuringLongTick)
+                * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10
         }];
     }
 
@@ -3190,6 +3192,7 @@ export class PoliceUAVHub extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
         this.serviceAllocationType = "policeprotection";
+        this.upkeepScales = true;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3199,8 +3202,8 @@ export class PoliceUAVHub extends Building {
     //Doesn't cost the maximum amount of upkeep unless there are 10 buildings in the area.
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{
-            type: "flunds", amount: 6 * (atEfficiency ||
-                (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10))
+            type: "flunds", amount: 4 * (atEfficiency || this.poweredTimeDuringLongTick)
+                * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10
         }];
     }
 
@@ -3232,6 +3235,7 @@ export class FireBay extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.serviceAllocationType = "fireprotection";
+        this.upkeepScales = true;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3241,8 +3245,8 @@ export class FireBay extends Building {
     //Doesn't cost the maximum amount of upkeep unless there are 10 buildings in the area.
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{
-            type: "flunds", amount: 2 * (atEfficiency ||
-                (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10))
+            type: "flunds", amount: 2 * (atEfficiency || this.poweredTimeDuringLongTick)
+                * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10
         }];
     }
 
@@ -3273,6 +3277,7 @@ export class FireStation extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
         this.serviceAllocationType = "fireprotection";
+        this.upkeepScales = true;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3281,8 +3286,8 @@ export class FireStation extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{
-            type: "flunds", amount: 4 * (atEfficiency ||
-                (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10))
+            type: "flunds", amount: 4 * (atEfficiency || this.poweredTimeDuringLongTick)
+                * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10
         }];
     }
 
@@ -3313,6 +3318,7 @@ export class Clinic extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 7;
         this.serviceAllocationType = "healthcare";
+        this.upkeepScales = true;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3321,8 +3327,8 @@ export class Clinic extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{
-            type: "flunds", amount: 8 * (atEfficiency ||
-                (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10))
+            type: "flunds", amount: 8 * (atEfficiency || this.poweredTimeDuringLongTick)
+                * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10 //I realized after a looong time that I meant for this to be Math.min...but now I kinda like how the costs scale up so much.
                 * (city.techManager.techs.get("aidiagnostics")?.researched ? 0.75 : 1)
         }];
     }
@@ -3364,6 +3370,7 @@ export class Hospital extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
         this.serviceAllocationType = "healthcare";
+        this.upkeepScales = true;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3372,8 +3379,8 @@ export class Hospital extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{
-            type: "flunds", amount: 30 * (atEfficiency ||
-                (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10))
+            type: "flunds", amount: 30 * (atEfficiency || this.poweredTimeDuringLongTick)
+                * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10
                 * (1 - city.techManager.getAdoption("aidiagnostics") * 0.2)
         }];
     }

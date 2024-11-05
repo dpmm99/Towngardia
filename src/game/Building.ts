@@ -47,6 +47,7 @@ export class Building implements IHasDrawable {
     patronageEfficiency: number = 1; //Stays 1 if it's not a business.
 
     affectingBuildingCount: number = 0; //For services, mainly, so it can be calculated in place() and remove() instead of repeated for every service on every long tick.
+    upkeepScales: boolean = false;
 
     //Drawable radius when placing the building
     areaIndicatorRadiusX: number = 0;

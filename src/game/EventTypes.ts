@@ -336,9 +336,9 @@ export class Riot extends CityEvent {
     }
 
     override shouldStart(city: City, date: Date): boolean {
-        //Chance and max frequency both increase as happiness decreases, but only if the city is big enough to have a riot. 4.3% chance per tick (16% a day) at 0.7 happiness, 30% (76% a day) at 0.1 happiness.
+        //Chance and max frequency both increase as happiness decreases, but only if the city is big enough to have a riot. 4.6% chance per tick (16% a day) at 0.65 happiness, 30% (76% a day) at 0.1 happiness.
         const happiness = city.resources.get("happiness")!.amount;
-        return this.checkedStart(this.skippedStarts > 2 * LONG_TICKS_PER_DAY / Math.max(0.1, happiness) && happiness < 0.7 && city.peakPopulation > 100 && Math.random() < 0.03 / Math.max(0.1, happiness) && this.getRiotEpicenter(city) !== undefined, city, date);
+        return this.checkedStart(this.skippedStarts > 2 * LONG_TICKS_PER_DAY / Math.max(0.1, happiness) && happiness < 0.65 && city.peakPopulation > 100 && Math.random() < 0.03 / Math.max(0.1, happiness) && this.getRiotEpicenter(city) !== undefined, city, date);
     }
 
     private calculatePoliceCoverage(city: City, epicenter: Building): number {

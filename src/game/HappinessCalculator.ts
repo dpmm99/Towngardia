@@ -8,6 +8,7 @@ import { AssemblyHouse, DataCenter, ECarRental, GameDevStudio, MohoMine, Nanogig
 
 export class HappinessCalculator {
     private effectSums: Map<EffectType, number> = new Map();
+    private uncoveredTiles: Map<EffectType, number> = new Map();
     private relevantTileCount: number = 0;
 
     constructor(
@@ -43,9 +44,21 @@ export class HappinessCalculator {
 
                 this.relevantTileCount++;
 
+                //We will only possibly penalize for these effect types
+                const unaffectedTypes = new Set([EffectType.PolicePresence, EffectType.FirePrevention, EffectType.Healthcare, EffectType.Luxury]);
                 for (const effect of this.city.effectGrid[y][x]) {
                     const currentSum = this.effectSums.get(effect.type) || 0;
                     this.effectSums.set(effect.type, currentSum + effect.getEffect(this.city, null, y, x));
+                    if (currentSum > 0.0001) unaffectedTypes.delete(effect.type);
+                }
+
+                //We want a subtraction effect for tiles with zero coverage for certain services, even if the average is pretty nice.
+                for (const effectType of unaffectedTypes) {
+                    //Check if the building has ANY coverage for that effect type--not a very efficient algorithm, especially with low coverage and large buildings, but it's a simple implementation.
+                    if (building.getHighestEffect(this.city, effectType) <= 0.0001) {
+                        const currentUncovered = this.uncoveredTiles.get(effectType) || 0;
+                        this.uncoveredTiles.set(effectType, currentUncovered + 1);
+                    }
                 }
             }
         }
@@ -76,11 +89,13 @@ export class HappinessCalculator {
             const organizedCrime = this.getAverageEffect(EffectType.OrganizedCrime);
             const difference = Math.sqrt(Math.max(0, policePresence)) - pettyCrime - 2 * organizedCrime;
             safety += Math.min(0.5, difference) * (difference > 0 ? 0.1 : 0.15); //Caps at +0.05, no cap in the other direction, but even worse impact if below zero
+            if (this.city.peakPopulation > 150) safety += (this.uncoveredTiles.get(EffectType.PolicePresence) || 0) / this.relevantTileCount * -0.1; //Extra penalty for zero coverage kicks in a bit later
             this.setDisplayStats("Police and crime", safety, 0.05);
         } else safety += 0.04;
 
         if (this.city.flags.has(CityFlags.FireProtectionMatters)) {
-            const fire = Math.min(1, Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.FirePrevention)))) * 0.05; //Caps at +0.05, no cap in the other direction
+            let fire = Math.min(1, Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.FirePrevention)))) * 0.05; //Caps at +0.05, no cap in the other direction
+            if (this.city.peakPopulation > 325) fire += (this.uncoveredTiles.get(EffectType.FirePrevention) || 0) / this.relevantTileCount * -0.1; //Extra penalty for zero coverage kicks in a bit later
             this.setDisplayStats("Fire protection", fire, 0.05);
             safety += fire;
         } else safety += 0.045;
@@ -118,12 +133,14 @@ export class HappinessCalculator {
 
     private calculateQualityOfLifeHappiness(): number {
         let qol = 0;
-        const luxury = Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.Luxury))) * 0.12; //No cap
+        let luxury = Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.Luxury))) * 0.12; //No cap
+        if (this.city.peakPopulation > 550) luxury += (this.uncoveredTiles.get(EffectType.Luxury) || 0) / this.relevantTileCount * -0.1; //Penalty kicks in after a while to encourage at least basic luxuries
         this.setDisplayStats("Luxury", luxury);
         qol += luxury;
 
         if (this.city.flags.has(CityFlags.HealthcareMatters)) {
-            const healthcare = Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.Healthcare))) * 0.1; //No cap
+            let healthcare = Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.Healthcare))) * 0.1; //No cap
+            if (this.city.peakPopulation > 1050) healthcare += (this.uncoveredTiles.get(EffectType.Healthcare) || 0) / this.relevantTileCount * -0.1; //Extra penalty for zero coverage kicks in a bit later
             this.setDisplayStats("Healthcare", healthcare);
             qol += healthcare;
         } else qol += 0.09;
@@ -142,9 +159,8 @@ export class HappinessCalculator {
             }
         } else qol += 0.09;
 
-        //Food satisfaction
         const food = this.city.resources.get(new FoodSatisfaction().type)!.amount * 0.13;
-        this.setDisplayStats("Food satisfaction", food, 0.13); //Food satisfaction itself has a cap of 1
+        this.setDisplayStats("Food gratification", food, 0.13); //Food gratification itself has a cap of 1
         qol += food;
 
         return qol;

@@ -111,6 +111,16 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 }));
                 nextY += iconSize + 5;
             }
+            if (building.x === -1 && building.upkeepScales) {
+                infoDrawable.addChild(new Drawable({
+                    x: padding,
+                    y: nextY,
+                    width: (barWidth - padding * 2) + "px",
+                    height: "24px",
+                    text: "...per covered building",
+                }));
+                nextY += 24 + 5;
+            }
             nextY += padding - 5;
         }
 
