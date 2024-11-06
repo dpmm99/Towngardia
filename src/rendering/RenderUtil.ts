@@ -78,7 +78,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
         /*right bar*/ 'friends', 'addfriend', 'newcity', 'research', 'notifications', 'notificationson', 'titles', 'achievements', 'views', 'budget', 'provisionview', 'memorymixology', 'slots', 'starbox', 'monobrynth', 'neponet',
         /*AchievementsMenu*/ 'title1', 'title2', 'title3', //TODO: Rename if you actually use them; must match achievement/title names
         /*top bar*/ 'resources', 'menu', 'progressbg', 'progressfg', 'diet', 'foodsufficiency', 'foodsatisfaction', 'foodhealth',
-        /*resource bar*/ 'tradesettingson', 'tradesettingsoff', 'autobuyhandle', 'autosellhandle',
+        /*resource bar*/ 'tradesettingson', 'tradesettingsoff', 'autobuyhandle', 'autosellhandle', 'arrowleft', 'arrowright',
         /*ConstructMenu*/ 'ok', 'x',
         /*ContextMenu*/ 'info', 'move', 'remove', 'demolish', 'buildcopy', 'switch',
         /*BudgetMenu*/ 'incometax', 'propertytax', 'salestax', 'budgetok', "fireprotection", "policeprotection", "healthcare", "education", "environment", "infrastructure", //Services might be resources, dunno

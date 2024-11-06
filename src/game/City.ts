@@ -202,18 +202,6 @@ export class City {
         }
     }
 
-    //TODO: This function was a good idea, but let's keep the multiplier at the city level and only modify it when events start and end. Just make sure you round to the nearest one or two decimal places after each multiplication to avoid drift.
-    //private getAdjustedBuyPrice(resource: Resource): number {
-    //    let adjustedPrice = resource.buyPrice;
-    //    // Apply city events that affect buy prices
-    //    this.events.forEach(event => {
-    //        if (event.affectedResources.includes(resource.type)) {
-    //            adjustedPrice *= event.buyPriceMultiplier;
-    //        }
-    //    });
-    //    return adjustedPrice;
-    //}
-
     /**
      * Use this when the player needs to know whether they can fully afford something, i.e., when selecting a building for construction
      * @param costs

@@ -244,7 +244,8 @@ export class CityDeserializer {
         const eventTypes = this.eventTypes(o.et);
         const events = this.events(o.ev, eventTypes);
         const techManager = this.techManager(o.tm);
-        const budget = Object.assign(new Budget(), o.bg);
+        const budget = <Budget>Object.assign(new Budget(), o.bg);
+        if (!budget.taxRates["property"]) budget.taxRates["property"] = 0.1; //Old saves won't have this value
         const dietComposition = o.dc;
         const titles = this.titles(o.ti);
         const grid = this.grid(o.gr, buildingsByID);

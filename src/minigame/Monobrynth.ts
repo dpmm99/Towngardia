@@ -193,6 +193,12 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         this.userInputLocked = true;
         this.sequenceVisible = true;
         this.collectingTreasures = currentTile.content.filter(p => p === 'treasure').map(p => this.generateTreasure(currentTile.difficulty));
+
+        if (this.playerPosition[1] === GRID_HEIGHT - 1 && !this.reachedEnd) {
+            this.reachedEnd = true;
+            this.score += 7;
+        }
+
         if (!this.collectingTreasures.length) {
             this.hideSequence();
             this.currentSequence = [];
@@ -247,14 +253,14 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
     private calculateWinnings(): void {
         this.winnings = [];
-        if (this.score > 0) this.winnings.push(new Silicon(Math.min(4, Math.floor(this.score / 2))));
-        if (this.score >= 10) this.winnings.push(new Electronics(Math.min(2, Math.floor((this.score - 5) / 5))));
-        if (this.score >= 15) this.winnings.push(new Gemstones(Math.min(4, Math.floor((this.score - 10) / 5))));
+        if (this.score >= 5) this.winnings.push(new Silicon(Math.min(4, Math.round((this.score - 4) * 5) / 10)));
+        if (this.score >= 10) this.winnings.push(new Electronics(Math.min(4, Math.round((this.score - 9) * 2) / 10)));
+        if (this.score >= 15) this.winnings.push(new Gemstones(Math.min(4, Math.round(this.score - 14) / 10)));
         if (this.score >= 20) {
-            if (this.city.resources.get(new Tritium().type)?.capacity) this.winnings.push(new Tritium(Math.min(4, Math.floor((this.score - 15) / 5))));
-            else this.winnings.push(new Flunds(Math.min(20, Math.floor((this.score - 15) / 2))));
+            if (this.city.resources.get(new Tritium().type)?.capacity) this.winnings.push(new Tritium(Math.min(4, Math.round((this.score - 19) * 2) / 10)));
+            else this.winnings.push(new Flunds(Math.min(20, Math.round((this.score - 19) * 10) / 10)));
         }
-        if (this.score > 25) this.winnings.push(new Research(Math.ceil((this.score - 25) / 5)));
+        if (this.score >= 25) this.winnings.push(new Research((this.score - 24) / 20)); //Was way too easy to earn research points. 1 a day is still a lot.
         this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
     }
 
@@ -290,11 +296,6 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             this.startBattle(currentTile.difficulty);
         } else {
             this.showBattleSuccess(currentTile);
-        }
-
-        if (this.playerPosition[1] === GRID_HEIGHT - 1 && !this.reachedEnd) {
-            this.reachedEnd = true;
-            this.score += 7;
         }
 
         this.updateTileVisibility();

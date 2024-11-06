@@ -109,16 +109,18 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         if (this.totalStarsDestroyed > 60) this.winnings.push(new Stone(Math.min(4, Math.floor((this.totalStarsDestroyed - 50) / 10))));
         if (this.totalStarsDestroyed > 80) this.winnings.push(new Iron(Math.min(4, Math.floor((this.totalStarsDestroyed - 70) / 10))));
         if (this.totalStarsDestroyed > 100) this.winnings.push(new Copper(Math.min(4, Math.floor((this.totalStarsDestroyed - 90) / 10))));
-        if (this.totalStarsDestroyed > 110) this.winnings.push(new Research(Math.min(4, Math.floor((this.totalStarsDestroyed - 105) / 5))));
-        if (this.totalStarsDestroyed > 120) {
+        if (this.totalStarsDestroyed > 120) this.winnings.push(new Research(Math.min(2, (this.totalStarsDestroyed - 120) / 30))); //A smoother increase but lower limit--research points were way too easy to earn
+        if (this.totalStarsDestroyed > 140) {
             if (this.city.resources.get(new Uranium().type)?.capacity) this.winnings.push(new Uranium(Math.min(4, Math.floor((this.totalStarsDestroyed - 115) / 4))));
             else rewardFlunds.amount += Math.min(10, Math.floor(this.totalStarsDestroyed - 118));
         }
-        if (this.totalStarsDestroyed > 130) {
+        if (this.totalStarsDestroyed > 160) {
             if (this.city.resources.get(new Tritium().type)?.capacity) this.winnings.push(new Tritium(Math.min(4, Math.floor((this.totalStarsDestroyed - 125) / 3))));
             else rewardFlunds.amount += Math.min(20, Math.floor((this.totalStarsDestroyed - 128) * 1.2));
         }
-        if (this.totalStarsDestroyed > 160) rewardFlunds.amount += 100;
+        if (this.totalStarsDestroyed > 180) rewardFlunds.amount += 20;
+        if (this.totalStarsDestroyed > 200) rewardFlunds.amount += 20;
+        if (this.totalStarsDestroyed > 220) rewardFlunds.amount += 20;
         if (rewardFlunds.amount > 0) this.winnings.push(rewardFlunds);
         this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
 

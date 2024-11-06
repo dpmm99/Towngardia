@@ -29,7 +29,8 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
         if (!this.shown) return this.lastDrawable = new Drawable({ width: "0px" }); //Nothing
 
         if (!this.uiManager.isMyCity) this.showSettings = false;
-        const barWidth = 170 + (this.showSettings ? 300 : 0);
+        const barWidth = 170;
+        const expandedWidth = 340;
         const padding = 10;
         const iconSize = 48;
         const buttonSize = 64;
@@ -37,7 +38,8 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
 
         const barDrawable = new Drawable({
             anchors: ['left'],
-            width: barWidth + "px", // or something like that
+            width: "min(100%, " + (barWidth + (this.showSettings ? expandedWidth : 0)) + "px)", //Note: makes it take up significantly more space on mobile than it uses
+            height: "calc(100% - 60px)", //TopBar height: 60px. BottomBar height: 80px. Decided to leave the bottom bar out of this calculation, because it's not always visible.
             y: topBarHeight,
             fallbackColor: '#333333',
             id: "resourcesBar",
@@ -45,50 +47,19 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
             onDragEnd: () => { this.scroller.resetDrag(); },
             biggerOnMobile: true, scaleYOnMobile: true,
         });
+        const expandedBar = new Drawable({
+            x: barWidth,
+            width: "min(" + expandedWidth + "px, calc(100% - " + barWidth + "px))", //should be 300, could be smaller on tiny screens.
+            height: barDrawable.height,
+            fallbackColor: '#00000000',
+            id: barDrawable.id + ".expanded",
+            scaleXOnMobile: true, biggerOnMobile: true
+        });
 
         //Toggle to switch between collection and provisioning modes, and toggle to switch between resource settings (auto-buy/auto-trade slider) and plain resource display
         let nextY = padding - this.scroller.getScroll();
         const baseY = nextY; //for the scroller maxScroll determination
-        if (this.uiManager.isMyCity) {
-            if (this.showSettings) {
-                barDrawable.addChild(new Drawable({
-                    x: 320,
-                    y: nextY + 12,
-                    centerOnOwnX: true,
-                    width: 300 - 2 * padding + "px",
-                    height: "32px",
-                    text: this.page === 0 ? "Auto-buy/sell" : this.page === 1 ? "Market prices" : "Market supply",
-                    id: barDrawable.id + ".tradesettings.text",
-                    biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
-                }));
-
-                if (this.page > 0)
-                    barDrawable.addChild(new Drawable({
-                        x: 170 + padding,
-                        y: nextY + 44,
-                        width: "150px",
-                        height: "32px",
-                        text: "<",
-                        id: barDrawable.id + ".tradesettings.left",
-                        biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
-                        onClick: () => this.page = Math.max(0, this.page - 1),
-                    }));
-                if (this.page < 2)
-                    barDrawable.addChild(new Drawable({
-                        anchors: ['right'],
-                        rightAlign: true,
-                        x: padding,
-                        y: nextY + 44,
-                        width: "150px",
-                        height: "32px",
-                        text: ">",
-                        id: barDrawable.id + ".tradesettings.right",
-                        biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
-                        onClick: () => this.page = Math.min(2, this.page + 1), //0 for auto-trade level sliders, 1 for buy/sell prices, 2 for market quantities and limits.
-                    }));
-            }
-            nextY += padding + buttonSize;
-        }
+        if (this.uiManager.isMyCity) nextY += padding + buttonSize; //For the trade and provision buttons, added last
 
         const lastTouchedSliderInfo = new Drawable({
             width: "0px",
@@ -142,8 +113,8 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
 
             if (this.showSettings) {
                 if (this.page === 0) {
-                    const slider = barDrawable.addChild(new ResourceSlider({
-                        x: padding * 3 + iconSize * 3.5,
+                    const slider = expandedBar.addChild(new ResourceSlider({
+                        x: padding * 2,
                         y: nextY,
                         id: "resourceSlider",
                     }, resource, this.uiManager.inTutorial(), this.lastTouched)); //Lock during the tutorial so they can't softlock themselves.
@@ -168,10 +139,10 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
                     }
                 } else if (this.page === 1) {
                     //Show buy and sell prices
-                    barDrawable.addChild(new Drawable({
-                        x: padding * 3 + iconSize * 3.5,
+                    expandedBar.addChild(new Drawable({
+                        x: padding,
                         y: nextY + 12,
-                        width: "300px",
+                        width: "calc(100% - " + padding * 3 + ")",
                         height: "32px",
                         text: "Buy: " + humanizeCeil(resource.buyPrice * resource.buyPriceMultiplier) + "; sell: " + humanizeFloor(resource.sellPrice * resource.sellPriceMultiplier),
                         id: barDrawable.id + "." + resource.type + ".buyprice",
@@ -179,10 +150,10 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
                     }));
                 } else if (this.page === 2) {
                     //Show market quantities and limits
-                    barDrawable.addChild(new Drawable({
-                        x: padding * 3 + iconSize * 3.5,
+                    expandedBar.addChild(new Drawable({
+                        x: padding,
                         y: nextY + 12,
-                        width: "300px",
+                        width: "calc(100% - " + padding * 3 + ")",
                         height: "32px",
                         text: "For sale: " + humanizeFloor(resource.buyableAmount) + "/" + humanizeFloor(this.city.getBuyCapacity(resource)),
                         id: barDrawable.id + "." + resource.type + ".buyable",
@@ -193,22 +164,18 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
 
             nextY += iconSize + padding;
         }
-        barDrawable.addChild(lastTouchedSliderInfo);
+        expandedBar.addChild(lastTouchedSliderInfo);
 
         this.scroller.setChildrenSize(nextY - baseY + padding + 100 + (this.uiManager.buildTypeBarShown() ? 120 : 0)); //80 for the bottom bar, 20 more to make the pop-up text readable
 
-        barDrawable.height = "calc(100% - 60px)"; //TopBar height: 60px. BottomBar height: 80px. Decided to leave the bottom bar out of this calculation, because it's not always visible.
-
         //Down here because it should be on top of everything else
         if (this.uiManager.isMyCity) {
-            const fixedTopPart = new Drawable({
-                x: 0,
-                y: 0,
-                width: "170px",
+            const fixedTopPart = barDrawable.addChild(new Drawable({
+                width: barWidth + "px",
                 height: (buttonSize + padding * 2) + "px",
                 fallbackColor: '#333333',
                 biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
-            });
+            }));
             fixedTopPart.addChild(new Drawable({
                 x: padding,
                 y: padding,
@@ -221,7 +188,7 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
                 biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
             }));
             fixedTopPart.addChild(new Drawable({
-                x: 170 - buttonSize - padding,
+                x: barWidth - buttonSize - padding,
                 y: padding,
                 width: buttonSize + "px",
                 height: buttonSize + "px",
@@ -231,7 +198,51 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
                 onClick: () => this.showSettings = !this.showSettings,
                 biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
             }));
-            barDrawable.addChild(fixedTopPart);
+
+            if (this.showSettings) {
+                barDrawable.addChild(expandedBar);
+                const settingsFixedTopPart = expandedBar.addChild(new Drawable({
+                    width: "100%",
+                    height: (buttonSize + padding * 2) + "px",
+                    fallbackColor: '#333333',
+                    biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                }));
+                settingsFixedTopPart.addChild(new Drawable({
+                    anchors: ['centerX'],
+                    y: padding,
+                    centerOnOwnX: true,
+                    width: "100%",
+                    height: "32px",
+                    text: this.page === 0 ? "Auto-buy/sell" : this.page === 1 ? "Market prices" : "Market supply",
+                    id: barDrawable.id + ".tradesettings.text",
+                    biggerOnMobile: true, scaleYOnMobile: true,
+                }));
+
+                if (this.page > 0)
+                    settingsFixedTopPart.addChild(new Drawable({
+                        x: padding,
+                        y: padding + 32,
+                        width: "44px",
+                        height: "32px",
+                        image: new TextureInfo(64, 64, "ui/arrowleft"),
+                        id: barDrawable.id + ".tradesettings.left",
+                        biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                        onClick: () => this.page = Math.max(0, this.page - 1), //TODO: I really need to make the click order opposite the draw order still
+                    }));
+                if (this.page < 2)
+                    settingsFixedTopPart.addChild(new Drawable({
+                        anchors: ['right'],
+                        rightAlign: true,
+                        x: padding,
+                        y: padding + 32,
+                        width: "44px",
+                        height: "32px",
+                        image: new TextureInfo(64, 64, "ui/arrowright"),
+                        id: barDrawable.id + ".tradesettings.right",
+                        biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                        onClick: () => this.page = Math.min(2, this.page + 1), //0 for auto-trade level sliders, 1 for buy/sell prices, 2 for market quantities and limits.
+                    }));
+            }
         }
 
         this.lastDrawable = barDrawable;

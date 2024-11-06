@@ -36,8 +36,8 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
         //Build the sliders once and reuse them
         this.taxSliders = {
             income: new LockStepSlider(uiManager, { x: 20, y: 0, fallbackColor: "#00000000" }, "Income Tax", "ui/incometax", ["9%", "10%", "11%"], 0, (value) => { }),
-            //Removed: property: new LockStepSlider(uiManager, { x: 20, y: 0, fallbackColor: "#00000000" }, "Property Tax", "ui/propertytax", ["9%", "10%", "11%"], 0, (value) => { }),
-            sales: new LockStepSlider(uiManager, { x: 20, y: 0, fallbackColor: "#00000000" }, "Sales Tax", "ui/salestax", ["9%", "10%", "11%"], 0, (value) => { })
+            sales: new LockStepSlider(uiManager, { x: 20, y: 0, fallbackColor: "#00000000" }, "Sales Tax", "ui/salestax", ["9%", "10%", "11%"], 0, (value) => { }),
+            property: new LockStepSlider(uiManager, { x: 20, y: 0, fallbackColor: "#00000000" }, "Property Tax", "ui/propertytax", ["9%", "10%", "11%"], 0, (value) => { }),
         };
         Object.keys(this.budget.serviceAllocations).forEach((service) =>
             this.serviceSliders[service] = new LockStepSlider(uiManager, { x: 20, y: 0, fallbackColor: "#00000000" }, this.serviceAndOtherNames[service], `ui/${service}`, ["80%", "90%", "100%"], 0, (value) => { })
@@ -104,7 +104,7 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
             budgetDrawable.addChild(new Drawable({
                 x: 102,
                 y: nextY,
-                text: `Latest revenue: ${humanizeFloor(this.budget.lastRevenue[arr[0]] * LONG_TICKS_PER_DAY)}/day`,
+                text: `Latest revenue: ${humanizeFloor((this.budget.lastRevenue[arr[0]] ?? 0) * LONG_TICKS_PER_DAY)}/day`,
                 width: "300px",
                 height: "24px"
             }));
@@ -121,11 +121,11 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
             budgetDrawable.addChild(new Drawable({
                 x: 102,
                 y: nextY,
-                text: `Latest cost: ${humanizeCeil(this.budget.lastServiceCosts[key] * LONG_TICKS_PER_DAY)}/day`,
+                text: `Latest cost: ${humanizeCeil((this.budget.lastServiceCosts[key] ?? 0) * LONG_TICKS_PER_DAY)}/day`,
                 width: "300px",
                 height: "24px"
             }));
-            coveredCosts += this.budget.lastServiceCosts[key];
+            coveredCosts += this.budget.lastServiceCosts[key] ?? 0;
             nextY += 10 + 20;
         });
 

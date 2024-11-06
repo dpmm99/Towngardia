@@ -128,7 +128,9 @@ export class HappinessCalculator {
         this.setDisplayStats("Income tax", incomeTax, 0);
         const salesTax = (this.city.budget.taxRates["sales"] - 0.09) * -2; //0, 0.02, 0.04
         this.setDisplayStats("Sales tax", salesTax, 0);
-        return businessPresence + landValue + incomeTax + salesTax;
+        const propertyTax = (this.city.budget.taxRates["property"] - 0.09) * -1; //0, 0.01, 0.02
+        this.setDisplayStats("Property tax", propertyTax, 0);
+        return businessPresence + landValue + incomeTax + salesTax + propertyTax;
     }
 
     private calculateQualityOfLifeHappiness(): number {

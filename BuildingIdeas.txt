@@ -126,6 +126,7 @@ Strip clubs
 Supermarkets
 Swimming pools
 Telecommunications towers
+Teleportation pods (huge traffic reduction but high power cost)
 Telescope arrays
 ~ Textile mills
 ~ Toy manufacturer

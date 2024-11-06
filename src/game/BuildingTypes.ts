@@ -27,7 +27,7 @@ export class Road extends Building {
 
     constructor() {
         super(
-            "road", "Road", "A chunk of cement to make travels smoother. Comes complete with wiring.",
+            "road", "Road", "A chunk of cement to make travels smoother. Comes complete with wiring. Maintenance cost increases as the population rises, and it spreads noise and pollution proportional to nearby businesses' patronage.",
             BuildingCategory.INFRASTRUCTURE,
             1, 1, 0,
             0,
@@ -415,14 +415,20 @@ export class CityHall extends Building {
         const baseRevenuePerCapita = city.budget.taxRates["income"] * (city.peakPopulation >= 1000 ? 35 : (15 + 0.02 * city.peakPopulation)); //Scale up slowly until you hit 1k population. Don't want to give way too many resources too early.
         city.budget.lastRevenue["income"] = Math.floor(10 + Math.pow(population, 0.6) * baseRevenuePerCapita); //Comes out to about 42 for 10 people, 60 for 46, 114 for 258, 357 for 2.5k, 1335 for 25k, 2553 for 75k, 3855 for 150k...
 
-        //TODO: not sure about property tax... but the grand total should probably be just a bit more than the above formula. It should barely pay for upkeep in bigger, balanced cities. Or maybe it could just be a tax on residences equal to their level squared (0 for houses, 1 for apartments/quadplexes, 4 for highrises, 9 for skyscrapers). That'd be 97 in a city of ~3k where income tax is 1.8k, sales tax is 1.3k, healthcare costs 538 (...wait, why? it should be 32x3=96).
+        //I considered a property tax formula using residenceLevel**2, but sum of residenceLevel + 1 is better because it dampens the huge wealth that easily comes with higher-tier residences.
+        //Simpler but less efficient version of this math: city.buildings.filter(b => b.isResidence).reduce((sum, b) => sum + b.residenceLevel + 1, 0)
+        city.budget.lastRevenue["property"] = 30 * (city.budget.taxRates["property"] ?? 0.1) *
+            (city.presentBuildingCount.get(getBuildingType(SmallHouse)) ?? 0 +
+                2 * (city.presentBuildingCount.get(getBuildingType(Quadplex)) ?? 0) + 2 * (city.presentBuildingCount.get(getBuildingType(SmallApartment)) ?? 0) +
+                3 * (city.presentBuildingCount.get(getBuildingType(Highrise)) ?? 0) +
+                4 * (city.presentBuildingCount.get(getBuildingType(Skyscraper)) ?? 0));
 
         //NOTE: Sales tax is on a one-long-tick delay because lastEfficiency isn't calculated until after the City Hall's onLongTick is called.
         //city.budget.lastRevenue["sales"] = city.budget.taxRates["sales"] * 10 * city.buildings.reduce((sum, building) => sum + building.lastEfficiency * building.businessValue, 0);
         city.budget.lastRevenue["sales"] = this.calculateSalesRevenue(city, population, tourists) * city.budget.taxRates["sales"];
 
         //Update the city's flunds production rate, update city hall's capacity (but don't delete any money they've already earned), and produce the new revenue on city hall
-        this.flunds.productionRate = city.flunds.productionRate = city.budget.lastRevenue["income"] + city.budget.lastRevenue["sales"];
+        this.flunds.productionRate = city.flunds.productionRate = city.budget.lastRevenue["income"] + city.budget.lastRevenue["sales"] + city.budget.lastRevenue["property"];
         const targetCapacity = Math.max(city.flunds.productionRate * CAPACITY_MULTIPLIER, this.flunds.amount, 250);
         if (this.flunds.capacity <= targetCapacity) this.flunds.capacity = targetCapacity;
         else this.flunds.capacity = this.flunds.capacity * 0.9 + targetCapacity * 0.1; //Reduce by 10% of the difference each tick if downsizing
@@ -3413,7 +3419,7 @@ export class Hospital extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 24; }
 }
 
-export class ElementarySchool extends Building {
+export class ElementarySchool extends Building { //TODO: Strongly consider splitting up education into lower, middle, and upper. Then all three school types could spread a wider area effect of 0.9 (since there are techs to upgrade them) and libraries could spread two or all three types of education with a smaller strength.
     constructor() {
         super(
             "elementaryschool", "Elementary School", "A place where children learn. For some reason, everyone who applies for the principal position is named Watson.",
@@ -3430,7 +3436,7 @@ export class ElementarySchool extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 10 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
+        return [{ type: "flunds", amount: 15 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
@@ -3470,7 +3476,7 @@ export class HighSchool extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 14 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
+        return [{ type: "flunds", amount: 21 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
@@ -3512,7 +3518,7 @@ export class College extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 20 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
+        return [{ type: "flunds", amount: 30 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
@@ -3615,6 +3621,7 @@ export class WeatherControlMachine extends Building {
             0.3,
             true,
         );
+        this.serviceAllocationType = "environment";
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3623,6 +3630,7 @@ export class WeatherControlMachine extends Building {
 
     override onLongTick(city: City): void {
         super.onLongTick(city);
+        this.lastEfficiency *= city.budget.serviceAllocations[this.serviceAllocationType] ** 2; //Weakened by the square of the environment budget deficit
 
         //One copy of this halves the duration; two copies cuts it to a third...
         const drought = city.events.find(p => p.type === "drought");
@@ -3634,7 +3642,7 @@ export class WeatherControlMachine extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 15 * (atEfficiency || (this.poweredTimeDuringLongTick)) }];
+        return [{ type: "flunds", amount: 15 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 20; }

@@ -433,6 +433,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
     private addBudgetInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: CityHall, barWidth: number): number {
         const incomeTax = this.city.budget.lastRevenue["income"] * LONG_TICKS_PER_DAY;
         const salesTax = this.city.budget.lastRevenue["sales"] * LONG_TICKS_PER_DAY;
+        const propertyTax = this.city.budget.lastRevenue["property"] * LONG_TICKS_PER_DAY;
         const expenses = this.city.flunds.consumptionRate * LONG_TICKS_PER_DAY;
         infoDrawable.addChild(new Drawable({
             x: padding,
@@ -457,11 +458,20 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             y: nextY,
             width: (barWidth - padding * 2) + "px",
             height: "24px",
+            text: "From property tax: " + humanizeFloor(propertyTax) + "/day",
+            id: `${infoDrawable.id}.output.budget.property`,
+        }));
+        nextY += 28;
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: "24px",
             text: "Expenses: " + humanizeCeil(expenses) + "/day", //Breakdown is in the budget menu
             id: `${infoDrawable.id}.output.budget.expenses`,
         }));
         nextY += 28;
-        const surplus = incomeTax + salesTax - expenses;
+        const surplus = incomeTax + salesTax + propertyTax - expenses;
         infoDrawable.addChild(new Drawable({
             x: padding,
             y: nextY,

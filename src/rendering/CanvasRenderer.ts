@@ -360,12 +360,13 @@ export class CanvasRenderer implements IRenderer {
             this.renderSprite(drawable, sprite, width, height, parentWidth, parentHeight);
             if (moreLinesOfTextSprites.length) { //This loop is solely because of word wrap
                 sumHeight = height;
+                const limitedWidth = drawable.getWidth(sprite, parentWidth); //Have to recalculate width since noXStretch might have reduced the first line's width.
                 for (const extraLineSprite of moreLinesOfTextSprites) {
-                    let lineWidth = width; //so the final output width isn't set to the width of the last line, but of the first line. Still kinda sloppy...and probably not needed
+                    let lineWidth = limitedWidth; //so the final output width isn't set to the width of the last line, but of the first line. Still kinda sloppy...and probably not needed
                     if (extraLineSprite) {
                         //Reapply noXStretch logic
                         //I was assuming all lines other than the final one should be justified like this: && moreLinesOfTextSprites.indexOf(extraLineSprite) === moreLinesOfTextSprites.length - 1
-                        if (drawable.noXStretch) lineWidth = this.getCorrectedWidth(extraLineSprite, width, height, lineStretchRatio);
+                        if (drawable.noXStretch) lineWidth = this.getCorrectedWidth(extraLineSprite, limitedWidth, height, lineStretchRatio);
                         this.renderSprite(drawable, extraLineSprite, lineWidth, height, parentWidth, parentHeight, sumHeight);
                     }
                     sumHeight += height;

@@ -209,7 +209,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         //Early game, you just get a tiny bit of flunds. Once you unlock tourism, it gives you a temporary tourism boost.
         if (this.score >= 10) this.winnings.push(new Flunds(this.score)); //Theoretical max score with the game rules: 2 * 15 (four-ingredient recipes) + 2 * 10 (three-ingredient recipes) = 50. If you mess up on one of the 4-ingredient ones, 15 + 3 * 10 = 45. Mess up both and you can score 50 again, though... 5 * 10 = 50 because it'd leave 6 cards at the end.
         if (this.score >= 30) this.winnings[0].amount += 10;
-        if (this.score >= 50) this.winnings[0].amount += 40;
+        if (this.score >= 50) this.winnings[0].amount += 20;
         this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
 
         if (this.city.flags.has(CityFlags.UnlockedTourism) && this.score >= 10) {
