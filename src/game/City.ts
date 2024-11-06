@@ -858,6 +858,10 @@ export class City {
                 }
             }
         }
+
+        //Remove this building's power from the grid, too--guaranteed since we removed the building itself.
+        this.applyPower(building, -1);
+        building.powerConnected = false;
     }
 
     getCellType(x: number, y: number): FootprintType {
