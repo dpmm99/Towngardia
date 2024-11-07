@@ -299,7 +299,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     }
 
     public handleMove(x: number, y: number): void {
-        if (!this.gameStarted || !this.isReachable(x, y, Array.from({ length: GRID_HEIGHT }, () => Array(GRID_WIDTH).fill(false))) || this.userInputLocked || this.currentSequence.length) return;
+        if (!this.gameStarted || !this.isReachable(x, y) || this.userInputLocked || this.currentSequence.length) return;
 
         this.playerPosition = [x, y];
         const currentTile = this.grid[y][x];
@@ -328,15 +328,13 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         });
     }
 
-    //DFS for the grid starting at each empty space in the top row, to check if (x, y) is reachable (all spaces along the path--any direction is allowed--must be empty)
-    private isReachable(x: number, y: number, visited: boolean[][]): boolean {
-        if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) return false;
-        if (y === 0) return true; //All tiles on row 0 are reachable
-        if (visited[y][x]) return false;
-        visited[y][x] = true;
-
-        //Reachable if any adjacent tile is reachable OR this one is empty (so all tiles adjacent to empty ones are reachable)
-        return !this.grid[y][x].content.length || this.isReachable(x, y - 1, visited) || this.isReachable(x - 1, y, visited) || this.isReachable(x + 1, y, visited) || this.isReachable(x, y + 1, visited);
+    private isReachable(x: number, y: number): boolean {
+        //Reachable if any adjacent tile is cleared or if this one is on the top row
+        for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
+            if (x + dx < 0 || x + dx >= GRID_WIDTH || y + dy >= GRID_HEIGHT) continue;
+            if (y + dy < 0 || this.grid[y + dy][x + dx].visibility === 'revealed') return true;
+        }
+        return false;
     }
 
     asDrawable(): Drawable {
@@ -351,11 +349,10 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
         if (!this.gameStarted) {
             this.drawStartOverlay(mainDrawable);
+            this.drawCloseButton(mainDrawable);
         } else {
             this.drawGameArea(mainDrawable);
         }
-
-        this.drawCloseButton(mainDrawable);
 
         this.lastDrawable = mainDrawable;
         return mainDrawable;

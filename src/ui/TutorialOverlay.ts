@@ -137,7 +137,7 @@ export class TutorialOverlay implements IHasDrawable {
                     x: 170, y: 70, width: "min(calc(100% - 170px), 1000px)", height: "min(600px, calc(100% - 80px))", scaleXOnMobile: true, scaleYOnMobile: true, biggerOnMobile: true,
                 },
                 content: {
-                    text: "There, now you can see your collected flunds in the top bar! As a housewarming present, you've been given some wood--just enough for that farm I know you're itching to build. See that bar that just appeared at the top of your screen? Tap the pile of objects at the left end to peek at your resource stash. Keep it open and tap the below text when you're done looking.",
+                    text: "There, now you can see your collected flunds in the top bar! As a housewarming present, you've been given some wood--I know you're itching to build with it, but there's more to learn. See that bar that just appeared at the top of your screen? Tap the pile of objects at the left end to peek at your resource stash. Keep it open and tap the below text when you're done looking.",
                 },
                 nextButton: {
                     text: "I have concrete, too!",
@@ -753,6 +753,7 @@ export class TutorialOverlay implements IHasDrawable {
             this.city.tutorialStepIndex++;
             this.stepStartTime = Date.now();
             this.steps[this.city.tutorialStepIndex].onStart();
+            this.minimized = false;
             if (!fastForward) {
                 this.uiManager.game.storage.saveCity(this.player.id, this.city); //Make sure the player's progress gets saved each step of the way.
                 this.uiManager.game.storage.updatePlayer(this.player);
