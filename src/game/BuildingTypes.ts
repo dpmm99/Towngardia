@@ -112,7 +112,7 @@ export class BikeRental extends Building {
             1, 1, 0,
             0.2,
         );
-        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.needsRoad = false;
     }
@@ -148,7 +148,7 @@ export class BusStation extends Building {
             2, 2, 0,
             0.2,
         );
-        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 9;
         this.areaIndicatorRounded = true;
     }
 
@@ -183,7 +183,7 @@ export class ECarRental extends Building {
             2, 2, 0,
             0.2,
         );
-        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
         this.areaIndicatorRounded = true;
     }
 
@@ -201,7 +201,42 @@ export class ECarRental extends Building {
 
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.PublicTransport, 1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
+        city.spreadEffect(new Effect(EffectType.PublicTransport, 1.1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
+    }
+
+    override remove(city: City, justMoving: boolean = false): void {
+        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
+        super.remove(city, justMoving);
+    }
+}
+
+export class TeleportationPod extends Building {
+    constructor() {
+        super(
+            "teleportationpod", "Teleportation Pod", "Folds space-time like origami through the power of scientific hand-waving, massively reducing road noise and pollution in the area--because, come on, it's a teleportation pod; everyone's dying to use it. Warning: may occasionally swap a few of your carbon atoms. It's easy to get them confused since they all look alike.",
+            BuildingCategory.INFRASTRUCTURE,
+            1, 1, 0,
+            0.4,
+        );
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
+        this.areaIndicatorRounded = true;
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 1000 }, { type: "electronics", amount: 30 }, { type: "gemstones", amount: 20 }];
+    }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 8 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number {
+        return (ideal ? 1 : this.lastEfficiency) * 38;
+    }
+
+    override place(city: City, x: number, y: number): void {
+        super.place(city, x, y);
+        city.spreadEffect(new Effect(EffectType.PublicTransport, 5, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
     }
 
     override remove(city: City, justMoving: boolean = false): void {
@@ -3978,7 +4013,7 @@ export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Industrial*/ MountainIronMine, Quarry, CementMill, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks, SiliconRefinery, CrystalMine, AssemblyHouse, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory, ToyManufacturer, Furnifactory, LithiumMine, MohoMine, Nanogigafactory, PharmaceuticalsLab, SpaceLaunchSite,
     /*Power*/ StarterSolarPanel, WindTurbine, SolarFarm, OilPowerPlant, OilTruck, GeothermalPowerPlant, CoalPowerPlant, CoalTruck, NuclearPowerPlant, NuclearFuelTruck, FusionPowerPlant, FusionFuelTruck,
     /*Agriculture*/ TreeFarm, Farm, Ranch, FishFarm, AlgaeFarm, PlantMilkPlant, VerticalFarm, Carnicultivator,
-    /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, DataCenter, NuclearStorage,
+    /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, TeleportationPod, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, DataCenter, NuclearStorage,
     /*Government*/ CityHall, InformationCenter, PostOffice,
     /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, QuantumComputingLab, WeatherControlMachine,
     /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse,

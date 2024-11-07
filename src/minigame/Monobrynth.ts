@@ -8,6 +8,9 @@ import { addResourceCosts } from "../ui/UIUtil.js";
 import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { IOnResizeEvent } from "../ui/IOnResizeEvent.js";
 import { StandardScroller } from "../ui/StandardScroller.js";
+import { CityFlags } from "../game/CityFlags.js";
+import { TeleportationPod, getBuildingType } from "../game/BuildingTypes.js";
+import { Notification } from "../game/Notification.js";
 
 const SYMBOL_COUNT = 6;
 const GRID_WIDTH = 5;
@@ -38,6 +41,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private winnings: Resource[] = [];
     private collectingTreasures: TreasureType[] | null = null;
     private score: number = 0;
+    private noneFailed: boolean = true;
     private reachedEnd: boolean = false;
     private hp: ('clothing' | 'shield')[] = [];
     private grid: Tile[][] = [];
@@ -55,6 +59,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
     private initializeGame(): void {
         this.score = 0;
+        this.noneFailed = true;
         this.hp = new Array(1 + this.clothingToUse).fill('clothing');
         this.grid = this.generateGrid();
         this.playerPosition = [0, -1]; //Player isn't drawn at first
@@ -234,6 +239,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         this.userInputLocked = true;
         this.sequenceVisible = true;
         this.sequenceFailed = true;
+        this.noneFailed = false;
         this.memorizeTimeout = setTimeout(() => {
             this.hideSequence();
             this.currentSequence = [];
@@ -243,7 +249,13 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     }
 
     private endGameIfAllVisited(): void {
-        if (this.grid.every(row => row.every(tile => !tile.content.length && tile.visibility === 'revealed'))) this.endGame();
+        if (this.grid.every(row => row.every(tile => !tile.content.length && tile.visibility === 'revealed'))) {
+            this.endGame();
+            if (this.city.flags.has(CityFlags.UnlockedGameDev) && this.noneFailed && this.city.buildingTypes.find(p => p.type === getBuildingType(TeleportationPod))?.locked) {
+                this.city.unlock(getBuildingType(TeleportationPod));
+                this.city.notify(new Notification("Telewhat!?", "Breaking news: Thanks to you bringing so many artifacts back from the Monobrynth, your city's smartypants scientists have figured out how to turn people into temporary particle clouds! They insist it's \"perfectly safe\" and only has a 0.0001% chance of accidentally creating an evil doppelganger. You'll find the Teleportation Pod in the Infrastructure construction category.", "monobrynth"));
+            }
+        }
     }
 
     private endGame(): void {
