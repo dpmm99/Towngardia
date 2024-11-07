@@ -53,24 +53,6 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
             }
         });
 
-        // A second close button because my click order and my draw order are different
-        menuDrawable.addChild(new Drawable({
-            x: 10,
-            y: 10,
-            anchors: ['right'],
-            width: "48px",
-            height: "48px",
-            fallbackColor: '#00000000',
-            biggerOnMobile: true,
-            onClick: () => this.hide()
-        }));
-
-        const nonResizingTop = menuDrawable.addChild(new Drawable({
-            y: 94,
-            height: "0px",
-            fallbackColor: '#00000000',
-        }));
-
         let yOffset = 100 - this.scroller.getScroll();
         let baseY = yOffset;
 

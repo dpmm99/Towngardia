@@ -62,8 +62,7 @@ export class Drawable {
     }
 
     getClickedDescendant(x: number, y: number): Drawable | null { //Parents don't *contain* the children; it's just for relative positioning and relative draw order.
-        //TODO: How do we reverse the order of this.children for searching?
-        for (const child of this.children) {
+        for (const child of this.children.toReversed()) {
             const descendant = child.getClickedDescendant(x, y);
             if (descendant) return descendant;
         }
