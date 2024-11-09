@@ -741,8 +741,8 @@ export class TutorialOverlay implements IHasDrawable {
             this.city.buildingTypes.filter(p => TUTORIAL_COMPLETION_BUILDING_UNLOCKS.has(p.type)).forEach(p => p.locked = false);
             this.city.tutorialStepIndex = -1;
             this.player.finishedTutorial = true;
-            this.uiManager.game.storage.saveCity(this.player.id, this.city);
             this.uiManager.game.storage.updatePlayer(this.player);
+            this.uiManager.game.storage.saveCity(this.player.id, this.city);
         }
     }
 

@@ -106,6 +106,9 @@ export class City {
         this.buildingTypes = this.buildingTypes.filter(p => p.category !== BuildingCategory.BLOCKER && p.category !== BuildingCategory.NATURAL_RESOURCE);
         this.categorizeBuildingTypes();
 
+        //Double check the unlocked buildings in case someone's tutorial "finished" state didn't get updated at the player level but their city did get reset to step index -1.
+        if (!this.buildingTypes.find(p => p.type === getBuildingType(Bar))!.locked) this.player.finishedTutorial = true;
+
         //Make sure all later-developed unlocks get unlocked, e.g., in case I add new ones after players have started their cities.
         this.ensureNewerUnlocks();
         
