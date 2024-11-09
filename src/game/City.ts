@@ -103,6 +103,7 @@ export class City {
         //In case of updates, ensure we have ALL building types. (Note: you need to account for new building that are affected by old upgrades here explicitly, too!)
         const missingBuildingTypes = [...BUILDING_TYPES.values()].filter(bt => !this.buildingTypes.some(b => b.type === bt.type)); //TODO: use a set instead.
         if (missingBuildingTypes.length) this.buildingTypes.push(...missingBuildingTypes);
+        this.buildingTypes = this.buildingTypes.filter(p => p.category !== BuildingCategory.BLOCKER && p.category !== BuildingCategory.NATURAL_RESOURCE);
         this.categorizeBuildingTypes();
 
         //Make sure all later-developed unlocks get unlocked, e.g., in case I add new ones after players have started their cities.

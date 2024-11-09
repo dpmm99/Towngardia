@@ -3691,7 +3691,6 @@ export class SmallBoulder extends Building {
             BuildingCategory.BLOCKER,
             2, 2, 0,
             0,
-            false,
         );
         this.owned = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
@@ -3707,7 +3706,6 @@ export class MediumBoulder extends Building {
             BuildingCategory.BLOCKER,
             3, 3, 0,
             0,
-            false,
         );
         this.owned = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
@@ -3723,7 +3721,6 @@ export class BigBoulder extends Building {
             BuildingCategory.BLOCKER,
             4, 4, 0,
             0,
-            false,
         );
         this.owned = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
@@ -3739,7 +3736,6 @@ export class ObstructingGrove extends Building {
             BuildingCategory.BLOCKER,
             4, 4, 0,
             0,
-            false,
         );
         this.owned = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
@@ -3756,7 +3752,6 @@ export class Mountain extends Building {
             BuildingCategory.NATURAL_RESOURCE,
             4, 4, 0,
             0,
-            false,
         );
         this.stampFootprint[1][3] = FootprintType.MINE;
         this.stampFootprint[2][3] = FootprintType.MINE;
@@ -3771,7 +3766,6 @@ export class CrystalMountain extends Building {
             BuildingCategory.NATURAL_RESOURCE,
             3, 3, 0,
             0,
-            false,
         );
         this.stampFootprint[0][2] = FootprintType.GEM_MINE;
         this.owned = this.needsPower = this.needsRoad = false;
@@ -3797,7 +3791,6 @@ export class LithiumPlateau extends Building {
             BuildingCategory.NATURAL_RESOURCE,
             3, 3, 0,
             0,
-            false,
         );
         this.stampFootprint[0][0] = this.stampFootprint[0][1] = this.stampFootprint[0][2] = this.stampFootprint[1][0] = this.stampFootprint[1][1] = this.stampFootprint[1][2] = this.stampFootprint[2][0] = this.stampFootprint[2][1] = this.stampFootprint[2][2] = FootprintType.LITHIUM_MINE;
         this.owned = this.needsPower = this.needsRoad = false;
@@ -3811,7 +3804,6 @@ export class PrettyPond extends Building {
             BuildingCategory.NATURAL_RESOURCE,
             3, 3, 0,
             0,
-            false,
         );
         this.owned = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
@@ -3836,7 +3828,6 @@ export class CleanPond extends Building {
             BuildingCategory.NATURAL_RESOURCE,
             3, 3, 0,
             0,
-            false,
         );
         this.stampFootprint[0][0] = this.stampFootprint[0][1] = this.stampFootprint[0][2] = this.stampFootprint[1][0] = this.stampFootprint[1][1] = this.stampFootprint[1][2] = this.stampFootprint[2][0] = this.stampFootprint[2][1] = this.stampFootprint[2][2] = FootprintType.SPECIAL;
         this.owned = this.needsPower = this.needsRoad = false;
@@ -3867,7 +3858,6 @@ export class PondFilth extends Building {
             BuildingCategory.BLOCKER, //Blocks the CleanPond from producing any land value.
             3, 3, 0,
             0,
-            false,
         );
         this.checkFootprint[0][0] = this.checkFootprint[0][1] = this.checkFootprint[0][2] = this.checkFootprint[1][0] = this.checkFootprint[1][1] = this.checkFootprint[1][2] = this.checkFootprint[2][0] = this.checkFootprint[2][1] = this.checkFootprint[2][2] = FootprintType.SPECIAL;
         this.owned = this.needsPower = this.needsRoad = false;
@@ -3884,7 +3874,6 @@ export class HotSpring extends Building {
             BuildingCategory.NATURAL_RESOURCE,
             2, 2, 0,
             0,
-            false,
         );
         this.stampFootprint[0][0] = this.stampFootprint[0][1] = this.stampFootprint[1][0] = this.stampFootprint[1][1] = FootprintType.HOT_SPRING;
         this.owned = this.needsPower = this.needsRoad = false;
@@ -3910,7 +3899,6 @@ export class AlienMonolith extends Building {
             BuildingCategory.NATURAL_RESOURCE,
             3, 3, 0,
             0,
-            false,
         );
         this.stampFootprint[0][0] = this.stampFootprint[0][1] = this.stampFootprint[0][2] = this.stampFootprint[1][0] = this.stampFootprint[1][1] = this.stampFootprint[1][2] = this.stampFootprint[2][0] = this.stampFootprint[2][1] = this.stampFootprint[2][2] = FootprintType.SPECIAL;
         this.owned = this.needsPower = this.needsRoad = false;
@@ -3930,7 +3918,6 @@ export class MysteriousRubble extends Building {
             BuildingCategory.BLOCKER,
             3, 3, 0,
             0,
-            false,
         );
         this.checkFootprint[0][0] = this.checkFootprint[0][1] = this.checkFootprint[0][2] = this.checkFootprint[1][0] = this.checkFootprint[1][1] = this.checkFootprint[1][2] = this.checkFootprint[2][0] = this.checkFootprint[2][1] = this.checkFootprint[2][2] = FootprintType.SPECIAL;
         this.owned = this.needsPower = this.needsRoad = false;
@@ -3957,7 +3944,6 @@ export class OilSeep extends Building {
             BuildingCategory.NATURAL_RESOURCE,
             1, 1, 0,
             0,
-            false,
         );
         this.stampFootprint[0][0] = FootprintType.OIL_WELL;
         this.owned = this.needsPower = this.needsRoad = false;
@@ -3971,7 +3957,6 @@ export class GeothermalVent extends Building {
             BuildingCategory.NATURAL_RESOURCE,
             1, 1, 0,
             0,
-            false,
         );
         this.stampFootprint[0][0] = FootprintType.GEO_VENT;
         this.owned = this.needsPower = this.needsRoad = false;
@@ -3994,7 +3979,6 @@ export class SandBar extends Building {
             BuildingCategory.NATURAL_RESOURCE,
             2, 2, 0,
             0,
-            false,
         );
         this.owned = this.needsPower = this.needsRoad = false;
         this.stampFootprint[0][0] = this.stampFootprint[1][0] = this.stampFootprint[0][1] = this.stampFootprint[1][1] = FootprintType.SAND;

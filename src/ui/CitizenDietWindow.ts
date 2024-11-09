@@ -87,7 +87,7 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
         }));
         nextY += 40;
 
-        const maxFoodsToShow = this.city.peakPopulation < 1200 ? 4 : (this.city.peakPopulation < 1800 ? 6 : this.city.citizenDietSystem.lastDietComposition.length);
+        const maxFoodsToShow = this.city.citizenDietSystem.lastDietComposition.filter(p => p.ratio > 0).length;
         for (let i = 0; i < maxFoodsToShow; i++) {
             const food = this.city.citizenDietSystem.lastDietComposition[i];
             if (!food) break;
