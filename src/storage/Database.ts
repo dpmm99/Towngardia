@@ -109,7 +109,7 @@ export class Database implements IStorage {
     protected async updateCity(playerID: string, city: City): Promise<void> {
         if (playerID != city.player.id) throw new Error("Wrong player ID submitted for city" + city.id + ". City has: " + city.player.id + "; given player ID was: " + playerID);
         const s = new CitySerializer();
-        await this.query("UPDATE towngardia_cities SET city = ? WHERE player = ? AND id = ?", [JSON.stringify(s.city(city)), playerID, city.id]);
+        await this.query("UPDATE towngardia_cities SET city = ?, name = ? WHERE player = ? AND id = ?", [JSON.stringify(s.city(city)), city.name, playerID, city.id]);
     }
 
     /**
