@@ -791,7 +791,7 @@ export class UIManager {
         if (this.draggingElem?.onDrag) return this.draggingElem;
 
         //Plug in other draggable (mainly for scrolling) elements here. Descendants are not checked.
-        const draggables: IHasDrawable[] = [this.buildingInfoMenu, this.techMenu, this.budgetMenu, this.friendsMenu, this.citizenDietWindow, this.achievementsMenu, this.notificationsMenu, this.buildTypeBar, this.topBar, this.bottomBar, this.viewsBar, this.rightBar, this.resourcesBar];
+        const draggables: IHasDrawable[] = [this.buildingInfoMenu, this.techMenu, this.budgetMenu, this.friendsMenu, this.citizenDietWindow, this.achievementsMenu, this.notificationsMenu, this.happinessFactorsWindow, this.buildTypeBar, this.topBar, this.bottomBar, this.resourcesBar, this.viewsBar, this.rightBar];
         for (const draggable of draggables) {
             if (this.draggingElem) break;
             const drawable = draggable.getLastDrawable();
@@ -802,7 +802,7 @@ export class UIManager {
     }
 
     private adjustDragDueToResize() {
-        const draggables: IOnResizeEvent[] = [this.buildingInfoMenu, this.techMenu, this.budgetMenu, this.friendsMenu, this.citizenDietWindow, this.achievementsMenu, this.notificationsMenu, this.buildTypeBar, this.topBar, this.bottomBar, this.rightBar, this.resourcesBar, this.viewsBar, this.tutorialOverlay];
+        const draggables: IOnResizeEvent[] = [this.buildingInfoMenu, this.techMenu, this.budgetMenu, this.friendsMenu, this.citizenDietWindow, this.achievementsMenu, this.notificationsMenu, this.happinessFactorsWindow, this.buildTypeBar, this.topBar, this.bottomBar, this.resourcesBar, this.viewsBar, this.rightBar, this.tutorialOverlay];
         for (const draggable of draggables) {
             draggable.onResize();
         }

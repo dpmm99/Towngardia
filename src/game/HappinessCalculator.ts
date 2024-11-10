@@ -25,7 +25,7 @@ export class HappinessCalculator {
         happiness += this.calculateEnvironmentHappiness();
         happiness += this.calculateEconomyHappiness();
         happiness += this.calculateQualityOfLifeHappiness();
-        happiness += this.calculateResidentialBlackoutPenalty(); //A big effect--caps at 1.0
+        happiness += this.calculateResidentialPenalties(); //A couple of big effects (power outages and residential damage)--the sum caps at 1.5
 
         this.setDisplayStats("Other", happiness - [...this.city.happinessBreakdown].filter(p => p[0] != "Other").reduce((a, b) => a + b[1], 0));
 
@@ -168,19 +168,27 @@ export class HappinessCalculator {
         return qol;
     }
 
-    private calculateResidentialBlackoutPenalty(): number {
+    private calculateResidentialPenalties(): number {
         let totalPowerNeeded = 0;
         let totalPowerReceived = 0;
+        let totalResidences = 0;
+        let totalRepair = 0;
 
         this.city.buildings.forEach(building => {
-            if (building.isResidence && building.needsPower) {
-                totalPowerNeeded += 1;
-                totalPowerReceived += building.poweredTimeDuringLongTick;
+            if (building.isResidence) {
+                if (building.needsPower) {
+                    totalPowerNeeded += 1;
+                    totalPowerReceived += building.poweredTimeDuringLongTick;
+                }
+                totalResidences++;
+                totalRepair += building.damagedEfficiency;
             }
         });
 
-        const blackoutPenalty = totalPowerNeeded > 0 ? -1 + totalPowerReceived / totalPowerNeeded : 0;
+        const blackoutPenalty = totalPowerNeeded > 0 ? 0.75 * (totalPowerReceived / totalPowerNeeded - 1) : 0;
         this.setDisplayStats("Power outages", blackoutPenalty, 0);
-        return blackoutPenalty;
+        const damagePenalty = totalResidences > 0 ? 0.75 * (totalRepair / totalResidences - 1) : 0;
+        this.setDisplayStats("Residence damage", damagePenalty, 0);
+        return blackoutPenalty + damagePenalty;
     }
 }

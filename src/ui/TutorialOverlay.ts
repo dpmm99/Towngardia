@@ -4,7 +4,7 @@ import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { Player } from "../game/Player.js";
 import { Grain } from "../game/ResourceTypes.js";
-import { CementMill, CornerStore, Farm, MountainIronMine, ObstructingGrove, Quarry, Road, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TreeFarm, WindTurbine, getBuildingType } from "../game/BuildingTypes.js";
+import { CementMill, CornerStore, Farm, MountainIronMine, ObstructingGrove, Quadplex, Quarry, Road, SmallHouse, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TreeFarm, WindTurbine, getBuildingType } from "../game/BuildingTypes.js";
 import { BIGGER_MOBILE_RATIO } from "../rendering/RenderUtil.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { StandardScroller } from "./StandardScroller.js";
@@ -629,14 +629,14 @@ export class TutorialOverlay implements IHasDrawable {
                 onStop: () => { },
             },
             {
-                title: "Congratulations!",
+                title: "End of Starter Tutorial",
                 charsPerPage: 805,
                 backdropMods: {
                     fallbackColor: '#000000bb',
                 },
                 content: {
                     x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", scaleYOnMobile: true,
-                    text: "You've graduated from City Planning 101! Remember, Towngardia is a marathon, not a sprint. Unless you're running from an angry mob of taxpayers... Then it's definitely a sprint. Happy building, fellow Towngardian!",
+                    text: "You've graduated from City Planning 101! Remember, Towngardia is a marathon, not a sprint. Unless you're running from an angry mob of taxpayers... Then it's definitely a sprint. Happy building, fellow Towngardian! Check the Tutorials option in the main menu (the gear icon) to review the tutorial and get more tips.",
                 },
                 nextButton: {
                     text: "I'm ready!",
@@ -650,12 +650,43 @@ export class TutorialOverlay implements IHasDrawable {
 
         //Extra tutorial steps that won't ever actually appear in the tutorial, only in the Tutorials menu.
         const fieldsNotNeededForExtras = <TutorialStep>{ charsPerPage: 1000, nextButton: {}, type: "button", advancementCriteria: () => true, onStart: () => { }, onStop: () => { } };
+        if (this.player.finishedTutorial) {
+            //More tips and strategy info that technically applies from the start of the game
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Road Racket",
+                content: {
+                    text: `Initially, roads are cheap to maintain and produce very little noise and pollution. However, as the first few dozen residents move in, the upkeep cost rises rapidly and then starts to stabilize. Nearby businesses lead to more traffic, which increases the noise and pollution coming from your roads. If you see high noise pollution, you can build public transportation nearby to reduce it, with diminishing returns for each nearby public transportation facility. There are also research options that reduce road noise and pollution throughout the entire city.`,
+                }
+            });
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Residential Rise",
+                content: {
+                    text: `The keys to growing your population are happiness, good business coverage, and leaving road-adjacent 2x2 spaces open for apartments, highrises, and skyscrapers to be built. A distinct icon will appear on residences in the Business Presence view if they will eventually upgrade on their own. If there's enough space around a residence without such an icon, then either happiness or business presence is too low. A single tile is only enough room for a Small House (up to ${new SmallHouse().outputResources[0].capacity} residents) or a Quadplex (up to ${new Quadplex().outputResources[0].capacity} residents). Residences will upgrade in-place if there's enough business coverage and local residential desirability. Your citizens' happiness and local residential desirability both factor into whether residences will spawn and/or upgrade. You can sell construction resources (${[...this.city.constructionResourceTypes].map(p => this.city.resources.get(p)!.displayName).join(", ")}) for a minor boost to the residence spawn/upgrade chance. For example, selling 50 flunds worth in one day will max out the boost at +5%, and 5% of the sold resources are consumed every tick, or 18.5% a day. In other words, if you have a 5% boost one day, you'll still have at least a 4% boost the next day and only need to sell 9 more flunds' worth at the most to bring the bonus back up to the maximum. Furniture Stores offer an even bigger boost if you can keep them running, but each additional Furniture Store gives a smaller amount of benefit.`,
+                }
+            });
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Industrial Impact",
+                content: {
+                    text: `Resources are relatively cheap compared to structures, but the market limits how fast you can obtain and consume them. Thus, industrial buildings are worth having, not because you can sell the resources, but because they enable you to consume resources beyond the market's limits. The costs of services, roads, upkeep, and input resources for factories may be higher than the amount of flunds they produce, so if you're trying to optimize your gameplay, you may stash them when you have plenty of resources in your warehouses. On the other hand, research coupled with economic boom events may make factories directly profitable. Also note that most resource types are only available for purchase once you build storage for them.`,
+                }
+            });
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Power Optimization",
+                content: {
+                    text: `Power plants are expensive to run, but even the least cost-effective one is cheaper than importing power from outside the city. Fossil fuels pollute heavily but are cheaper over the long term than your run-of-the-mill wind turbine or solar power plant. Oil, coal, nuclear, and fusion power plants require you to provide resources directly to them, which is risky if you aren't around to manage the city every day, but you can pay a little extra for a fuel truck to keep them going non-stop. Also important to note is that power plants always run at their max capacity, so if you're not using the power, you're throwing away flunds. Because of that, an effective approach is stashing your wind turbines when you build a more efficient facility, then taking them out and placing them again as you begin to run into a power deficit.`,
+                }
+            });
+        }
         if (this.city.flags.has(CityFlags.PoliceProtectionMatters)) {
             steps.push({
                 ...fieldsNotNeededForExtras,
                 title: "Police Protection",
                 content: {
-                    text: "Citizens demand police coverage even if there's no crime around, and happiness will suffer without it. Crime is broken into two types, petty and organized. Petty crime is more common but does less damage to citizens' happiness--and less damage to your flunds if someone burglarizes City Hall. Organized crime takes more police resources and can lead to a proper (costly!) heist. Police coverage also reduces the number of damaged buildings if the citizens riot due to low total happiness. You can slightly adjust the police budget in the budget menu, but just a 10% budget cut has closer to a 20% impact on the police protection quality. Note: city services only need to cover one tile of a building for the entire building to be considered covered.",
+                    text: "Citizens demand police coverage even if there's no crime around, and happiness will suffer without it. Crime is broken into two types, petty and organized. Petty crime is more common but does less damage to citizens' happiness--and less damage to your flunds if someone burglarizes City Hall. Organized crime takes more police resources and can lead to a proper (costly!) heist. Police coverage also reduces the number of damaged buildings if the citizens riot due to low total happiness. You can slightly adjust the police budget in the budget menu, but just a 10% budget cut has closer to a 20% impact on the police protection quality. Note: city services only need to cover one tile of a building for the entire building to be considered covered. Also note that low-strength coverage (e.g., a single Police Box at 80% budget) is far better than no coverage.",
                 }
             });
         }
@@ -673,7 +704,7 @@ export class TutorialOverlay implements IHasDrawable {
                 ...fieldsNotNeededForExtras,
                 title: "Tourism",
                 content: {
-                    text: "Tourism is a great way to boost your city's income and reputation, unlocked by building an Information Center. Various types of building attract tourists, including some natural formations. Tourists act as patrons in your city's businesses, drawing in flunds via sales tax. Visit a friend's city and play the Nepotism Networking minigame to boost both your and your friend's tourism by a small percentage for a few hours to days. You can see all your active tourism boosts by checking the Information Center's info bar. Tourism boosts are multiplicative and gradually decrease until their time limits, so it's more effective to pile them all on at once if your businesses can keep up!",
+                    text: "Tourism is a great way to boost your city's income, unlocked by building an Information Center. Various types of building attract tourists, including some natural formations. Tourists act as patrons in your city's businesses, drawing in flunds via sales tax. Visit a friend's city and play the Nepotism Networking minigame via the right side bar to boost both your and your friend's tourism by a small percentage for up to a few days. You can see all your active tourism boosts by checking the Information Center's info bar. Tourism boosts are multiplicative and gradually decrease until their time limits, so it's more effective to pile them all on at once--if your businesses have the capacity!",
                 },
             });
         }
@@ -691,7 +722,7 @@ export class TutorialOverlay implements IHasDrawable {
                 ...fieldsNotNeededForExtras,
                 title: "Education",
                 content: {
-                    text: "Education is a key factor in your citizens' happiness, but on top of that, the higher the average education level, the more research points the city earns each day. Furthermore, many high-tech buildings require a high-quality education.",
+                    text: "Education is a key factor in your citizens' happiness, but on top of that, the higher the average education level, the more research points the city earns each day. Furthermore, many high-tech buildings require a high-quality education--try to get a fully-funded College covering at least 90% of your residences, and your construction options will expand immensely.",
                 }
             });
 

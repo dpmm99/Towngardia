@@ -639,7 +639,7 @@ export class City {
 
     sell(cityResource: Resource, amount: number) {
         this.flunds.amount += cityResource.sellPrice * cityResource.sellPriceMultiplier * amount;
-        if (this.constructionResourceTypes.has(cityResource.type)) this.recentConstructionResourcesSold += amount;
+        if (this.constructionResourceTypes.has(cityResource.type)) this.recentConstructionResourcesSold += amount * cityResource.sellPrice;
         this.resourceEvents.push({ type: cityResource.type, event: "sell", amount: amount });
 
         //Resource Tycoon requires both producing AND selling, so check it both places

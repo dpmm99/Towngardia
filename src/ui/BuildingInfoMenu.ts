@@ -492,12 +492,12 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             y: nextY,
             width: (barWidth - padding * 2) + "px",
             height: "24px",
-            text: `Update in: ${hours}h ${minutes}m ${seconds}s`,
+            text: this.city.timeFreeze ? "Time frozen during the tutorial." : (`Update in: ${hours}h ${minutes}m ${seconds}s`),
             id: `${infoDrawable.id}.output.budget.nexttick`,
         }));
         nextY += 28;
         if (this.timeout) clearTimeout(this.timeout);
-        this.timeout = setTimeout(() => { this.uiManager.frameRequested = true; }, 1000); //Only redraw automatically for this one building.
+        if (!this.city.timeFreeze) this.timeout = setTimeout(() => { this.uiManager.frameRequested = true; }, 1000); //Only redraw automatically for this one building.
         return nextY;
     }
 

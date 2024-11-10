@@ -121,10 +121,12 @@ export class ResidenceSpawningSystem {
         const suckyHomes: { building: Building, desirability: number }[] = [];
         const buildings = this.city.buildings.filter(p => p.isResidence);
         for (const building of buildings) {
-            const desirability = this.calculateDesirability(building.x, building.y);
-            if (desirability < 0) { //The home sucks.
+            const desirability = Math.max(this.calculateDesirability(building.x, building.y), building.width !== 1
+                ? Math.max(this.calculateDesirability(building.x + building.width - 1, building.y), this.calculateDesirability(building.x + building.width - 1, building.y + building.height - 1), this.calculateDesirability(building.x, building.y + building.height - 1))
+                : -2) + 0.5 * (building.damagedEfficiency - 1); //Damage is now also a factor
+            if (desirability < 0 || this.globalSpawnChance < 0) { //The home sucks OR the city really sucks.
                 if ((this.globalSpawnChance >= 0 && Math.random() < -desirability) //But people are happy in the city overall--chance is just desirability.
-                    || this.globalSpawnChance < 0 && Math.random() < Math.abs(desirability + this.globalSpawnChance)) { //Or the home sucks AND people are generally unhappy across the city--chance is undesirability PLUS unhappiness.
+                    || this.globalSpawnChance < 0 && Math.random() < 1 - desirability + Math.abs(this.globalSpawnChance)) { //Or the home sucks AND people are generally unhappy across the city--chance is undesirability PLUS unhappiness.
                     suckyHomes.push({ building, desirability });
                     if (suckyHomes.length > maxDespawnCount) {
                         suckyHomes.sort((a, b) => b.desirability - a.desirability);
@@ -151,10 +153,10 @@ export class ResidenceSpawningSystem {
     //}
 
     public calculateDesirability(x: number, y: number): number {
-        let score = 0;
-        score += this.city.getLandValue(x, y) + Math.sqrt(Math.max(0, this.city.getEducation(x, y))) * 0.2;
+        let score = -0.15; //Initial bias chosen based on actual values in a test city. They were too eager to build apartments next to a coal power plant.
+        score += this.city.getLandValue(x, y) + Math.sqrt(Math.max(0, this.city.getEducation(x, y))) * 0.25;
         //Organized crime is twice as harmful; 1 police protection is worth 1 crime elimination. Caps at 0.2 because police protection alone doesn't make a place very desirable.
-        score += Math.min(0.2, Math.sqrt(Math.max(0, this.city.getPoliceProtection(x, y))) - this.city.getPettyCrime(x, y) - 2 * this.city.getOrganizedCrime(x, y));
+        score += Math.min(0.25, Math.sqrt(Math.max(0, this.city.getPoliceProtection(x, y))) - this.city.getPettyCrime(x, y) - 2 * this.city.getOrganizedCrime(x, y));
         //Healthcare CAN be worth a bit more than police protection and pollution always has a negative impact. But doubled-up healthcare doesn't help anything.
         score += 0.3 * (Math.min(1, Math.sqrt(Math.max(0, this.city.getHealthcare(x, y)))) - this.city.getParticulatePollution(x, y)); //May want to square pollution or something, though...
         score -= 0.05 * this.city.getNoise(x, y) * (3 - this.city.techManager.getAdoption('vacuumwindows')); //Noise has an impact of 0.15 and can be reduced by a third by vacuum windows.
