@@ -333,7 +333,7 @@ export class Stone extends Resource {
         super(
             "stone", "Stone",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 3, 1
+            false, 5, 3
         );
     }
 }
@@ -343,17 +343,17 @@ export class Iron extends Resource { //Could need refined
         super(
             "iron", "Iron",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 2, 1
+            false, 3, 2
         );
     }
 }
 
-export class Copper extends Resource { //Could need refined
+export class Copper extends Resource {
     constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
         super(
             "copper", "Copper",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 2, 1
+            false, 4, 3
         );
     }
 }
@@ -363,7 +363,7 @@ export class Lithium extends Resource {
         super(
             "lithium", "Lithium",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 5, 4
+            false, 8, 5
         );
     }
 }
@@ -373,7 +373,7 @@ export class Clay extends Resource {
         super(
             "clay", "Clay",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 2, 1
+            false, 3, 2
         );
     }
 }
@@ -383,7 +383,7 @@ export class Sand extends Resource {
         super(
             "sand", "Sand",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 2, 1
+            false, 3, 2
         );
     }
 }
@@ -393,7 +393,7 @@ export class Wood extends Resource {
         super(
             "wood", "Wood",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 1, 1
+            false, 1.5, 1
         );
     }
 }
@@ -403,7 +403,7 @@ export class Coal extends Resource {
         super(
             "coal", "Coal",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 3, 3
+            false, 5, 4
         );
     }
 }
@@ -413,7 +413,7 @@ export class Oil extends Resource { //Could need refined
         super(
             "oil", "Oil",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 5, 4
+            false, 8, 5
         );
     }
 }
@@ -423,7 +423,7 @@ export class Gemstones extends Resource { //Could need refined
         super(
             "gemstones", "Gemstones",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 8, 6
+            false, 11, 9.5
         );
     }
 }
@@ -433,7 +433,7 @@ export class Uranium extends Resource { //Could need refined
         super(
             "uranium", "Uranium",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 11, 8
+            false, 11, 9
         );
     }
 }
@@ -454,7 +454,7 @@ export class Silicon extends Resource {
         super(
             "silicon", "Silicon",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 4, 3
+            false, 8.5, 7
         );
     }
 }
@@ -464,7 +464,7 @@ export class Batteries extends Resource {
         super(
             "batteries", "Batteries",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 8, 6
+            false, 15, 12
         );
     }
 }
@@ -474,7 +474,7 @@ export class Bricks extends Resource {
         super(
             "bricks", "Bricks",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 2, 1
+            false, 3, 2
         );
     }
 }
@@ -484,7 +484,7 @@ export class Glass extends Resource {
         super(
             "glass", "Glass",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 3, 2
+            false, 5.5, 4.5
         );
     }
 }
@@ -494,7 +494,7 @@ export class Concrete extends Resource {
         super(
             "concrete", "Concrete",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 2, 1
+            false, 3, 2
         );
     }
 }
@@ -504,7 +504,7 @@ export class Steel extends Resource {
         super(
             "steel", "Steel",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 4, 3
+            false, 6, 5
         );
     }
 }
@@ -514,7 +514,7 @@ export class Plastics extends Resource {
         super(
             "plastics", "Plastics",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 3, 2
+            false, 5, 4
         );
     }
 }
@@ -524,7 +524,7 @@ export class Lumber extends Resource {
         super(
             "lumber", "Lumber",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 3, 2
+            false, 4, 3
         );
     }
 }
@@ -534,7 +534,7 @@ export class Paper extends Resource {
         super(
             "paper", "Paper",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 1, 1
+            false, 1.5, 1
         );
     }
 }
@@ -544,7 +544,7 @@ export class Rubber extends Resource {
         super(
             "rubber", "Rubber",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 2, 1
+            false, 3, 2
         );
     }
 }
@@ -554,7 +554,7 @@ export class Textiles extends Resource {
         super(
             "textiles", "Textiles",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 2, 1
+            false, 5, 4
         );
     }
 }
@@ -565,7 +565,7 @@ export class Electronics extends Resource {
         super(
             "electronics", "Electronics",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 5, 4
+            false, 10, 8.5
         );
     }
 }
@@ -575,7 +575,7 @@ export class Furniture extends Resource {
         super(
             "furniture", "Furniture",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 7, 6
+            false, 13, 10
         );
     }
 }
@@ -585,7 +585,7 @@ export class Clothing extends Resource {
         super(
             "clothing", "Clothing",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 6, 5
+            false, 14, 11
         );
     }
 }
@@ -595,7 +595,7 @@ export class Pharmaceuticals extends Resource {
         super(
             "pharmaceuticals", "Pharmaceuticals",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 5, 4
+            false, 7, 5
         );
     }
 }
@@ -605,7 +605,7 @@ export class Toys extends Resource {
         super(
             "toys", "Toys",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 4, 3
+            false, 5.5, 5
         );
     }
 }
@@ -615,7 +615,7 @@ export class Apps extends Resource {
         super(
             "apps", "Apps",
             initialCount, productionRate, capacity, consumptionRate,
-            false, 6, 5
+            false, 14, 11
         );
     }
 }

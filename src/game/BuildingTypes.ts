@@ -330,7 +330,7 @@ export class OilTank extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 1 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 }
 
@@ -1553,7 +1553,7 @@ export class MountainIronMine extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 0.5 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Very cheap to upkeep
+        return [{ type: "flunds", amount: 0.25 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Very cheap to upkeep
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.2; }
@@ -1570,7 +1570,7 @@ export class Quarry extends Building {
         this.stores.push(new Stone());
         this.storeAmount = 3; //Stores 3 stone so the player doesn't need a warehouse before they can use Cement Mill.
         this.needsPower = false;
-        this.outputResources.push(new Stone(0, 1));
+        this.outputResources.push(new Stone(0, 1.5));
     }
 
     override place(city: City, x: number, y: number): void {
@@ -1598,7 +1598,7 @@ export class Quarry extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 0.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
@@ -1613,7 +1613,7 @@ export class CementMill extends Building {
             0.3,
         );
         this.inputResources.push(new Stone(0, 0, 1));
-        this.outputResources.push(new Concrete(0, 3));
+        this.outputResources.push(new Concrete(0, 3.5));
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1621,7 +1621,7 @@ export class CementMill extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 0.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1; }
@@ -1638,7 +1638,7 @@ export class ShaftCoalMine extends Building {
             0.3,
             true,
         );
-        this.outputResources.push(new Coal(0, 0.5));
+        this.outputResources.push(new Coal(0, 1.25));
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1661,7 +1661,7 @@ export class VerticalCopperMine extends Building {
             0.3,
             true,
         );
-        this.outputResources.push(new Copper(0, 1));
+        this.outputResources.push(new Copper(0, 1.5));
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1669,10 +1669,10 @@ export class VerticalCopperMine extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 0.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 }
 
 export class SandCollector extends Building {
@@ -1706,7 +1706,7 @@ export class Glassworks extends Building {
             2, 2, 0,
             0.5,
         );
-        this.inputResources.push(new Sand(0, 0, 2));
+        this.inputResources.push(new Sand(0, 0, 1.5));
         this.outputResources.push(new Glass(0, 2));
     }
 
@@ -1718,7 +1718,7 @@ export class Glassworks extends Building {
         return [{ type: "flunds", amount: 1 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
 }
 
 export class SiliconRefinery extends Building {
@@ -1729,8 +1729,8 @@ export class SiliconRefinery extends Building {
             2, 2, 0,
             0.5
         );
-        this.inputResources.push(new Sand(0, 0, 2));
-        this.outputResources.push(new Silicon(0, 1));
+        this.inputResources.push(new Sand(0, 0, 1.75));
+        this.outputResources.push(new Silicon(0, 1.25));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
     }
@@ -1740,7 +1740,7 @@ export class SiliconRefinery extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 1.25 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override place(city: City, x: number, y: number): void {
@@ -1753,7 +1753,7 @@ export class SiliconRefinery extends Building {
         super.remove(city, justMoving);
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 }
 
 export class CrystalMine extends Building {
@@ -1774,7 +1774,7 @@ export class CrystalMine extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 0.75 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.2; }
@@ -1798,7 +1798,7 @@ export class AssemblyHouse extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 1.75 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
@@ -1836,7 +1836,7 @@ export class TextileMill extends Building {
             0.35,
         );
         this.inputResources.push(new Wood(0, 0, 0.25));
-        this.outputResources.push(new Textiles(0, 1));
+        this.outputResources.push(new Textiles(0, 1.25));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
     }
@@ -1846,10 +1846,10 @@ export class TextileMill extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Pretty cheap--it's a factory, so it makes its own money
+        return [{ type: "flunds", amount: 0.75 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Pretty cheap--it's a factory, so it makes its own money
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
@@ -1872,7 +1872,7 @@ export class ApparelFactory extends Building {
             2, 2, 0,
             0.35,
         );
-        this.inputResources.push(new Textiles(0, 0, 1.5));
+        this.inputResources.push(new Textiles(0, 0, 1));
         this.outputResources.push(new Clothing(0, 0.5)); //Trying to kinda balance with the minigame that uses it
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
@@ -1883,10 +1883,10 @@ export class ApparelFactory extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Pretty cheap--it's a factory, so it makes its own money
+        return [{ type: "flunds", amount: 0.5 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Pretty cheap--it's a factory, so it makes its own money
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
@@ -1910,7 +1910,7 @@ export class SteelMill extends Building {
             0.5,
         );
         this.inputResources.push(new Iron(0, 0, 1.5));
-        this.outputResources.push(new Steel(0, 1.5));
+        this.outputResources.push(new Steel(0, 1.75));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
     }
@@ -1931,10 +1931,10 @@ export class SteelMill extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 1.25 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 10; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
 }
@@ -1947,7 +1947,7 @@ export class PlasticsFactory extends Building {
             2, 2, 0,
             0.4,
         );
-        this.inputResources.push(new Oil(0, 0, 0.5));
+        this.inputResources.push(new Oil(0, 0, 0.25));
         this.inputResources.push(new Wood(0, 0, 0.5));
         this.outputResources.push(new Plastics(0, 2));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
@@ -1970,7 +1970,7 @@ export class PlasticsFactory extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 2 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
@@ -1988,7 +1988,7 @@ export class ToyManufacturer extends Building {
         );
         this.inputResources.push(new Plastics(0, 0, 1));
         this.inputResources.push(new Electronics(0, 0, 0.25));
-        this.outputResources.push(new Toys(0, 2)); //TODO: Reduce this if you make a "toy distribution" minigame (for happiness boost) as mentioned in the design doc. It's only this high to make the factory a net flunds gain.
+        this.outputResources.push(new Toys(0, 2.5)); //TODO: Reduce this if you make a "toy distribution" minigame (for happiness boost) as mentioned in the design doc. It's only this high to make the factory a net flunds gain.
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
     }
@@ -2134,7 +2134,7 @@ export class Nanogigafactory extends Building {
             2, 2, 0,
             0.5,
         );
-        this.inputResources.push(new Lithium(0, 0, 1)); //NOTE: gets reset every frame in onLongTick.
+        this.inputResources.push(new Lithium(0, 0, 0.75)); //NOTE: gets reset every frame in onLongTick.
         this.inputResources.push(new Copper(0, 0, 0.5));
         this.inputResources.push(new Plastics(0, 0, 0.5));
         this.outputResources.push(new Batteries(0, 1));
@@ -2157,7 +2157,7 @@ export class Nanogigafactory extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 2 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 10; }
@@ -2165,7 +2165,7 @@ export class Nanogigafactory extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
 
     override onLongTick(city: City): void {
-        this.inputResources.find(p => p.type === 'lithium')!.consumptionRate = 1 - 0.5 * city.techManager.getAdoption('graphenebattery');
+        this.inputResources.find(p => p.type === 'lithium')!.consumptionRate = 0.75 - 0.375 * city.techManager.getAdoption('graphenebattery');
         super.onLongTick(city);
     }
 }
@@ -2178,7 +2178,7 @@ export class PharmaceuticalsLab extends Building {
             2, 2, 0,
             0.35,
         );
-        this.outputResources.push(new Pharmaceuticals(0, 3));
+        this.outputResources.push(new Pharmaceuticals(0, 2.5));
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2186,10 +2186,10 @@ export class PharmaceuticalsLab extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 2 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 3 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 14; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 18; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
 }
@@ -2202,7 +2202,7 @@ export class SpaceLaunchSite extends Building {
             3, 3, 0,
             0.3,
         );
-        this.outputResourceOptions = [new Iron(0, 8), new Copper(0, 7), new Lithium(0, 5), new Uranium(0, 3)]; //TODO: Other options to consider: space tourism to rake in the flunds, asteroid crashing for a chance of damage to nearby structures but higher returns that always include stone
+        this.outputResourceOptions = [new Iron(0, 9.5), new Copper(0, 7), new Lithium(0, 3.5), new Uranium(0, 2.5)]; //TODO: Other options to consider: space tourism to rake in the flunds, asteroid crashing for a chance of damage to nearby structures but higher returns that always include stone
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
     }
@@ -2229,7 +2229,7 @@ export class SpaceLaunchSite extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 3.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 7 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }

@@ -25,6 +25,7 @@ import { Resource } from "./Resource.js";
 import * as ResourceTypes from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
 
+const CITY_DATA_VERSION = 1; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
     //Not serialized
     public uiManager: UIManager | null = null;
@@ -85,6 +86,7 @@ export class City {
         public regionID: string | null = null, //Should always be set to a valid region ID when the city is loaded. If it's null, the city existed before I implemented regions.
         public regionVersion: number = 0,
         public flags: Set<CityFlags> = new Set(), //Notification triggers
+        public dataVersion: number = CITY_DATA_VERSION,
         citizenDietSystem: CitizenDietSystem | undefined = undefined,
     ) {
         if (!this.regionID) {
@@ -135,6 +137,42 @@ export class City {
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(HighSchool));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Dorm));
         if (this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount < 150) this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount = 150;
+
+        //Version changes that aren't as simple as an unlock
+        if (this.dataVersion < 1) {
+            //Need to uniformly modify buildingTypes, buildings, and unplacedBuildings. Concat them to do one loop.
+            const allBuildings = this.buildingTypes.concat(this.buildings).concat(this.unplacedBuildings);
+            //Need to modify just inputResources and outputResources; multiply by new/old and round to 2 decimal places (in case they had another factor applied, we can't just directly set the values).
+            const upgradeMap = new Map<string, { resourceType: string, factor: number }[]>([
+                ["quarry", [{ resourceType: "stone", factor: 1.5 }]],
+                ["cementmill", [{ resourceType: "concrete", factor: 3.5 / 3 }]],
+                ["shaftcoalmine", [{ resourceType: "coal", factor: 2.5 }]],
+                ["verticalcoppermine", [{ resourceType: "copper", factor: 1.5 }]],
+                ["glassworks", [{ resourceType: "sand", factor: 0.75 }]],
+                ["siliconrefinery", [{ resourceType: "sand", factor: 0.875 }, { resourceType: "silicon", factor: 1.25 }]],
+                ["textilemill", [{ resourceType: "textiles", factor: 1.25 }]],
+                ["apparelfactory", [{ resourceType: "textiles", factor: 1 / 1.5 }]],
+                ["steelmill", [{ resourceType: "steel", factor: 1.75 / 1.5 }]],
+                ["plasticsfactory", [{ resourceType: "oil", factor: 0.5 }]],
+                ["toymanufacturer", [{ resourceType: "toys", factor: 1.25 }]],
+                ["nanogigafactory", [{ resourceType: "lithium", factor: 0.75 }]],
+                ["pharmaceuticalslab", [{ resourceType: "pharmaceuticals", factor: 2.5 / 3 }]],
+                ["spacelaunchsite", [{ resourceType: "iron", factor: 9.5 / 8 }, { resourceType: "lithium", factor: 3.5 / 3 }, { resourceType: "iron", factor: 2.5 / 3 }]],
+            ]);
+            for (const building of allBuildings) {
+                const upgradeValues = upgradeMap.get(building.type);
+                if (!upgradeValues) continue;
+                for (const { resourceType, factor } of upgradeValues) {
+                    for (const resource of building.inputResources) {
+                        if (resource.type === resourceType) resource.consumptionRate = Math.round(resource.consumptionRate * factor * 100) / 100;
+                    }
+                    for (const resource of building.outputResources) {
+                        if (resource.type === resourceType) resource.productionRate = Math.round(resource.productionRate * factor * 100) / 100;
+                    }
+                }
+            }
+            this.dataVersion = 1;
+        }
     }
 
     enableResourceConstruction() { //NOT for normal players. :)

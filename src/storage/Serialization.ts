@@ -22,6 +22,7 @@ export class CitySerializer {
     city(o: City) {
         //Note: player IS NOT serialized as part of the city JSON; it should be stored in a separate column in the database.
         const r: any = {
+            _v: o.dataVersion,
             bu: o.buildings.map(p => this.building(p)),
             ub: o.unplacedBuildings.map(p => this.building(p)),
             ob: [...o.presentBuildingCount], //A map. Could easily just be recalculated at startup. It's meant to be an optimization anyway.
@@ -257,7 +258,7 @@ export class CityDeserializer {
         }
 
         const r = new City(player, o.id + "", o.na, o.wi, o.he, [...this.buildingTypes.values()], o.re.map((p: any) => this.resource(p)), unplacedBuildings, events,
-            techManager, budget, undefined, titles, grid, [...eventTypes.values()], effectGrid, buildings, o.lt, o.st, o.nb, o.ri, o.rv, o.fl ? new Set(o.fl) : new Set());
+            techManager, budget, undefined, titles, grid, [...eventTypes.values()], effectGrid, buildings, o.lt, o.st, o.nb, o.ri, o.rv, o.fl ? new Set(o.fl) : new Set(), o._v ?? 0);
         r.presentBuildingCount = new Map(o.ob);
         r.desiredPower = o.dp;
         r.createdDate = new Date(o.cd);
