@@ -263,7 +263,7 @@ export class City {
             const insufficientAmount = Math.max(0, cost.amount - resource.amount);
             if (insufficientAmount > 0.0001) {
                 const buyableAmount = Math.min(insufficientAmount, resource.buyableAmount);
-                if (buyableAmount < insufficientAmount) return false;
+                if (buyableAmount < insufficientAmount - 0.0001) return false;
 
                 totalCost += buyableAmount * resource.buyPrice * resource.buyPriceMultiplier;
             }
@@ -290,7 +290,7 @@ export class City {
             if (insufficientAmount > 0.0001) {
                 const buyableAmount = Math.min(insufficientAmount, resource.buyableAmount);
                 flundsCost.amount += buyableAmount * resource.buyPrice * resource.buyPriceMultiplier;
-                if (buyableAmount < insufficientAmount) { //Count the buyable amount toward flunds, but don't consider this resource's amount acceptable
+                if (buyableAmount < insufficientAmount - 0.0001) { //Count the buyable amount toward flunds, but don't consider this resource's amount acceptable
                     finalCosts.push({ type: cost.type, amount: multipliedCost - buyableAmount, reddize: true });
                     continue;
                 }
@@ -367,7 +367,7 @@ export class City {
             }
         }
 
-        if (totalCost === 0 || totalCost <= flunds || allowDebt) return maxPortion;
+        if (totalCost === 0 || totalCost <= flunds + 0.0001 || allowDebt) return maxPortion;
 
         // Calculate break-even point using a binary search //TODO: I'm pretty sure it's possible to calculate more directly. It's a pretty simple linear system of equations. Find x where Ax + Bx + ... = availableFlunds
         let lowPortion = 0;
