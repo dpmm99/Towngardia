@@ -215,6 +215,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             nextY += padding;
         }
 
+        //Storage
+        if (building.stores.length) nextY = this.addBuildingStorageStats(infoDrawable, padding, nextY, iconSize * 0.75, building, barWidth);
+
         //These apply to your own buildings excluding a few special cases
         if (building.x !== -1 && building.owned) {
             //Efficiency
@@ -336,6 +339,40 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             }));
             nextY += 24 + padding;
         }
+        return nextY;
+    }
+
+    private addBuildingStorageStats(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: Building, barWidth: number): number {
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: "24px",
+            text: `Stores ${building.storeAmount} of:`,
+            id: `${infoDrawable.id}.storageLabel`,
+        }));
+        nextY += 24 + 5;
+
+        for (const resource of building.stores) {
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: iconSize + "px",
+                height: iconSize + "px",
+                image: new TextureInfo(iconSize, iconSize, `resource/${resource.type}`),
+                id: `${infoDrawable.id}.storage.${resource.type}.icon`,
+            }));
+            infoDrawable.addChild(new Drawable({
+                x: padding + iconSize + 5,
+                y: nextY + 4,
+                width: (barWidth - padding * 2 - iconSize - 5) + "px",
+                height: iconSize + "px",
+                text: resource.displayName,
+                id: `${infoDrawable.id}.storage.${resource.type}.text`,
+            }));
+            nextY += iconSize + 5;
+        }
+        nextY += padding;
         return nextY;
     }
 
