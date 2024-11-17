@@ -323,6 +323,19 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             id: `${infoDrawable.id}.salesTax`,
         }));
         nextY += 24 + padding;
+        //Citywide untapped patronage number. If present, you need to build more businesses.
+        const untappedPatronage = this.city.resources.get("untappedpatronage")!.amount;
+        if (untappedPatronage) {
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: `Untapped patronage: ${humanizeFloor(untappedPatronage)}`,
+                id: `${infoDrawable.id}.untappedPatronage`,
+            }));
+            nextY += 24 + padding;
+        }
         return nextY;
     }
 

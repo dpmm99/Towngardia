@@ -24,6 +24,16 @@ export class Tourists extends Resource {
     }
 }
 
+export class UntappedPatronage extends Resource {
+    constructor(initialCount: number = 0) {
+        super(
+            "untappedpatronage", "Untapped Patronage",
+            initialCount, 0, Number.MAX_SAFE_INTEGER, 0,
+            true
+        );
+    }
+}
+
 export class Flunds extends Resource {
     constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
         super(
@@ -629,7 +639,7 @@ export const RESOURCE_TYPES = <Resource[]>([
     /*Manufactured goods*/ Apps, Batteries, Clothing, Electronics, Furniture, Paper, Pharmaceuticals, Toys,
     /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays,
     /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases,
-    /*Citywide needs*/ Flunds, Research, Population, Tourists, Power, Water].map(p => new p()));
+    /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Water].map(p => new p()));
 
 //For easy checking if something is a food.
 export const FOOD_TYPES = new Set([Apples, Berries, Dairy, Fish, Grain, LabGrownMeat, LeafyGreens, Legumes, PlantBasedDairy, Poultry, RedMeat, RootVegetables, VitaminB12].map(p => new p().type));

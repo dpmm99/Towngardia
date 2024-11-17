@@ -39,7 +39,6 @@ XYZ building, in the style of a detailed 3D realistic cartoon isometric city sim
 
 
 Main remaining features:
-"Untapped tourism" notice in the building info when tourists + population > business capacity (also, the small businesses don't pick up the remaining patronage when you have more than enough patrons for everything)
 Regions (ancient ocean, delta, tundra, volcanic yard)
 Some more UI work, like maybe showing an unobtrusive pop-up when you collect resources
 aaand probably being able to buy things (particularly the resources that aren't in every region) more easily if your friends are selling them. I was thinking sales go into a list for 5 days, but then you have to load and affect the other players' city data...

@@ -484,7 +484,7 @@ export class CityHall extends Building {
 
         // Assign tourists and residents to businesses
         const totalPeople = population + tourists;
-        this.assignPeopleToBusinesses(businesses, totalPeople);
+        this.assignPeopleToBusinesses(city, businesses, totalPeople);
 
         // Calculate total revenue and update business failure counters
         let totalRevenue = 0;
@@ -503,7 +503,7 @@ export class CityHall extends Building {
         return totalRevenue;
     }
 
-    private assignPeopleToBusinesses(businesses: Business[], totalPeople: number): void {
+    private assignPeopleToBusinesses(city: City, businesses: Business[], totalPeople: number): void {
         let remainingPeople = totalPeople;
         const totalBusinessValue = businesses.reduce((sum, b) => sum + b.building.businessValue * b.connectedPoweredAndUpkeepEfficiency, 0);
         if (totalBusinessValue === 0 && businesses.length) throw new Error("Total business value 0 but there are businesses.");
@@ -527,6 +527,9 @@ export class CityHall extends Building {
                 if (remainingPeople <= 0) break;
             }
         }
+
+        //Store the untapped business potential somewhere
+        city.resources.get("untappedpatronage")!.amount = Math.max(0, remainingPeople);
     }
 
     override isBuyable(city: City, bySpawner: boolean = false): boolean {
@@ -2474,11 +2477,11 @@ export class PalmNomNom extends Building {
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
         this.isEntertainment = true;
-        this.outputResources.push(new Tourists(10, 10, 0, 50)); //Brings in 50 tourists per long tick, but it takes 5 days to get up to full steam.
+        this.outputResources.push(new Tourists(1.25, 1.25, 0, 50)); //Brings in 50 tourists per long tick, but it takes 10 days to get up to full steam (50/LONG_TICKS_PER_DAY/10).
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 220 }, { type: "wood", amount: 20 }, { type: "sand", amount: 10 }];
+        return [{ type: "flunds", amount: 270 }, { type: "wood", amount: 20 }, { type: "sand", amount: 10 }];
     }
 
     override place(city: City, x: number, y: number): void {
