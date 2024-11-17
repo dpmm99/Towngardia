@@ -68,18 +68,33 @@ export class MainMenu implements IHasDrawable {
             onClick: () => this.uiManager.drawFPS = !this.uiManager.drawFPS,
         }));
 
-        menu.addChild(new Drawable({
-            anchors: ['centerX'],
-            y: nextY += 50,
-            centerOnOwnX: true,
-            width: "calc(100% - 20px)",
-            height: "40px",
-            text: "Save city",
-            onClick: () => {
-                this.shown = false;
-                this.game.storage.saveCity(this.game.player!.id, this.game.city!);
-            }
-        }));
+        if (this.uiManager.isMyCity) {
+            menu.addChild(new Drawable({
+                anchors: ['centerX'],
+                y: nextY += 50,
+                centerOnOwnX: true,
+                width: "calc(100% - 20px)",
+                height: "40px",
+                text: "Save city",
+                onClick: () => {
+                    this.shown = false;
+                    this.game.storage.saveCity(this.game.player!.id, this.game.city!);
+                }
+            }));
+        } else {
+            menu.addChild(new Drawable({
+                anchors: ['centerX'],
+                y: nextY += 50,
+                centerOnOwnX: true,
+                width: "calc(100% - 20px)",
+                height: "40px",
+                text: "Return to your city",
+                onClick: () => {
+                    this.shown = false;
+                    this.uiManager.switchCity(this.game.city!, this.game.player!);
+                }
+            }));
+        }
 
         menu.addChild(new Drawable({
             anchors: ['centerX'],

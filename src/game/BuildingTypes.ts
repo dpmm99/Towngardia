@@ -520,7 +520,7 @@ export class CityHall extends Building {
         if (remainingPeople > 0) {
             for (const business of businesses) { //Already sorted from highest to lowest value
                 const additionalCapacity = business.building.businessPatronCap - business.totalAssigned;
-                if (additionalCapacity <= 0) break;
+                if (additionalCapacity <= 0) continue;
                 const additionalAssigned = Math.min(remainingPeople, additionalCapacity);
                 business.totalAssigned += additionalAssigned;
                 remainingPeople -= additionalAssigned;

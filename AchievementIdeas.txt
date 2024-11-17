@@ -44,6 +44,10 @@ Urban Farmer: Collect enough food in one day to feed your entire population for 
 Urban Jungle: Have more trees than homes in a city with at least 1000 population
 Waste Not, Want Not: Maintain 90% recycling rate for a week in a city with at least 1000 population
 
+Achievements for absurd collections, like...
+Brain Freeze: have 20+ ice cream trucks
+Guess We'll Just Mutate, Then: very high pollution
+
 --Titles:
 Vegan Retreat: Within 7 days, collect at least 250 food and avoid producing any animal products. Reward: efficiency bonus for farms and vertical farms.
 City of Innovators: Complete two research options in one day. Reward: research speed bonus.
