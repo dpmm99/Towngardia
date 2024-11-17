@@ -122,7 +122,6 @@ export class SlotMachine implements IHasDrawable, IOnResizeEvent {
         }));
 
         this.drawButtons(machineArea);
-        this.drawCloseButton(mainDrawable);
 
         // Draw scoring info if requested
         if (this.showScoringInfo) {
@@ -133,7 +132,7 @@ export class SlotMachine implements IHasDrawable, IOnResizeEvent {
         if (this.spinningFrames.some(p => p > 0)) {
             this.advanceAnimation();
             this.uiManager.frameRequested = true;
-        }
+        } else if (!this.showScoringInfo) this.drawCloseButton(mainDrawable);
 
         this.lastDrawable = mainDrawable;
         return mainDrawable;

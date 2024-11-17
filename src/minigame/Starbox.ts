@@ -144,6 +144,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
 
         if (!this.gameStarted) {
             this.drawStartOverlay(mainDrawable);
+            if (!this.howToPlayShown) this.drawCloseButton(mainDrawable);
         } else {
             this.updateGameState();
             this.drawGameArea(mainDrawable);
@@ -173,8 +174,6 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
                 }));
             }
         }
-
-        this.drawCloseButton(mainDrawable);
 
         this.lastDrawable = mainDrawable;
         return mainDrawable;

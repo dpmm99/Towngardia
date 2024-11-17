@@ -231,11 +231,10 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
 
         if (!this.gameStarted) {
             this.drawStartOverlay(mainDrawable);
+            if (!this.howToPlayShown) this.drawCloseButton(mainDrawable);
         } else {
             this.drawGameArea(mainDrawable);
         }
-
-        this.drawCloseButton(mainDrawable);
 
         this.lastDrawable = mainDrawable;
         return mainDrawable;

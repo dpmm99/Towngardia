@@ -349,7 +349,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
         if (!this.gameStarted) {
             this.drawStartOverlay(mainDrawable);
-            this.drawCloseButton(mainDrawable);
+            if (!this.howToPlayShown) this.drawCloseButton(mainDrawable);
         } else {
             this.drawGameArea(mainDrawable);
         }

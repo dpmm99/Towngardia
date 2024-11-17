@@ -568,11 +568,10 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
 
         if (!this.gameStarted) {
             this.drawStartOverlay(mainDrawable);
+            if (!this.howToPlayShown) this.drawCloseButton(mainDrawable);
         } else {
             this.drawGameArea(mainDrawable);
         }
-
-        this.drawCloseButton(mainDrawable);
 
         // If offset is non-zero, request another frame for animation
         if (this.gridState?.shiftOffset) {
