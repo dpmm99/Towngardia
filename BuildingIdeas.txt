@@ -4,13 +4,14 @@ Airports
 Apiaries
 ~ Aquaculture facilities
 Aquariums
-Art galleries
+Art galleries that cost gemstones to build and spread some luxury
 Automobile factories
 Bakeries
 ~ Banks
 ~ Battery factory (apparently 'gigafactory', though the term makes no sense)
 ~ Bars
-Bike sharing stations
+~ Bike sharing stations
+Bookstores that use paper and generate a tiny amount of research
 ~ Botanical gardens
 Bowling alleys
 Brothels
@@ -99,7 +100,7 @@ Orbital habitat (residential structure that would also be built above a space la
 Orchards
 ~ Parks
 Pharmacies
-Pinball arcades
+Pinball arcades that raise local luxury
 ~ Playgrounds
 ~ Police stations
 ~ Post offices
@@ -123,7 +124,7 @@ Snow plow garage
 ~ Solar farms
 Solar panel factories
 ~ Space launch sites
-Sports stadiums
+Sports stadiums (or smaller sports shops, gyms, batting cages, wrestling arenas, whatever) that use textiles (and could also use rubber) for a local health and happiness boost
 ~ Statues
 ~ Steel mills
 ~ Stone quarries

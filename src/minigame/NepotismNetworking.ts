@@ -406,8 +406,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
     }
 
     public startGame(): void {
-        this.city.checkAndSpendResources(this.costs);
-        this.initializeGame();
+        if (this.city.checkAndSpendResources(this.costs)) this.initializeGame();
     }
 
     public show(): void {
