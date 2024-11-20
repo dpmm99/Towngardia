@@ -156,7 +156,7 @@ export class UIManager {
             this.budgetMenu = new BudgetMenu(newCity, this),
             this.citizenDietWindow = new CitizenDietWindow(newCity, this),
             this.achievementsMenu = new AchievementsMenu(owner, newCity, this),
-            this.notificationsMenu = new NotificationsMenu(this.game.player!, this.game.city!, this), //NEVER changes cities/players
+            this.notificationsMenu = new NotificationsMenu(this.game.player!, this.game.city!, this.game), //NEVER changes cities/players
             this.buildingInfoMenu = new BuildingInfoMenu(newCity, this),
             this.friendsMenu = new FriendsMenu(this.game.player!, this),
             this.friendVisitWindow = new FriendVisitWindow(),
@@ -360,6 +360,7 @@ export class UIManager {
         this.cityView = this.cityView instanceof ProvisioningView ? new CityView(this.city, this) : new ProvisioningView(this.city, this);
         this.bottomBar.shown = this.rightBar.shown = !(this.cityView instanceof ProvisioningView);
         if (this.cityView instanceof ProvisioningView) this.buildTypeBar.expandedCategory = null;
+        if (this.cityView instanceof CityView) this.game.fullSave(); //Save when done provisioning
     }
     toggleResidentialDesirabilityView() {
         this.cityView = this.cityView instanceof ResidentialDesirabilityView ? new CityView(this.city, this) : new ResidentialDesirabilityView(this.city, this);

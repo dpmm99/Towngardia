@@ -2,11 +2,11 @@ import { Drawable } from "./Drawable.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { City } from "../game/City.js";
 import { Player } from "../game/Player.js";
-import { UIManager } from "./UIManager.js";
 import { Notification } from "../game/Notification.js";
 import { StandardScroller } from "./StandardScroller.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
+import { GameState } from "../game/GameState.js";
 
 export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
@@ -16,7 +16,7 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
     private notificationPadding = 10;
     private expandedNotifications: Set<Notification> = new Set();
 
-    constructor(private player: Player, private city: City, private uiManager: UIManager) { }
+    constructor(private player: Player, private city: City, private game: GameState) { }
 
     onResize(): void { this.scroller.onResize(); }
 
@@ -78,7 +78,10 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
                     } else {
                         this.expandedNotifications.add(notification);
                     }
-                    notification.seen = true;
+                    if (!notification.seen) {
+                        notification.seen = true;
+                        this.game.fullSave();
+                    }
                 }
             });
 

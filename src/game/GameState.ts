@@ -89,6 +89,7 @@ export class GameState {
         if (owner === this.player) {
             //Switching to one of my own other cities. No actual plans for multiple cities per player yet, but the back-end will support it.
             this.city = toCity;
+            this.city.game = this; //Enables city to call back to this object for things like saving
             this.visitingCity = null;
             this.visitingPlayer = null;
         } else {
@@ -161,6 +162,7 @@ export class GameState {
             this.city = new City(this.player, "", "Towngardia", 50, 50, this.buildingTypes);
             this.city.startNew();
         }
+        this.city.game = this; //Enables city to call back to this object for things like saving
         const cityIndex = this.player.cities.findIndex(c => c.id == this.city!.id); //ID might be numeric when deserialized from the server.
         if (cityIndex >= 0) this.player.cities[cityIndex] = this.city; else this.player.addCity(this.city);
         this.onLoadEnd?.();

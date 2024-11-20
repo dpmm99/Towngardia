@@ -311,7 +311,10 @@ export class ContextMenu implements IHasDrawable {
             image: new TextureInfo(48, 48, this.city?.hasResources(cost) ? "ui/ok" : "ui/x"),
             id: confirmation.id + ".confirm",
             onClick: () => {
-                if (this.city?.hasResources(cost)) building.reopenBusiness(this.city!);
+                if (this.city?.hasResources(cost)) {
+                    building.reopenBusiness(this.city!);
+                    this.game.fullSave();
+                }
                 this.building = null;
                 this.reopening = false;
             },

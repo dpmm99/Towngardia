@@ -13,6 +13,7 @@ import { Effect } from "./Effect.js";
 import { EVENT_TYPES, EmergencyPowerAid, PowerOutage } from "./EventTypes.js";
 import { FootprintType } from "./FootprintType.js";
 import { LONG_TICKS_PER_DAY, SHORT_TICKS_PER_LONG_TICK } from "./FundamentalConstants.js";
+import { GameState } from "./GameState.js";
 import { GREENHOUSE_GASES_MIN_POPULATION } from "./GameplayConstants.js";
 import { EffectType } from "./GridType.js";
 import { HappinessCalculator } from "./HappinessCalculator.js";
@@ -35,6 +36,7 @@ export class City {
     public residenceSpawner: ResidenceSpawningSystem; //No persistent data other than constants
     public citizenDietSystem: CitizenDietSystem; //No persistent data other than constants and lastDietComposition
     public canBuildResources: boolean = false; //Is set to true by the construction cheat so I can lay out 'regions'
+    public game: GameState | null = null; //Set when the city is loaded in a writable mode (i.e., it's your own city and it's not on the server)
     //Just aliases
     public flunds: Resource;
     public networkRoot!: Building; //You need to call startNew() or fake() immediately after the constructor.
@@ -501,11 +503,13 @@ export class City {
     public notify(notice: Notification): void {
         this.notifications.push(notice);
         if (this.notifications.length > 10) this.notifications.splice(0, this.notifications.length - 10);
+        this.game?.fullSave();
     }
 
     public notifyPlayer(notice: Notification): void {
         this.player.notifications.push(notice);
         if (this.player.notifications.length > 10) this.player.notifications.splice(0, this.player.notifications.length - 10);
+        this.game?.fullSave();
     }
 
     addBuilding(building: Building, x: number | null = null, y: number | null = null): void {
