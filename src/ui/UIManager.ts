@@ -360,7 +360,7 @@ export class UIManager {
         this.cityView = this.cityView instanceof ProvisioningView ? new CityView(this.city, this) : new ProvisioningView(this.city, this);
         this.bottomBar.shown = this.rightBar.shown = !(this.cityView instanceof ProvisioningView);
         if (this.cityView instanceof ProvisioningView) this.buildTypeBar.expandedCategory = null;
-        if (this.cityView instanceof CityView) this.game.fullSave(); //Save when done provisioning
+        if (!(this.cityView instanceof ProvisioningView)) this.game.fullSave(); //Save when done provisioning
     }
     toggleResidentialDesirabilityView() {
         this.cityView = this.cityView instanceof ResidentialDesirabilityView ? new CityView(this.city, this) : new ResidentialDesirabilityView(this.city, this);
