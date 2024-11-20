@@ -1,4 +1,5 @@
 import { City } from "../game/City.js";
+import { GameState } from "../game/GameState.js";
 import { Resource } from "../game/Resource.js";
 import { Copper, Flunds, Iron, Research, Silicon, StarboxPlays, Stone, Tritium, Uranium } from "../game/ResourceTypes.js";
 import { Drawable } from "../ui/Drawable.js";
@@ -36,7 +37,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     private costs = [{ type: new StarboxPlays().type, amount: 1, reddize: false }];
     private userInputLocked: boolean = false;
 
-    constructor(private city: City, private uiManager: UIManager) {
+    constructor(private city: City, private uiManager: UIManager, private game: GameState) {
         this.initializeGame();
     }
 
@@ -124,6 +125,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         if (rewardFlunds.amount > 0) this.winnings.push(rewardFlunds);
         this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
 
+        this.game.fullSave();
         this.userInputLocked = true;
         setTimeout(() => { this.gameStarted = false; }, 2000); //Will wait for the user to tap to continue.
     }
@@ -611,6 +613,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         if (this.city.checkAndSpendResources(this.costs)) {
             this.gameStarted = true;
             this.initializeGame();
+            this.game.fullSave();
         }
     }
 

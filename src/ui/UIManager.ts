@@ -169,11 +169,11 @@ export class UIManager {
         this.bottomBar.shown = this.isMyCity;
 
         //Minigames never change cities/players
-        this.memoryMixology = new MemoryMixology(this.game.city!, this);
-        this.slots = new SlotMachine(this.game.city!, this);
-        this.starbox = new Starbox(this.game.city!, this);
-        this.monobrynth = new Monobrynth(this.game.city!, this);
-        this.neponet = new NepotismNetworking(this.game.city!, newCity, this); //Affects BOTH your city and the other player's
+        this.memoryMixology = new MemoryMixology(this.game.city!, this, this.game);
+        this.slots = new SlotMachine(this.game.city!, this, this.game);
+        this.starbox = new Starbox(this.game.city!, this, this.game);
+        this.monobrynth = new Monobrynth(this.game.city!, this, this.game);
+        this.neponet = new NepotismNetworking(this.game.city!, newCity, this, this.game); //Affects BOTH your city and the other player's
 
         //This overlay has to be instantiated after bottomBar.shown is set, because the tutorial hides the bottom bar.
         this.windows.push(this.tutorialOverlay = new TutorialOverlay(this.game.player!, this.game.city!, this)); //Also NEVER changes cities/players
@@ -717,6 +717,7 @@ export class UIManager {
         });
 
         this.exitConstructionMode();
+        this.game.fullSave();
     }
 
     private exitConstructionMode(): void {

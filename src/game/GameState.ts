@@ -235,6 +235,19 @@ export class GameState {
         testFriend.cities[0].techManager.techs.get(new HeatPumps().id)!.researched = true;
     }
 
+    public async fullSave() {
+        if (!this.city) throw new Error("City not yet loaded.");
+        try {
+            await this.storage.updatePlayer(this.player!);
+            await this.storage.saveCity(this.player!.id, this.city);
+        } catch (err) {
+            if (err?.toString().includes("SyntaxError")) {
+                if (confirm("Your session expired or the server is down. Open the login page in another tab?")) window.open("index.html"); //Need to log back in
+            }
+            this.uiManager?.showWarning("Save failed. Open a new tab to log in again, then save via the menu. Tap this message to hide it.");
+        }
+    }
+
     private shortTick(untilTime: number) {
         if (!this.city) throw new Error("City not yet loaded.");
         while (untilTime - this.city.lastShortTick >= SHORT_TICK_TIME) {
@@ -262,22 +275,17 @@ export class GameState {
 
             this.city.onLongTick();
             if (now - this.city.lastLongTick < LONG_TICK_TIME) { //Don't save while fast-forwarding.
-                try {
-                    this.storage.saveCity(this.player!.id, this.city);
-                    this.storage.updatePlayer(this.player!);
-                } catch (err) {
-                    if (err?.toString().includes("SyntaxError")) {
-                        if (confirm("Your session expired or the server is down. Open the login page in another tab?")) window.open("index.html"); //Need to log back in
-                    }
-                    this.uiManager?.showWarning("Save failed. Open a new tab to log in again, then save via the menu. Tap this message to hide it.");
-                }
+                this.fullSave();
             }
             if (this.uiManager) this.uiManager.frameRequested = true;
         }
 
         // If no more long ticks are needed, do the short ticks up to the current time.
         const moreLongTicksPending = now - this.city.lastLongTick >= LONG_TICK_TIME;
-        if (!moreLongTicksPending) this.shortTick(now);
+        if (!moreLongTicksPending) {
+            this.shortTick(now);
+            this.fullSave();
+        }
 
         // Return true if there are more long ticks to run, false otherwise.
         return moreLongTicksPending;

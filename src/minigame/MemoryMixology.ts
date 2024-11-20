@@ -3,6 +3,7 @@ import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
 import { TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
+import { GameState } from "../game/GameState.js";
 import { inPlaceShuffle } from "../game/MiscFunctions.js";
 import { Resource } from "../game/Resource.js";
 import { BarPlays, Flunds } from "../game/ResourceTypes.js";
@@ -62,7 +63,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
     private readonly countdownSteps = [8, 7, 6, 5, 4, 3, 2, 1, "GO"];
     private countdownStep = 0;
 
-    constructor(private city: City, private uiManager: UIManager) { }
+    constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
 
     private initializeGame(): void {
         this.score = 0;
@@ -217,6 +218,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             this.city.events.push(new TourismReward(this.wonTourismTicks));
             this.city.checkAndAwardTitle(TitleTypes.SmartCityShowcase.id);
         }
+        this.game.fullSave();
     }
 
     asDrawable(): Drawable {
@@ -411,6 +413,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         if (this.city.checkAndSpendResources(this.costs)) {
             this.gameStarted = true;
             this.initializeGame();
+            this.game.fullSave();
         }
     }
 

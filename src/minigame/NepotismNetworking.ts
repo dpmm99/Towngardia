@@ -12,6 +12,7 @@ import { inPlaceShuffle } from "../game/MiscFunctions.js";
 import { TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
 import { Assist } from "../game/Assist.js";
+import { GameState } from "../game/GameState.js";
 
 // Constants
 const GRID_WIDTH = 4;
@@ -72,7 +73,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
     private costs = [{ type: new NepotismNetworkingPlays().type, amount: 1 }];
     private userInputLocked: boolean = false;
 
-    constructor(private city: City, private friendCity: City, private uiManager: UIManager) { }
+    constructor(private city: City, private friendCity: City, private uiManager: UIManager, private game: GameState) { }
 
     private initializeGame(): void {
         this.timer = GAME_DURATION;
@@ -406,7 +407,10 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
     }
 
     public startGame(): void {
-        if (this.city.checkAndSpendResources(this.costs)) this.initializeGame();
+        if (this.city.checkAndSpendResources(this.costs)) {
+            this.initializeGame();
+            this.game.fullSave();
+        }
     }
 
     public show(): void {
@@ -442,6 +446,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         }
 
         this.calculateWinnings();
+        this.game.fullSave();
         // Freeze input and keep showing the grid for a couple seconds before returinng to the main screen.
         this.userInputLocked = true;
         setTimeout(() => { this.gameStarted = false; }, 2000); //Will wait for the user to tap to continue.

@@ -1,4 +1,5 @@
 import { City } from "../game/City.js";
+import { GameState } from "../game/GameState.js";
 import { inPlaceShuffle } from "../game/MiscFunctions.js";
 import { Drawable } from "../ui/Drawable.js";
 import { IHasDrawable } from "../ui/IHasDrawable.js";
@@ -51,7 +52,7 @@ export class SlotMachine implements IHasDrawable, IOnResizeEvent {
         { name: "The Jack", face: Face.FatCat, multiplier: 0 } // Using FatCat as a placeholder for "No matches"
     ];
 
-    constructor(private city: City, private uiManager: UIManager) {
+    constructor(private city: City, private uiManager: UIManager, private game: GameState) {
         this.initializeReels();
     }
 
@@ -373,6 +374,7 @@ export class SlotMachine implements IHasDrawable, IOnResizeEvent {
         }
 
         this.city.resources.get('flunds')!.amount += this.winnings;
+        this.game.fullSave();
     }
 
     private spin(multiplier: number): void {
@@ -387,6 +389,7 @@ export class SlotMachine implements IHasDrawable, IOnResizeEvent {
             this.spinningFrames[1] = this.spinningFrames[2] - 5 - Math.floor(Math.random() * 30);
             this.spinningFrames[0] = this.spinningFrames[1] - 5 - Math.floor(Math.random() * 30);
             this.initializeReels();
+            this.game.fullSave();
         }
     }
 

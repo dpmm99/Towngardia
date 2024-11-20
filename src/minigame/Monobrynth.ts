@@ -11,6 +11,7 @@ import { StandardScroller } from "../ui/StandardScroller.js";
 import { CityFlags } from "../game/CityFlags.js";
 import { TeleportationPod, getBuildingType } from "../game/BuildingTypes.js";
 import { Notification } from "../game/Notification.js";
+import { GameState } from "../game/GameState.js";
 
 const SYMBOL_COUNT = 6;
 const GRID_WIDTH = 5;
@@ -55,7 +56,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private preloaded: boolean = false;
     private costs = [{ type: new MonobrynthPlays().type, amount: 1 }, { type: new Clothing().type, amount: 0 }];
 
-    constructor(private city: City, private uiManager: UIManager) { }
+    constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
 
     private initializeGame(): void {
         this.score = 0;
@@ -261,6 +262,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private endGame(): void {
         this.gameStarted = false;
         this.calculateWinnings();
+        this.game.fullSave();
     }
 
     private calculateWinnings(): void {
@@ -279,6 +281,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     public startGame(): void {
         if (this.city.checkAndSpendResources(this.costs)) {
             this.initializeGame();
+            this.game.fullSave();
         }
     }
 
