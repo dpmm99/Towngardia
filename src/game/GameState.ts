@@ -250,11 +250,14 @@ export class GameState {
 
     private shortTick(untilTime: number) {
         if (!this.city) throw new Error("City not yet loaded.");
+        let ticked = false;
         while (untilTime - this.city.lastShortTick >= SHORT_TICK_TIME) {
             this.city.lastShortTick += SHORT_TICK_TIME;
             this.city.onShortTick();
+            ticked = true;
             if (this.uiManager) this.uiManager.frameRequested = true;
         }
+        return ticked;
     }
 
     tick(): boolean {
@@ -283,8 +286,7 @@ export class GameState {
         // If no more long ticks are needed, do the short ticks up to the current time.
         const moreLongTicksPending = now - this.city.lastLongTick >= LONG_TICK_TIME;
         if (!moreLongTicksPending) {
-            this.shortTick(now);
-            this.fullSave();
+            if (this.shortTick(now)) this.fullSave();
         }
 
         // Return true if there are more long ticks to run, false otherwise.

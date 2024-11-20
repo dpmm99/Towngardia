@@ -1,5 +1,6 @@
 import { Building } from "../game/Building.js";
 import { City } from "../game/City.js";
+import { GameState } from "../game/GameState.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { TextureInfo } from "./TextureInfo.js";
@@ -19,7 +20,7 @@ export class ContextMenu implements IHasDrawable {
     public repairing: boolean = false;
     public switchingOutputs: boolean = false;
 
-    constructor(private uiManager: UIManager) {
+    constructor(private uiManager: UIManager, private game: GameState) {
     }
 
     public update(city: City, x: number, y: number) {
@@ -91,7 +92,10 @@ export class ContextMenu implements IHasDrawable {
             menu.addChild(new Drawable({
                 image: new TextureInfo(childWidth, childHeight, "ui/remove"), //TODO: Need better icons for these
                 id: menu.id + ".remove",
-                onClick: () => { this.city?.removeBuilding(building); }
+                onClick: () => {
+                    this.city?.removeBuilding(building);
+                    this.game.fullSave();
+                }
             }));
         }
         if (building.canDemolish(this.city!) && this.uiManager.isMyCity) {
@@ -184,6 +188,7 @@ export class ContextMenu implements IHasDrawable {
             onClick: () => {
                 if (this.city?.checkAndSpendResources(building.getDemolitionCosts(this.city!))) {
                     this.city?.removeBuilding(building, true);
+                    this.game.fullSave();
                 }
                 this.building = null;
                 this.demolishing = false;
@@ -382,7 +387,10 @@ export class ContextMenu implements IHasDrawable {
             image: new TextureInfo(48, 48, this.city?.hasResources(costs) ? "ui/ok" : "ui/x"),
             id: confirmation.id + ".confirm",
             onClick: () => {
-                if (this.city?.checkAndSpendResources(costs)) building.repair(this.city);
+                if (this.city?.checkAndSpendResources(costs)) {
+                    building.repair(this.city);
+                    this.game.fullSave();
+                }
                 this.building = null;
                 this.repairing = false;
             },
@@ -475,6 +483,7 @@ export class ContextMenu implements IHasDrawable {
                     //Collect as if you had clicked the building first
                     this.city?.transferResourcesFrom(building.outputResources, "produce");
                     building.outputResources = [resource.clone()];
+                    this.game.fullSave();
                     this.building = null;
                     this.switchingOutputs = false;
                 },

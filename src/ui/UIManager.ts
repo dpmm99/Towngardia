@@ -163,7 +163,7 @@ export class UIManager {
         ];
         this.worldCoordinateDrawables = [
             this.constructMenu = new ConstructMenu(),
-            this.contextMenu = new ContextMenu(this),
+            this.contextMenu = new ContextMenu(this, this.game),
         ];
 
         this.bottomBar.shown = this.isMyCity;
@@ -188,6 +188,7 @@ export class UIManager {
             const [tech, bonusClaimed] = TechManager.grantFreePoints(this.game.city!, this.game.visitingCity!, grantPoints, Date.now());
             if (tech) await this.techMenu.preloadImages();
             this.showFriendVisitWindow(tech, grantPoints, bonusClaimed); //TODO: also let the player choose to buy specific resources from this city (if this city has sold them recently)
+            if (bonusClaimed) this.game.fullSave();
             this.frameRequested = true;
         }
     }
