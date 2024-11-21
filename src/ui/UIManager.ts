@@ -683,6 +683,9 @@ export class UIManager {
     }
 
     public selectBuildCategory(category: BuildingCategory | null, toggle: boolean = false): void {
+        this.contextMenu.moving = false; //If you were moving a building, clicking to place another building would remove a building from the city and cause an error, so we need to reset moving=false.
+        this.constructMenu.update(this.city, this.renderer, null, 0, 0, false); //Remove the construction overlay
+
         this.buildTypeBar.expandedCategory = toggle && this.buildTypeBar.expandedCategory === category ? null : category;
         this.buildTypeBar.resetScroll();
         this.buildTypeBar.selectBuildingType(""); //Reset scroll and selection in the other bar
@@ -704,6 +707,7 @@ export class UIManager {
         if (!this.buildTypeBar.selectedBuilding) return;
 
         //Get one from inventory or make a new copy, and subtract building costs at the same time
+        //TODO: I think 'moving' is sometimes true but this.buildTypeBar.selectedBuilding is null, because buildings remove themselves from the map in rare cases.
         if (this.contextMenu.moving) this.city.removeBuilding(this.buildTypeBar.selectedBuilding!, false, true); //If we're moving a building, put it in the inventory and then immediately take it back out
 
         const copies = this.constructMenu.getCopies();
