@@ -254,6 +254,7 @@ export class Building implements IHasDrawable {
         return availableFraction;
     }
 
+    //Returns true if the building is a business and has failed.
     public updateBusinessFailures(city: City, revenue: number) {
         if (revenue < 0.1 * this.businessPatronCap) { //No special consideration needed for businessPatronCap === -1 since revenue wouldn't be negative. :)
             this.businessFailureCounter++;
@@ -261,10 +262,12 @@ export class Building implements IHasDrawable {
                 this.businessFailed = true;
                 this.patronageEfficiency = 0;
                 city.failBusiness(this);
+                return true;
             }
         } else {
             this.businessFailureCounter = 0;
         }
+        return false;
     }
 
     public reopenBusiness(city: City): boolean {
@@ -342,28 +345,25 @@ export class Building implements IHasDrawable {
     collectiblesAsDrawable(city: City): Drawable | null {
         //Pick the best one to display based on the highest amount. Exclude special resources because they shouldn't be collected manually.
         const resource = this.outputResources.filter(p => p.amount > 0 && !p.isSpecial).sort((a, b) => b.amount - a.amount)[0];
-        if (!resource) {
-            if (this.damagedEfficiency < 1) {
-                return this.lastCollectibleDrawable = new Drawable({
-                    anchors: ['bottom'],
-                    width: "64px",
-                    height: "64px",
-                    image: new TextureInfo(128, 128, 'ui/warningbackdrop'),
-                    fallbackColor: "#bb0000aa",
-                    onClick: () => city.showRepairBuildingDialog(this),
-                    children: [
-                        new Drawable({
-                            x: 16,
-                            y: 16,
-                            width: "32px",
-                            height: "32px",
-                            image: new TextureInfo(64, 64, "ui/fire"),
-                        }),
-                    ],
-                });
-            }
-
-            return this.lastCollectibleDrawable = null;
+        if (resource) {
+            //Collection
+            return this.lastCollectibleDrawable = new Drawable({
+                anchors: ['bottom'],
+                width: "64px",
+                height: "64px",
+                image: new TextureInfo(128, 128, 'ui/collectionbackdrop'),
+                fallbackColor: "#0055bbaa",
+                onClick: () => city.transferResourcesFrom(this.outputResources, "produce"),
+                children: [
+                    new Drawable({
+                        x: 16,
+                        y: 16,
+                        width: "32px",
+                        height: "32px",
+                        image: new TextureInfo(64, 64, "resource/" + resource.type),
+                    }),
+                ],
+            });
         }
 
         //If the business is failed, show a different icon, and make the onClick reopen the business.
@@ -387,24 +387,28 @@ export class Building implements IHasDrawable {
             });
         }
 
-        //Collection
-        return this.lastCollectibleDrawable = new Drawable({
-            anchors: ['bottom'],
-            width: "64px",
-            height: "64px",
-            image: new TextureInfo(128, 128, 'ui/collectionbackdrop'),
-            fallbackColor: "#0055bbaa",
-            onClick: () => city.transferResourcesFrom(this.outputResources, "produce"),
-            children: [
-                new Drawable({
-                    x: 16,
-                    y: 16,
-                    width: "32px",
-                    height: "32px",
-                    image: new TextureInfo(64, 64, "resource/" + resource.type),
-                }),
-            ],
-        });
+        //Damage
+        if (this.damagedEfficiency < 1) {
+            return this.lastCollectibleDrawable = new Drawable({
+                anchors: ['bottom'],
+                width: "64px",
+                height: "64px",
+                image: new TextureInfo(128, 128, 'ui/warningbackdrop'),
+                fallbackColor: "#bb0000aa",
+                onClick: () => city.showRepairBuildingDialog(this),
+                children: [
+                    new Drawable({
+                        x: 16,
+                        y: 16,
+                        width: "32px",
+                        height: "32px",
+                        image: new TextureInfo(64, 64, "ui/fire"),
+                    }),
+                ],
+            });
+        }
+
+        return this.lastCollectibleDrawable = null;
     }
 
     //Show icons for when buildings are low on input resources as well. If they don't have enough for the next <view-provided number> long ticks, then the "feed me" icon should appear.

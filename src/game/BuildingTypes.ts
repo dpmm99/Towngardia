@@ -489,7 +489,7 @@ export class CityHall extends Building {
         // Calculate total revenue and update business failure counters
         let totalRevenue = 0;
         businesses.forEach(business => {
-            business.building.updateBusinessFailures(city, business.totalAssigned);
+            if (business.building.updateBusinessFailures(city, business.totalAssigned)) return; //continue if the business failed, so we don't count its revenue or update its patronageEfficiency
             // Update the building's lastEfficiency to include assigned people
             if (business.building.businessPatronCap === 0) throw new Error("Patron cap 0 on building " + business.building.type);
             business.building.patronageEfficiency = (business.totalAssigned / business.building.businessPatronCap);
