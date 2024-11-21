@@ -218,7 +218,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
                 this.currentSequence = [];
                 this.handleTileContent(currentTile);
                 this.endGameIfAllVisited();
-            }, 2000);
+            }, 1000);
         }
     }
 
@@ -246,7 +246,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             this.currentSequence = [];
             this.hp.pop();
             if (!this.hp.length) this.endGame();
-        }, 2000);
+        }, 1000);
     }
 
     private endGameIfAllVisited(): void {

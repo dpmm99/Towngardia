@@ -127,7 +127,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
 
         this.game.fullSave();
         this.userInputLocked = true;
-        setTimeout(() => { this.gameStarted = false; }, 2000); //Will wait for the user to tap to continue.
+        setTimeout(() => { this.gameStarted = false; }, 1000); //Will wait for the user to tap to continue.
     }
 
     onResize(): void {
@@ -335,7 +335,12 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
 
         // Check for game over (no space for new piece)
         if (this.currentPiece.some((color, i) => this.gameBoard[this.currentPiecePosition.y + i][this.currentPiecePosition.x] !== 0)) {
-            this.endGame();
+            //First, if they have a black hole, try using that.
+            if (this.blackHoles > 0) {
+                this.useBlackHole();
+            }
+            //If they don't have a black hole, or if they do but the current piece is still blocked, end the game.
+            if (this.currentPiece.some((color, i) => this.gameBoard[this.currentPiecePosition.y + i][this.currentPiecePosition.x] !== 0)) this.endGame();
         }
     }
 

@@ -449,7 +449,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         this.game.fullSave();
         // Freeze input and keep showing the grid for a couple seconds before returinng to the main screen.
         this.userInputLocked = true;
-        setTimeout(() => { this.gameStarted = false; }, 2000); //Will wait for the user to tap to continue.
+        setTimeout(() => { this.gameStarted = false; }, 1000); //Will wait for the user to tap to continue.
     }
 
     private calculateWinnings(): void {
@@ -944,6 +944,27 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
                         width: "100%",
                         height: "48px",
                         text: "Time's up!",
+                    })
+                ]
+            }));
+        } else {
+            //Put a "give up" button at the top right corner
+            gameArea.addChild(new Drawable({
+                anchors: ['right'],
+                x: 10,
+                y: 10,
+                width: "100px",
+                height: "48px",
+                fallbackColor: '#444444',
+                onClick: () => this.endGame(),
+                children: [
+                    new Drawable({
+                        anchors: ['centerX'],
+                        y: 5,
+                        width: "calc(100% - 10px)",
+                        height: "100%",
+                        text: "Give Up",
+                        centerOnOwnX: true
                     })
                 ]
             }));
