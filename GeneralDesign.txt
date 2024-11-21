@@ -55,6 +55,7 @@ new events:
 	aurora (tourism)
 	spring bloom (agriculture boost)
 	meteor shower (research boost)
+	lightning strike (just damages one to a few random buildings)
 	social events
 	perfect weather (Claude suggested "clear skies week" = solar power + happiness, "perfect growing conditions" = agriculture)
 	food festival (happiness + business)
@@ -73,6 +74,7 @@ new buildings:
 	Environmental Lab - pollution reduction over time - I particularly like this idea because I only had 1 or 2 buildings in the "environment" budget category previously
 	Energy Institute - permanent power efficiency
 	Social Sciences Center - happiness research
+	Bamboo garden - produces more wood using less space (maybe unlocked with GM crops or as another tech after it)
 	Advanced Recycling Center - converts waste to basic resources - could just produce some random resources based on the nearby building count
 	Molecular Assembler - slow high-tier resource generation
 	Mobile Clinics - spreads healthcare to underserved areas, i.e., it might not be a square/rounded-rectangle AoE
@@ -80,6 +82,8 @@ new buildings:
 	Emergency Response Center - reduces event impact, but this would make more sense if there were negative health events even when you have good healthcare coverage
 	Innovation Hub - could turn Apps into research or something
 	Supply Chain Center - production efficiency, e.g., could boost business patron cap and proportionally boost business revenue
+	Air quality monitoring and enforcement center - reduces pollution from nearby structures
+	Other environment building ideas: wildlife sanctuary (+tourism), ecosystem restoration center (improves land value)
 	Winter event buildings: could have a parade that you can place on the road, hot chocolate vendor, reindeer stuff, candy cane decorations, a Santa house thing, a huge tree...
 	More specific decorations: bronze dragon, giant wind instrument, giant steampunk chess set, plaza that looks like a compass rose, fancy bike path that both reduces traffic and spreads luxury, human-sized hamster wheels (maybe spreads a little healthcare and produces 0.1 MW for the laughs :))
 Mechanical failures - a few buildings would damage themselves slowly over time and show a wrench icon instead of fire when they're damaged, but the damage wouldn't harm efficiency for 5 days, then the backdrop turns from the 'warning' one into the 'error' one after that. A tech could unlock auto-repair.
@@ -90,6 +94,7 @@ Possible multi-friend project: Intercity Trade Center (permanently reduces marke
 Some possible minigame rewards: factory booster - can boost a single factory's output by 25% for a day or something; land value booster - permanently increase land value a little bit (with a limit); temporary construction cost reduction; temporary market buy price reduction
 Possible minigame reward for a friend: Expert Consulting (temporary business efficiency boost)
 Another minigame idea: like a 'bulldozer' game but with trash and it's really just a match-3 kind of thing. Could produce paper (which could be required by the post office)
+Another minigame idea: cryptograms that boost education and use paper, maybe occasionally lead to buried treasure or something ;)
 "corporate enticement"
 construction image until a building activates
 convention center with its own MEANINGFUL events (they just cause a temporary tourism increase as-is)

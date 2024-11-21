@@ -79,7 +79,7 @@ app.get(urlRootPath + '/index.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.get(urlRootPath + '/game.html', isAuthenticated, (req, res) => {
+app.get(urlRootPath + '/game.html', isAuthenticated, (req, res) => { //TODO: Allow moderately expired sessions on everything except this route.
     res.sendFile(path.join(__dirname, 'game.html'));
 });
 
@@ -124,7 +124,7 @@ app.get(urlRootPath + '/api/player', isAuthenticated, asyncHandler(async (req: a
     res.json(s.player(playerAndFriends));
 }));
 
-app.post(urlRootPath + '/api/saveCity', isAuthenticated, asyncHandler(async (req: any, res: any)  => {
+app.post(urlRootPath + '/api/saveCity', isAuthenticated, asyncHandler(async (req: any, res: any)  => { //TODO: When client is outdated, save if possible, but then tell the client to refresh (though if they're doing something like starting a minigame, we don't want to force it right away).
     const d = new CityDeserializer();
     const rebuiltCity = d.city(new Player(req.playerId, ""), req.body); // Validate city (sort of)
     await db.saveCity(req.playerId, rebuiltCity);

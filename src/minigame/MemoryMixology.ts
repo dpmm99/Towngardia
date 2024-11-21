@@ -1,7 +1,7 @@
 import { TitleTypes } from "../game/AchievementTypes.js";
 import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
-import { TourismReward } from "../game/EventTypes.js";
+import { ProductionReward, TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
 import { GameState } from "../game/GameState.js";
 import { inPlaceShuffle } from "../game/MiscFunctions.js";
@@ -28,6 +28,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
     private gameStarted: boolean = false;
     private winnings: Resource[] = [];
     private wonTourismTicks: number = 0;
+    private wonProductionTicks: number = 0;
     private score: number = 0;
     private cardSize: { width: number, height: number } = { width: 128, height: 192 };
     private gridSize: { width: number, height: number } = { width: 5, height: 3 };
@@ -213,10 +214,14 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         if (this.score >= 50) this.winnings[0].amount += 20;
         this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
 
+        this.wonTourismTicks = this.wonProductionTicks = 0;
         if (this.city.flags.has(CityFlags.UnlockedTourism) && this.score >= 10) {
             this.wonTourismTicks = Math.ceil(LONG_TICKS_PER_DAY * this.score / 25); //Up to 2 days worth of a tourism boost
             this.city.events.push(new TourismReward(this.wonTourismTicks));
             this.city.checkAndAwardTitle(TitleTypes.SmartCityShowcase.id);
+        } else if (this.score >= 10) { //May make this into a switchable reward later if I implement the Minigame Research Lab idea.
+            this.wonProductionTicks = Math.ceil(LONG_TICKS_PER_DAY * this.score / 25);
+            this.city.events.push(new ProductionReward(this.wonProductionTicks));
         }
         this.game.fullSave();
     }
@@ -550,11 +555,12 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             }));
             addResourceCosts(winningsArea.children[winningsArea.children.length - 1], this.winnings, 0, 0, false, false, false, 64, 10, 32, 4);
 
+            let nextY = 220;
             if (this.wonTourismTicks) {
                 //Only show the tourism reward if they won one
                 winningsArea.addChild(new Drawable({
                     x: 20,
-                    y: 220,
+                    y: nextY,
                     width: "48px",
                     height: "48px",
                     image: new TextureInfo(64, 64, "resource/tourists"),
@@ -562,10 +568,29 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
                 }));
                 winningsArea.addChild(new Drawable({
                     x: 80,
-                    y: 230,
+                    y: nextY + 10,
                     width: "390px",
                     height: "36px",
                     text: `${this.wonTourismTicks * (24 / LONG_TICKS_PER_DAY)} hours of slightly boosted tourism`,
+                    scaleYOnMobile: true,
+                }));
+                nextY += 58;
+            }
+            if (this.wonProductionTicks) {
+                winningsArea.addChild(new Drawable({
+                    x: 20,
+                    y: nextY,
+                    width: "48px",
+                    height: "48px",
+                    image: new TextureInfo(64, 64, "ui/resources"),
+                    scaleYOnMobile: true,
+                }));
+                winningsArea.addChild(new Drawable({
+                    x: 80,
+                    y: nextY + 10,
+                    width: "390px",
+                    height: "36px",
+                    text: `${this.wonProductionTicks * (24 / LONG_TICKS_PER_DAY)} hours of slightly boosted production`,
                     scaleYOnMobile: true,
                 }));
             }

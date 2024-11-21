@@ -1559,7 +1559,7 @@ export class MountainIronMine extends Building {
         return [{ type: "flunds", amount: 0.25 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Very cheap to upkeep
     }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.2; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.2 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class Quarry extends Building {
@@ -1604,7 +1604,7 @@ export class Quarry extends Building {
         return [{ type: "flunds", amount: 0.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class CementMill extends Building {
@@ -1629,7 +1629,7 @@ export class CementMill extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1; }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class ShaftCoalMine extends Building {
@@ -1780,7 +1780,7 @@ export class CrystalMine extends Building {
         return [{ type: "flunds", amount: 0.75 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.2; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.2 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class AssemblyHouse extends Building {
@@ -1864,7 +1864,7 @@ export class TextileMill extends Building {
         super.remove(city, justMoving);
     }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class ApparelFactory extends Building {
@@ -1901,7 +1901,7 @@ export class ApparelFactory extends Building {
         super.remove(city, justMoving);
     }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class SteelMill extends Building {
@@ -1939,7 +1939,7 @@ export class SteelMill extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class PlasticsFactory extends Building {
@@ -1978,7 +1978,7 @@ export class PlasticsFactory extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class ToyManufacturer extends Building {
@@ -2016,7 +2016,7 @@ export class ToyManufacturer extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class Furnifactory extends Building {
@@ -2054,7 +2054,7 @@ export class Furnifactory extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class LithiumMine extends Building {
@@ -2165,7 +2165,7 @@ export class Nanogigafactory extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 10; }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 
     override onLongTick(city: City): void {
         this.inputResources.find(p => p.type === 'lithium')!.consumptionRate = 0.75 - 0.375 * city.techManager.getAdoption('graphenebattery');
@@ -2194,7 +2194,7 @@ export class PharmaceuticalsLab extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 18; }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 export class SpaceLaunchSite extends Building {
@@ -2237,7 +2237,7 @@ export class SpaceLaunchSite extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
 
-    override getEfficiencyEffectMultiplier(city: City): number { return 1 + city.techManager.getAdoption("advrobots") * 0.1; }
+    override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
 //# Commercial
@@ -2500,7 +2500,7 @@ export class PalmNomNom extends Building {
 export class GregsGrogBarr extends Building {
     constructor() {
         super(
-            "gregsgrogbarr", "Greg's Grog B'Arr", "Where landlubbers and sea dogs alike come to get ship-faced. Our peanuts are as salty as an old captain's vocabulary. Pirate-wannabe patrons aren't organized, but they do perpetrate some crime.",
+            "gregsgrogbarr", "Greg's Grog B'Arr", "Where landlubbers and sea dogs alike come to get ship-faced. Our peanuts are as salty as an old captain's vocabulary. Pirate-wannabe patrons aren't particularly organized, but they do perpetrate some crime of various sorts.",
             BuildingCategory.COMMERCIAL,
             2, 2, 0,
             0.4,
@@ -2517,6 +2517,7 @@ export class GregsGrogBarr extends Building {
 
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
+        city.spreadEffect(new Effect(EffectType.OrganizedCrime, 0.05, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX - 2, this.areaIndicatorRadiusY - 2, this.areaIndicatorRounded);
         city.spreadEffect(new Effect(EffectType.PettyCrime, 0.2, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
         city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY); //Affects apartment spawn chance
     }
@@ -2619,7 +2620,7 @@ export class Casino extends Building {
 
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.OrganizedCrime, 0.15, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX - 1, this.areaIndicatorRadiusY - 1, this.areaIndicatorRounded);
+        city.spreadEffect(new Effect(EffectType.OrganizedCrime, 0.2, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX - 1, this.areaIndicatorRadiusY - 1, this.areaIndicatorRounded);
         city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
     }
 
@@ -2667,7 +2668,7 @@ export class GameDevStudio extends Building {
 export class BlankCheckBank extends Building {
     constructor() {
         super(
-            "blankcheckbank", "Blank Check Bank", "A towering temple of marble and money, where dreams come with interest rates and savings come with sighs. Our vault doors are heavy, our columns are tall, and our pens are chained down because someone's got trust issues. The fancy marble floors are meant to make you feel poor.",
+            "blankcheckbank", "Blank Check Bank", "A towering temple of marble and money, where dreams come with interest rates and savings come with sighs. Our vault doors are heavy, our columns are tall, and our pens are chained down because someone's got trust issues. The fancy marble floors are meant to make you feel poor. May lose revenue to embezzling if the area has unchecked organized crime.",
             BuildingCategory.COMMERCIAL,
             2, 2, 0,
             0.3,
@@ -2684,6 +2685,7 @@ export class BlankCheckBank extends Building {
 
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
+        city.spreadEffect(new Effect(EffectType.OrganizedCrime, 0.15, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX - 1, this.areaIndicatorRadiusY - 1, this.areaIndicatorRounded);
         city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.3, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
     }
 
@@ -2693,6 +2695,11 @@ export class BlankCheckBank extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
+
+    override getEfficiencyEffectMultiplier(city: City): number {
+        const embezzling = this.x === -1 ? 0 : Math.min(city.getNetOrganizedCrime(this.x, this.y), city.getNetOrganizedCrime(this.x + 1, this.y), city.getNetOrganizedCrime(this.x, this.y + 1), city.getNetOrganizedCrime(this.x + 1, this.y + 1));
+        return super.getEfficiencyEffectMultiplier(city) * Math.max(0, 1 - embezzling);
+    }
 }
 
 export class ResortHotel extends Building {

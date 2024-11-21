@@ -34,6 +34,17 @@ export class UntappedPatronage extends Resource {
     }
 }
 
+//Multiplicative bonus or penalty applied to factory production rates; only affected by a reward event currently
+export class ProductionEfficiency extends Resource {
+    constructor(initialCount: number = 1) {
+        super(
+            "prodeff", "Production Efficiency",
+            initialCount, 0, Number.MAX_SAFE_INTEGER, 0,
+            true
+        );
+    }
+}
+
 export class Flunds extends Resource {
     constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
         super(
@@ -638,7 +649,7 @@ export const RESOURCE_TYPES = <Resource[]>([
     /*Fuel and ingredients*/ Coal, Copper, Gemstones, Lithium, Oil, Plastics, Rubber, Sand, Silicon, Textiles, Tritium, Uranium,
     /*Manufactured goods*/ Apps, Batteries, Clothing, Electronics, Furniture, Paper, Pharmaceuticals, Toys,
     /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays,
-    /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases,
+    /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency,
     /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Water].map(p => new p()));
 
 //For easy checking if something is a food.

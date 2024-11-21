@@ -242,7 +242,7 @@ export class GameState {
         try {
             await this.storage.updatePlayer(this.player!);
             await this.storage.saveCity(this.player!.id, this.city);
-        } catch (err) {
+        } catch (err) { //TODO: Break up the error into at least 3 parts: 1. session expired, 2. mandatory client version update, 3. unexpected server error
             if (err?.toString().includes("SyntaxError")) {
                 if (confirm("Your session expired or the server is down. Open the login page in another tab?")) window.open("index.html"); //Need to log back in
             }

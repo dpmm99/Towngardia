@@ -64,6 +64,25 @@ export class TourismReward extends CityEvent {
     //No shouldStart because it should never start on its own
 }
 
+export class ProductionReward extends CityEvent { //Applies to physical resources, i.e., not flunds, tourists, power, or business revenue
+    constructor(initialDuration = 12, bonusFraction = 0) {
+        super("productionreward", "Production Reward", initialDuration, "", "", undefined, EventTickTiming.Early);
+        if (bonusFraction) this.variables.push(bonusFraction);
+        this.duration = initialDuration;
+    }
+
+    override onLongTick(city: City): boolean {
+        const productionResource = city.resources.get("prodeff");
+
+        if (!this.variables.length) this.variables.push(0.05); //Default 5% bonus
+        if (productionResource?.capacity) productionResource.amount *= 1 + this.variables[0]; //Bonus stays constant
+
+        return super.onLongTick(city);
+    }
+
+    //No shouldStart because it should never start on its own
+}
+
 export class Drought extends CityEvent { //Implemented on Fire Station already
     constructor() {
         super("drought", "Drought", 10 * LONG_TICKS_PER_DAY,
@@ -534,7 +553,7 @@ export class Spoilage extends CityEvent {
 
 export const EVENT_TYPES = <CityEvent[]>([
     /*Fixed seasonal events*/ Hauntymonth,
-    /*Minigame-triggered events*/ TourismReward,
+    /*Minigame-triggered events*/ TourismReward, ProductionReward,
     /*Random negative events*/ Drought, Heatwave, ColdSnap, PowerOutage, Burglary, Heist, Epidemic, Fire, Earthquake, Riot, Spoilage,
     //...but Earthquake has positive effects, too: spawns a cheap geothermal power source sometimes, and spawns a hot spring the first time.
     /*Random positive events*/ EconomicBoom,

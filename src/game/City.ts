@@ -139,6 +139,7 @@ export class City {
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(HighSchool));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Dorm));
         if (this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount < 150) this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount = 150;
+        if (this.happinessBreakdown.has("Food satisfaction")) this.happinessBreakdown.delete("Food satisfaction"); //I renamed it to "Food gratification" to match the citizen diet screen later
 
         //Version changes that aren't as simple as an unlock
         if (this.dataVersion < 1) {
@@ -1076,6 +1077,9 @@ export class City {
             resource.buyableAmount = Math.min(resource.buyCapacity, resource.buyableAmount + resource.buyCapacity * 0.2 / LONG_TICKS_PER_DAY);
         });
 
+        this.resources.get("prodeff")!.amount = 1;
+        this.runEvents(EventTickTiming.Early); //Some events might need to happen at this point, such as production efficiency boosts.
+
         this.updatePopulation();
         this.updateTourists();
         this.techManager.updateAdoptionRates();
@@ -1099,6 +1103,7 @@ export class City {
         this.budget.resetLastServiceCosts();
         this.budget.otherExpenses["powerprod"] = 0; //Currently calculated specially--but I may make it part of "lastServiceCosts" at some point; just not sure I want the user poking around with a power production slider.
         this.budget.otherExpenses["agriculture"] = this.budget.otherExpenses["industry"] = 0;
+
         this.buildings.forEach(building => building.onLongTick(this)); //Note: this is where inputResources consumption and outputResources production happens.
         this.flunds.amount += this.cityHall.flunds.amount; //Deduct from City Hall first, step 2
         const expectedTotalFlunds = this.flunds.amount; //Calculate expenses, step 1

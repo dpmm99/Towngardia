@@ -208,9 +208,10 @@ export class Building implements IHasDrawable {
     getPowerProduction(city: City, ideal: boolean = false): number { return 0; }
 
     //This needs to consider earned titles, active events, and other effects (e.g., from surrounding buildings that apply a bonus).
-    //By default, it's affected by the Culinary Capital title for restaurants.
+    //By default, it's affected by the Culinary Capital title for restaurants and the Production Efficiency resource for any non-business that produces resources.
     getEfficiencyEffectMultiplier(city: City): number {
-        return this.isRestaurant && city.titles.get(TitleTypes.CulinaryCapital.id)?.attained ? 1.1 : 1;
+        return (this.isRestaurant && city.titles.get(TitleTypes.CulinaryCapital.id)?.attained ? 1.1 : 1) *
+            (this.outputResources.length && !this.businessPatronCap ? city.resources.get("prodeff")!.amount : 1);
     }
 
     //Calculate the given type of effect for each cell the building covers and return the highest one.
