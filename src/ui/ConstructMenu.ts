@@ -184,7 +184,8 @@ export class ConstructMenu implements IHasDrawable {
 
     private addEffectAreaDrawable(parentDrawable: Drawable, xPos: number, yPos: number, index: number): void {
         if (this.buildingType && this.buildingType.areaIndicatorRadiusX > 0 && this.buildingType.areaIndicatorRadiusY > 0) {
-            const areaIndicator = this.city!.getTilesInArea(xPos, yPos, this.buildingType.width, this.buildingType.height, this.buildingType.areaIndicatorRadiusX, this.buildingType.areaIndicatorRadiusY, this.buildingType.areaIndicatorRounded);
+            const radiusBonus = this.buildingType.getRadiusUpgradeAmount(this.city!);
+            const areaIndicator = this.city!.getTilesInArea(xPos, yPos, this.buildingType.width, this.buildingType.height, this.buildingType.areaIndicatorRadiusX + radiusBonus, this.buildingType.areaIndicatorRadiusY + radiusBonus, this.buildingType.areaIndicatorRounded);
             for (const tile of areaIndicator) {
                 //Skip the tiles that the building itself covers, or we can't see the footprint
                 if (tile.x >= xPos && tile.x < xPos + this.buildingType.width && tile.y >= yPos && tile.y < yPos + this.buildingType.height) continue;

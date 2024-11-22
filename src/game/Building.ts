@@ -4,6 +4,7 @@ import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { TitleTypes } from "./AchievementTypes.js";
 import { BuildingCategory } from "./BuildingCategory.js";
+import { BuildingEffects } from "./BuildingEffects.js";
 import { City } from "./City.js";
 import { Effect } from "./Effect.js";
 import { FootprintType } from "./FootprintType.js";
@@ -47,7 +48,7 @@ export class Building implements IHasDrawable {
     patronageEfficiency: number = 1; //Stays 1 if it's not a business.
 
     affectingBuildingCount: number = 0; //For services, mainly, so it can be calculated in place() and remove() instead of repeated for every service on every long tick.
-    upkeepScales: boolean = false;
+    upkeepScales: boolean = false; //affectingBuildingCount will only be recalculated on placement or radius-upgrade if this is true.
 
     //Drawable radius when placing the building
     areaIndicatorRadiusX: number = 0;
@@ -59,6 +60,7 @@ export class Building implements IHasDrawable {
     outputResourceOptions: Resource[] = []; //For buildings that can produce multiple types of resources
 
     builtOn: Set<Building> = new Set(); //For buildings with footprints of the "NEEDS_MINE" or "NEEDS_WATER" type. They can only be built on top of certain other buildings.
+    effects: BuildingEffects | null = null; //For buildings that spread effects
 
     //For storage facilities
     public readonly stores: Resource[] = [];
@@ -102,6 +104,16 @@ export class Building implements IHasDrawable {
         return newBuilding;
     }
 
+    getRadiusUpgradeAmount(city: City): number {
+        return this.effects?.getRadiusUpgradeAmount(this, city) ?? 0;
+    }
+
+    upgradeRadius(city: City) { //Only runs for already-placed clinics and hospitals when the telemedicine tech gets researched.
+        this.effects?.stopEffects(this, city);
+        this.effects?.applyEffects(this, city);
+        if (this.upkeepScales) this.recalculateAffectingBuildings(city);
+    }
+
     //Like canPlace, but not checking a specific location. Also not intended for checking costs, so we can display cost problems separately from other reasons that something is unplaceable.
     isPlaceable(city: City, bySpawner: boolean = false): boolean { return this.movable || bySpawner; } //Assumes you'd never want to 'lock' a residence so that even the spawner can't place it.
     isBuyable(city: City, bySpawner: boolean = false): boolean { return !this.locked || bySpawner; }
@@ -141,7 +153,10 @@ export class Building implements IHasDrawable {
             if (cityResource) cityResource.capacity += this.storeAmount;
             else city.resources.set(resource.type, resource.clone({ capacity: this.storeAmount })); //Note: the city should have all resources from the start
         }
-        //Inheritors would do building type-specific actions like applying effects to surrounding buildings/tiles here (via city.spreadEffect).
+
+        //For buildings that spread effects
+        this.effects?.applyEffects(this, city);
+        if (this.upkeepScales) this.recalculateAffectingBuildings(city);
     }
 
     //Called after adding to the city grid
@@ -170,6 +185,11 @@ export class Building implements IHasDrawable {
         }
 
         //Inheritors would do building type-specific actions like removing effects from surrounding buildings/tiles here (via city.stopEffects).
+    }
+
+    recalculateAffectingBuildings(city: City) {
+        const radiusBonus = this.getRadiusUpgradeAmount(city);
+        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX + radiusBonus, this.areaIndicatorRadiusY + radiusBonus, this.areaIndicatorRounded, true).size;
     }
 
     addStorage(city: City, amount: number) {
@@ -290,7 +310,7 @@ export class Building implements IHasDrawable {
 
     //You can use this for dynamic effects based on the building's current efficiency.
     public dynamicEffectByEfficiency(city: City, building: Building | null, x: number, y: number) {
-        return this.lastEfficiency;
+        return this.x === -1 ? 1 : this.lastEfficiency;
     }
 
     //Where you'd do stuff like produce resources

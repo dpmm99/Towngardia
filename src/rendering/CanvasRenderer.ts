@@ -263,7 +263,7 @@ export class CanvasRenderer implements IRenderer {
             });
             this.postTileDrawables.push({ x: x, y: y - height, width, height, drawable: willUpgradeIcon});
         }
-        if (view.drawFireCoverage && building.owned && building.fireHazard > building.getHighestEffect(city, EffectType.FirePrevention)) {
+        if (view.drawFireCoverage && building.owned && building.fireHazard > building.getHighestEffect(city, EffectType.FireProtection)) {
             const dangerIcon = new Drawable({
                 anchors: ['bottom'],
                 x: width / 2 - 16,

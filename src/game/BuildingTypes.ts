@@ -3,13 +3,13 @@ import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
 import { Business } from "./Business.js";
 import { City } from "./City.js";
-import { Effect } from "./Effect.js";
 import { FootprintType } from "./FootprintType.js";
 import { EffectType } from "./GridType.js";
 import { Apples, Apps, Batteries, Berries, Bricks, CAPACITY_MULTIPLIER, Clay, Clothing, Coal, Concrete, Copper, Dairy, Electronics, Fish, Flunds, Furniture, Gemstones, Glass, Grain, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, Steel, Stone, Textiles, Tourists, Toys, Tritium, Uranium, VitaminB12, Wood } from "./ResourceTypes.js";
 import { Geothermal } from "./TechTypes.js";
 import { Notification } from "./Notification.js";
 import { LONG_TICKS_PER_DAY } from "./FundamentalConstants.js";
+import { BuildingEffects, EffectDefinition } from "./BuildingEffects.js";
 
 //This is a cache for the type string of a class. It's used to avoid creating an instance of a class just to get its type.
 const buildingTypeCache = new Map<Function, string>();
@@ -35,6 +35,8 @@ export class Road extends Building {
         this.isRoad = true;
         this.maxVariant = 2;
         this.serviceAllocationType = "infrastructure";
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.0002, "dynamicEffectByTrafficQuantity"),
+            new EffectDefinition(EffectType.Noise, 0.0005, "dynamicEffectByTrafficQuantityAndBudget")]); //Reduced infrastructure budget = noisier roads.
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -48,11 +50,11 @@ export class Road extends Building {
     }
 
     dynamicEffectByTrafficQuantity(): number {
-        return this.trafficQuantity;
+        return this.x === -1 ? 1 : this.trafficQuantity;
     }
 
     dynamicEffectByTrafficQuantityAndBudget(city: City): number {
-        return this.trafficQuantity * (1 + 2 * (1 - city.budget.serviceAllocations[this.serviceAllocationType] ** 2)); //x1.72 noise for 80% budget, x1.32 noise for 90%. Nothing protects from noise other than vacuum glass.
+        return (this.x === -1 ? 1 : this.trafficQuantity) * (1 + 2 * (1 - city.budget.serviceAllocations[this.serviceAllocationType] ** 2)); //x1.72 noise for 80% budget, x1.32 noise for 90%. Nothing protects from noise other than vacuum glass.
     }
 
     determineVariant(city: City, triggerOthers: boolean): void {
@@ -71,12 +73,6 @@ export class Road extends Building {
         else this.variant = 0;
     }
 
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, 0.0002, this, "dynamicEffectByTrafficQuantity"), 1, 1, true);
-        city.spreadEffect(new Effect(EffectType.Noise, 0.0005, this, "dynamicEffectByTrafficQuantityAndBudget"), 1, 1, true); //Reduced infrastructure budget = noisier roads.
-    }
-
     override placed(city: City): void {
         this.determineVariant(city, true); //This road and any roads adjacent to it should switch their variant image according to connectivity.
         this.powered = this.powerConnected;
@@ -85,7 +81,6 @@ export class Road extends Building {
     override remove(city: City, justMoving: boolean = false): void {
         let x = this.x;
         let y = this.y;
-        city.stopEffects(this, 1, 1, true);
         super.remove(city, justMoving);
 
         //Trigger adjacent roads to update their variant images.
@@ -115,6 +110,7 @@ export class BikeRental extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.needsRoad = false;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 0.2, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -128,16 +124,6 @@ export class BikeRental extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * 1;
     }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.PublicTransport, 0.2, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 
 export class BusStation extends Building {
@@ -150,6 +136,7 @@ export class BusStation extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 9;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 1, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -163,16 +150,6 @@ export class BusStation extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * 6;
     }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.PublicTransport, 1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 
 export class ECarRental extends Building {
@@ -185,6 +162,7 @@ export class ECarRental extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 1.1, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -198,16 +176,6 @@ export class ECarRental extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * 18;
     }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.PublicTransport, 1.1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 
 export class TeleportationPod extends Building {
@@ -220,6 +188,7 @@ export class TeleportationPod extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 5, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -232,16 +201,6 @@ export class TeleportationPod extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * 38;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.PublicTransport, 5, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 }
 
@@ -396,16 +355,7 @@ export class NuclearStorage extends Building { //Should probably be required bef
         this.storeAmount = 80;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.LandValue, -0.2, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, -0.2)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -437,6 +387,7 @@ export class CityHall extends Building {
         this.flunds.isSpecial = false; //Or else you can't collect them. :)
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.1)]);
     }
 
     onLoad() {
@@ -535,16 +486,6 @@ export class CityHall extends Building {
     override isBuyable(city: City, bySpawner: boolean = false): boolean {
         //Can only have one
         return super.isBuyable(city, bySpawner) && (bySpawner || !city.buildings.some(p => p.type === this.type));
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.LandValue, 0.1, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded); //The only reason I have this in overrides is because I didn't make fields for the maximum area of effects.
-        super.remove(city, justMoving);
     }
 }
 
@@ -786,20 +727,11 @@ export class ShowHome extends Building {
         this.outputResources.push(new Population(0, 4));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.2, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 700 }, { type: "wood", amount: 15 }, { type: "glass", amount: 15 }, { type: "electronics", amount: 5 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.15, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded); //TODO: Figure out how to generalize and move the effect stuff to Building. Needs a list of Effect, except the dynamic effect functions may or may not require binding to the building... so need a list of effect type, amount, radius if different from areaIndicatorRadius, dynamic mag function, and whether the function needs bound.
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number { return 5 * city.techManager.getAdoption('rooftopsolar'); }
@@ -919,17 +851,8 @@ export class OilPowerPlant extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.stampFootprint[0][2] = FootprintType.OIL_PLANT; //Allows an Oil Truck on its rightmost tile for sustained player absences
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, 0.25, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, 0.2, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.25, "dynamicEffectByEfficiency"),
+            new EffectDefinition(EffectType.GreenhouseGases, 0.2, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1001,20 +924,12 @@ export class CoalPowerPlant extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.stampFootprint[2][0] = FootprintType.COAL_PLANT; //Allows a Coal Truck on its leftmost tile for sustained player absences
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.4, "pollutionEffectDynamicCalculation"),
+            new EffectDefinition(EffectType.GreenhouseGases, 0.3, "dynamicEffectByEfficiency")]); //Should be about 50% more greenhouse gases than oil power
     }
 
     pollutionEffectDynamicCalculation(city: City, building: Building | null, x: number, y: number): number {
-        return this.lastEfficiency * (1 - 0.25 * city.techManager.getAdoption('coalscrubbers'));
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, 0.4, this, "pollutionEffectDynamicCalculation"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, 0.3, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded); //Should be about 50% more than oil power
-    }
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        return (this.x === -1 ? 1 : this.lastEfficiency) * (1 - 0.25 * city.techManager.getAdoption('coalscrubbers'));
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1087,17 +1002,8 @@ export class NuclearPowerPlant extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
         this.stampFootprint[2][1] = FootprintType.NUCLEAR_PLANT;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, 0.05, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.LandValue, -0.05, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, 0.05, "dynamicEffectByEfficiency"),
+            new EffectDefinition(EffectType.LandValue, -0.05)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1241,17 +1147,8 @@ export class TreeFarm extends Building {
         this.outputResources.push(new Wood(0, 1)); //Very slow growth. Maybe you need some GMO trees. :) NOTE: Production rate gets reset in onLongTick
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, -0.05, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.05, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, -0.05),
+            new EffectDefinition(EffectType.Luxury, 0.05)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1277,11 +1174,11 @@ export class Farm extends Building {
             0.2,
         );
         this.outputResourceOptions = [Grain, RootVegetables, Apples, Berries, LeafyGreens, Legumes].map(foodType => new foodType(0, 3)); //NOTE: Production rate gets reset in onLongTick
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, -0.02, undefined, true, 3, 3, false)]);
     }
 
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, -0.02, this), 3, 3, true);
         if (this.outputResources.length === 0) {
             //TODO: the allowed resource types may depend on the region. Amounts could also differ.
             const foodType = this.outputResourceOptions[Math.floor(Math.random() * this.outputResourceOptions.length)];
@@ -1303,11 +1200,6 @@ export class Farm extends Building {
 
         this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("gmcrops");
         super.onLongTick(city);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, 3, 3, true);
-        super.remove(city, justMoving);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1332,6 +1224,7 @@ export class Ranch extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
         this.outputResourceOptions = [RedMeat, Poultry, Dairy].map(foodType => new foodType(0, 4));
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, 0.1)]);
     }
 
     override getEfficiencyEffectMultiplier(city: City): number {
@@ -1344,11 +1237,6 @@ export class Ranch extends Building {
             const foodType = this.outputResourceOptions[Math.floor(Math.random() * this.outputResourceOptions.length)];
             this.outputResources.push(foodType.clone());
         }
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, 0.1, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1373,16 +1261,7 @@ export class AlgaeFarm extends Building {
         this.outputResources.push(new VitaminB12(0, 3)); //NOTE: Production rate gets reset in onLongTick
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, -0.05, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, -0.05)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1466,20 +1345,15 @@ export class VerticalFarm extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
         this.outputResourceOptions = [Grain, RootVegetables, Berries, LeafyGreens, Legumes].map(foodType => new foodType(0, 5)); //NOTE: Production rate gets reset in onLongTick
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, -0.04)]);
     }
 
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, -0.04, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
         if (this.outputResources.length === 0) {
             const foodType = this.outputResourceOptions[Math.floor(Math.random() * this.outputResourceOptions.length)];
             this.outputResources.push(foodType);
         }
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 
     override getEfficiencyEffectMultiplier(city: City): number {
@@ -1736,6 +1610,7 @@ export class SiliconRefinery extends Building {
         this.outputResources.push(new Silicon(0, 1.25));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.05, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1744,16 +1619,6 @@ export class SiliconRefinery extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 1.25 * (atEfficiency || this.poweredTimeDuringLongTick) }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, 0.05, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
@@ -1842,6 +1707,7 @@ export class TextileMill extends Building {
         this.outputResources.push(new Textiles(0, 1.25));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Noise, 0.05, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1853,16 +1719,6 @@ export class TextileMill extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Noise, 0.05, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
@@ -1879,6 +1735,7 @@ export class ApparelFactory extends Building {
         this.outputResources.push(new Clothing(0, 0.5)); //Trying to kinda balance with the minigame that uses it
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.02, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1890,16 +1747,6 @@ export class ApparelFactory extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, 0.02, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
@@ -1916,17 +1763,8 @@ export class SteelMill extends Building {
         this.outputResources.push(new Steel(0, 1.75));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, 0.1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, 0.05, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.1, "dynamicEffectByEfficiency"),
+            new EffectDefinition(EffectType.Noise, 0.05, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1955,17 +1793,8 @@ export class PlasticsFactory extends Building {
         this.outputResources.push(new Plastics(0, 2));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, 0.1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.Noise, 0.1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.1, "dynamicEffectByEfficiency"),
+            new EffectDefinition(EffectType.Noise, 0.1, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1994,16 +1823,7 @@ export class ToyManufacturer extends Building {
         this.outputResources.push(new Toys(0, 2.5)); //TODO: Reduce this if you make a "toy distribution" minigame (for happiness boost) as mentioned in the design doc. It's only this high to make the factory a net flunds gain.
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Noise, 0.1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Noise, 0.1, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2032,16 +1852,7 @@ export class Furnifactory extends Building {
         this.outputResources.push(new Furniture(0, 1));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Noise, 0.15, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Noise, 0.15, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2070,17 +1881,8 @@ export class LithiumMine extends Building {
         this.outputResources.push(new Lithium(0, 1.5));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Noise, 0.3, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, 0.05, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.05, "dynamicEffectByEfficiency"),
+            new EffectDefinition(EffectType.Noise, 0.3, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2106,16 +1908,7 @@ export class MohoMine extends Building {
         this.outputResources.push(new Copper(0, 0.75));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Noise, 0.2, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Noise, 0.2, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2143,16 +1936,7 @@ export class Nanogigafactory extends Building {
         this.outputResources.push(new Batteries(0, 1));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, 0.1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.1, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2208,23 +1992,18 @@ export class SpaceLaunchSite extends Building {
         this.outputResourceOptions = [new Iron(0, 9.5), new Copper(0, 7), new Lithium(0, 3.5), new Uranium(0, 2.5)]; //TODO: Other options to consider: space tourism to rake in the flunds, asteroid crashing for a chance of damage to nearby structures but higher returns that always include stone
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.2, "dynamicEffectByEfficiency"),
+            new EffectDefinition(EffectType.GreenhouseGases, 0.15, "dynamicEffectByEfficiency"),
+            new EffectDefinition(EffectType.Noise, 0.3, "dynamicEffectByEfficiency")]);
     }
 
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, 0.2, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, 0.15, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.Noise, 0.3, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
         if (this.outputResources.length === 0) {
             //If the city has uranium storage, choose that. Otherwise, default to lithium.
             if (city.resources.get("uranium")?.capacity) this.outputResources.push(this.outputResourceOptions.find(p => p.type === "uranium")!);
             else this.outputResources.push(this.outputResourceOptions.find(p => p.type === "lithium")!);
         }
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2253,20 +2032,11 @@ export class CornerStore extends Building {
         this.businessValue = 20;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.05)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 40 }, { type: "wood", amount: 5 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.05, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1; }
@@ -2283,21 +2053,12 @@ export class Junkyard extends Building {
         this.businessValue = 90;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.1),
+            new EffectDefinition(EffectType.Luxury, -0.25, undefined, undefined, -1, -1)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 50 }, { type: "wood", amount: 5 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, -0.25, this), this.areaIndicatorRadiusX - 1, this.areaIndicatorRadiusY - 1, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.1, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2; }
@@ -2315,20 +2076,11 @@ export class SuckasCandy extends Building {
         this.businessValue = 90;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.15)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 90 }, { type: "wood", amount: 20 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.15, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
@@ -2347,20 +2099,11 @@ export class Cafe extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 120 }, { type: "wood", amount: 25 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.2, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
@@ -2379,20 +2122,11 @@ export class TheLoadedDie extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 120 }, { type: "wood", amount: 20 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.2, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded); //Affects apartment spawn chance
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
@@ -2411,20 +2145,11 @@ export class Whalemart extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.15)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 340 }, { type: "wood", amount: 35 }, { type: "glass", amount: 10 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.15, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 9; }
@@ -2443,21 +2168,12 @@ export class Bar extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2),
+            new EffectDefinition(EffectType.PettyCrime, 0.15, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 100 }, { type: "wood", amount: 20 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.PettyCrime, 0.15, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.2, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY); //Affects apartment spawn chance
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
@@ -2478,20 +2194,11 @@ export class PalmNomNom extends Building {
         this.isRestaurant = true;
         this.isEntertainment = true;
         this.outputResources.push(new Tourists(1.25, 1.25, 0, 50)); //Brings in 50 tourists per long tick, but it takes 10 days to get up to full steam (50/LONG_TICKS_PER_DAY/10).
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 270 }, { type: "wood", amount: 20 }, { type: "sand", amount: 10 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.2, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded); //Affects apartment spawn chance
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
@@ -2509,22 +2216,13 @@ export class GregsGrogBarr extends Building {
         this.businessValue = 240; //Feeds into sales tax--this is the max value it could be worth per long tick before being multiplied by the sales tax rate (i.e., this is its max sales).
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25),
+            new EffectDefinition(EffectType.PettyCrime, 0.2, "dynamicEffectByEfficiency"),
+            new EffectDefinition(EffectType.OrganizedCrime, 0.05, "dynamicEffectByEfficiency", undefined, -2, -2)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 400 }, { type: "wood", amount: 25 }, { type: "sand", amount: 10 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.OrganizedCrime, 0.05, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX - 2, this.areaIndicatorRadiusY - 2, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.PettyCrime, 0.2, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY); //Affects apartment spawn chance
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
@@ -2543,20 +2241,11 @@ export class IceCreamTruck extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 9;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.05)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 60 }, { type: "iron", amount: 5 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.05, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY); //Affects apartment spawn chance
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return super.getEfficiencyEffectMultiplier(city) + city.techManager.getAdoption("advrobots") * 0.1; }
@@ -2579,20 +2268,11 @@ export class FurnitureStore extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.inputResources.push(new Furniture(0, 0, 0.5));
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 350 }, { type: "wood", amount: 25 }, { type: "glass", amount: 10 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.2, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
@@ -2612,21 +2292,12 @@ export class Casino extends Building {
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
         this.isEntertainment = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25),
+            new EffectDefinition(EffectType.OrganizedCrime, 0.2, "dynamicEffectByEfficiency", undefined, -1, -1)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 300 }, { type: "wood", amount: 35 }, { type: "gemstones", amount: 5 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.OrganizedCrime, 0.2, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX - 1, this.areaIndicatorRadiusY - 1, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
@@ -2646,20 +2317,11 @@ export class GameDevStudio extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.3)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 700 }, { type: "steel", amount: 30 }, { type: "electronics", amount: 20 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.3, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 16; }
@@ -2677,21 +2339,12 @@ export class BlankCheckBank extends Building {
         this.businessValue = 170;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.3),
+            new EffectDefinition(EffectType.OrganizedCrime, 0.15, "dynamicEffectByEfficiency", undefined, -1, -1)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 980 }, { type: "stone", amount: 25 }, { type: "steel", amount: 15 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.OrganizedCrime, 0.15, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX - 1, this.areaIndicatorRadiusY - 1, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.3, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
@@ -2717,21 +2370,11 @@ export class ResortHotel extends Building {
         this.outputResources.push(new Tourists(5, 5, 0, 200)); //Brings in 200 tourists per long tick, but it takes 10 days to get up to full steam.
         this.isRestaurant = true;
         this.isEntertainment = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25), new EffectDefinition(EffectType.Luxury, 0.1)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 1000 }, { type: "steel", amount: 25 }, { type: "glass", amount: 15 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.1, this), this.areaIndicatorRadiusX - 1, this.areaIndicatorRadiusY - 1, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded); //Affects apartment spawn chance
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 35; }
@@ -2755,16 +2398,11 @@ export class HotSpringInn extends Building {
         //The weirdest footprint yet: it must fully cover the Hot Spring, but the inn itself (y=0) shouldn't be on top of the hot spring.
         this.checkFootprint[1][0] = this.checkFootprint[1][2] = this.checkFootprint[2][0] = this.checkFootprint[2][2] = FootprintType.HOT_SPRING | FootprintType.EMPTY | FootprintType.RESIDENCE;
         this.checkFootprint[1][1] = this.checkFootprint[2][1] = FootprintType.HOT_SPRING;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25), new EffectDefinition(EffectType.Luxury, 0.1)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 700 }, { type: "wood", amount: 25 }, { type: "stone", amount: 10 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.1, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded); //Affects apartment spawn chance
     }
 
     override placed(city: City): void {
@@ -2773,7 +2411,6 @@ export class HotSpringInn extends Building {
 
     override remove(city: City, justMoving: boolean = false): void {
         (this.builtOn.values().next().value as HotSpring).variant = 0; //allowed to draw again (this must be before the call to super.remove)
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
         super.remove(city, justMoving);
     }
 
@@ -2796,20 +2433,11 @@ export class ConventionCenter extends Building {
         this.isRestaurant = true;
         this.isEntertainment = true;
         this.maxVariant = 3;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25)]); //TODO: Business presence should stop if the business fails. I don't really want to make it affected by efficiency in general, though.
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 1650 }, { type: "steel", amount: 30 }, { type: "glass", amount: 20 }];
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.BusinessPresence, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY); //Affects apartment spawn chance
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 22; }
@@ -2854,6 +2482,7 @@ export class HauntymonthGrave extends Building {
         this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.06)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2862,16 +2491,6 @@ export class HauntymonthGrave extends Building {
     }
 
     override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.06, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 
 export class HauntymonthLamp extends Building {
@@ -2886,6 +2505,7 @@ export class HauntymonthLamp extends Building {
         this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.08)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2894,16 +2514,6 @@ export class HauntymonthLamp extends Building {
     }
 
     override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.08, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1; }
 }
@@ -2921,6 +2531,7 @@ export class HauntymonthHouse extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.outputResources.push(new Tourists(5, 5, 0, 80)); //Brings in 80 tourists per long tick, and it gets up to full steam in 4 days.
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.15)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2931,16 +2542,6 @@ export class HauntymonthHouse extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
 
     override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.15, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 //End of seasonal decorations
 
@@ -2955,20 +2556,10 @@ export class SmallPark extends Building {
         this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.05), new EffectDefinition(EffectType.GreenhouseGases, -0.01)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 30 }]; }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.05, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, -0.01, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 
 export class MediumPark extends Building {
@@ -2982,20 +2573,10 @@ export class MediumPark extends Building {
         this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.1), new EffectDefinition(EffectType.GreenhouseGases, -0.04)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 80 }]; }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.1, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, -0.04, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 
 export class KellyStatue extends Building {
@@ -3009,19 +2590,10 @@ export class KellyStatue extends Building {
         this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.05)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 120 }, { type: "stone", amount: 5 }]; }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.05, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 
 export class SharonStatue extends Building {
@@ -3035,19 +2607,10 @@ export class SharonStatue extends Building {
         this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.1)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 180 }, { type: "stone", amount: 5 }]; }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.1, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 
 export class SmallFountain extends Building {
@@ -3061,19 +2624,10 @@ export class SmallFountain extends Building {
         this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.08)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 280 }, { type: "stone", amount: 5 }]; }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.08, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 
 export class Greenhouse extends Building {
@@ -3087,20 +2641,10 @@ export class Greenhouse extends Building {
         this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.08), new EffectDefinition(EffectType.GreenhouseGases, -0.05)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 150 }, { type: "glass", amount: 10 }]; }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.08, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, -0.05, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 }
 
 export class Playground extends Building {
@@ -3114,19 +2658,10 @@ export class Playground extends Building {
         this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.2)]);
     }
 
-    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 80 }, { type: "plastics", amount: 10 }]; }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Luxury, 0.2, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 210 }, { type: "plastics", amount: 10 }]; }
 }
 
 export class SesharTower extends Building {
@@ -3160,6 +2695,7 @@ export class PoliceBox extends Building {
         this.areaIndicatorRounded = true;
         this.serviceAllocationType = "policeprotection";
         this.upkeepScales = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.PoliceProtection, 0.2, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3177,17 +2713,6 @@ export class PoliceBox extends Building {
     //Includes the city police budget allocation; the effect is squared so 80% budget is only 64% effectiveness and 90% budget is 81% effectiveness.
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.PolicePresence, 0.2, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, true, true).size;
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
-
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1; }
 }
 
@@ -3202,6 +2727,7 @@ export class PoliceStation extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 7;
         this.serviceAllocationType = "policeprotection";
         this.upkeepScales = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.PoliceProtection, 1, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3219,17 +2745,6 @@ export class PoliceStation extends Building {
     //Includes the city police budget allocation; the effect is squared so 80% budget is only 64% effectiveness and 90% budget is 81% effectiveness.
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.PolicePresence, 1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, false, true).size;
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
-    }
-
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
 }
 
@@ -3244,6 +2759,7 @@ export class PoliceUAVHub extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
         this.serviceAllocationType = "policeprotection";
         this.upkeepScales = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.PoliceProtection, 0.75, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3261,17 +2777,6 @@ export class PoliceUAVHub extends Building {
     //Includes the city police budget allocation; the effect is squared so 80% budget is only 64% effectiveness and 90% budget is 81% effectiveness.
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.PolicePresence, 0.75, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, false, true).size;
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
-    }
-
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
 }
 
@@ -3287,6 +2792,7 @@ export class FireBay extends Building {
         this.areaIndicatorRounded = true;
         this.serviceAllocationType = "fireprotection";
         this.upkeepScales = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.FireProtection, 0.4, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3304,17 +2810,6 @@ export class FireBay extends Building {
     //Affected by fire protection budget (deficit squared) AND drought (30% debuff).
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 - (city.events.some(p => p.type === 'drought') ? 0.3 : 0); }
 
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.FirePrevention, 0.4, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, true, true).size;
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
-
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1; }
 }
 
@@ -3329,6 +2824,7 @@ export class FireStation extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
         this.serviceAllocationType = "fireprotection";
         this.upkeepScales = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.FireProtection, 1, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3344,22 +2840,10 @@ export class FireStation extends Building {
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 - (city.events.some(p => p.type === 'drought') ? 0.3 : 0); }
 
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.FirePrevention, 1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, false, true).size;
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
-    }
-
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 }
 
 export class Clinic extends Building {
-    private upgradedRadius = 9;
     constructor() {
         super(
             "clinic", "Clinic", "A place of employment for a few doctors. They keep our residents healthy, so we need to keep their wallets healthy.",
@@ -3370,6 +2854,8 @@ export class Clinic extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 7;
         this.serviceAllocationType = "healthcare";
         this.upkeepScales = true;
+        //Only half as effective as a hospital would be.
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Healthcare, 0.5, "dynamicEffectByEfficiency")], [{ tech: "telemedicine", amount: 2 }]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3387,31 +2873,11 @@ export class Clinic extends Building {
     //Affected by healthcare budget (deficit squared) AND food health (75% of perfect diet = no effect, up to +10% effect, but can easily be a debuff)
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 + 0.4 * (city.resources.get("foodhealth")!.amount - 0.75); }
 
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        if (city.techManager.techs.get("telemedicine")?.researched) this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = this.upgradedRadius;
-        city.spreadEffect(new Effect(EffectType.Healthcare, 0.5, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY); //Only half as effective as a hospital would be.
-        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, false, true).size;
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
-    }
-
-    upgradeRadius(city: City) { //Only runs for already-placed hospitals when the telemedicine tech gets researched.
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = this.upgradedRadius;
-        city.spreadEffect(new Effect(EffectType.Healthcare, 1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, false, true).size;
-    }
-
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
 }
 
 //TODO: Generate images for more. Police HQ, fire HQ, etc.
 export class Hospital extends Building {
-    private upgradedRadius = 12;
     constructor() {
         super(
             "hospital", "Hospital", "A place where doctors work...a lot of kinds of them.",
@@ -3419,9 +2885,10 @@ export class Hospital extends Building {
             4, 4, 0,
             0.5,
         );
-        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10; //That's a 24x24 area in total!
         this.serviceAllocationType = "healthcare";
         this.upkeepScales = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Healthcare, 1, "dynamicEffectByEfficiency")], [{ tech: "telemedicine", amount: 2 }]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3439,26 +2906,7 @@ export class Hospital extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 + 0.4 * (city.resources.get("foodhealth")!.amount - 0.75); }
 
     public dynamicEffectByEfficiency(city: City, building: Building | null, x: number, y: number) {
-        return this.lastEfficiency * (1 + city.techManager.getAdoption("nanomedicine") * 0.2);
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        if (city.techManager.techs.get("telemedicine")?.researched) this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = this.upgradedRadius;
-        city.spreadEffect(new Effect(EffectType.Healthcare, 1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY); //That's a 20x20 area in total!
-        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, false, true).size;
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
-    }
-
-    upgradeRadius(city: City) { //Only runs for already-placed hospitals when the telemedicine tech gets researched.
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = this.upgradedRadius;
-        city.spreadEffect(new Effect(EffectType.Healthcare, 1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, false, true).size;
+        return (this.x === -1 ? 1 : this.lastEfficiency) * (1 + city.techManager.getAdoption("nanomedicine") * 0.2);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 24; }
@@ -3474,6 +2922,7 @@ export class ElementarySchool extends Building { //TODO: Strongly consider split
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
         this.serviceAllocationType = "education";
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Education, 0.5, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3487,17 +2936,7 @@ export class ElementarySchool extends Building { //TODO: Strongly consider split
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
     public dynamicEffectByEfficiency(city: City, building: Building | null, x: number, y: number) {
-        return this.lastEfficiency * (1 + city.techManager.getAdoption("braininterface") * 0.25 + city.techManager.getAdoption("vrclassrooms") * 0.1);
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Education, 0.5, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
+        return (this.x === -1 ? 1 : this.lastEfficiency) * (1 + city.techManager.getAdoption("braininterface") * 0.25 + city.techManager.getAdoption("vrclassrooms") * 0.1);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
@@ -3514,6 +2953,7 @@ export class HighSchool extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 9;
         this.serviceAllocationType = "education";
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Education, 0.75, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3527,17 +2967,7 @@ export class HighSchool extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
     public dynamicEffectByEfficiency(city: City, building: Building | null, x: number, y: number) {
-        return this.lastEfficiency * (1 + city.techManager.getAdoption("braininterface") * 0.2 + city.techManager.getAdoption("vrclassrooms") * 0.1);
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Education, 0.75, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
+        return (this.x === -1 ? 1 : this.lastEfficiency) * (1 + city.techManager.getAdoption("braininterface") * 0.2 + city.techManager.getAdoption("vrclassrooms") * 0.1);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 16; }
@@ -3556,6 +2986,8 @@ export class College extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
         this.outputResources.push(new Research(0, 0.1));
         this.serviceAllocationType = "education";
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Education, 0.8, "dynamicEffectByEfficiency"),
+            new EffectDefinition(EffectType.Noise, 0.2, undefined, true, 4, 4, false)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3569,18 +3001,7 @@ export class College extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
     public dynamicEffectByEfficiency(city: City, building: Building | null, x: number, y: number) {
-        return this.lastEfficiency * (1 + city.techManager.getAdoption("braininterface") * 0.2 + city.techManager.getAdoption("vrclassrooms") * 0.1);
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.Education, 0.8, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        city.spreadEffect(new Effect(EffectType.Noise, 0.2, this), 4, 4, true);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
+        return (this.x === -1 ? 1 : this.lastEfficiency) * (1 + city.techManager.getAdoption("braininterface") * 0.2 + city.techManager.getAdoption("vrclassrooms") * 0.1);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 22; }
@@ -3598,6 +3019,8 @@ export class CarbonCapturePlant extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.serviceAllocationType = "environment";
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, -0.5, "dynamicEffectByEfficiency"),
+            new EffectDefinition(EffectType.ParticulatePollution, -0.1, "dynamicEffectByEfficiency")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3610,17 +3033,6 @@ export class CarbonCapturePlant extends Building {
 
     //Affected by environment budget (deficit squared).
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.GreenhouseGases, -0.5, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        city.spreadEffect(new Effect(EffectType.ParticulatePollution, -0.1, this, "dynamicEffectByEfficiency"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-        super.remove(city, justMoving);
-    }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
 }
@@ -3781,16 +3193,7 @@ export class CrystalMountain extends Building {
         this.owned = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.LandValue, 0.15, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.15)]);
     }
 }
 
@@ -3818,16 +3221,7 @@ export class PrettyPond extends Building {
         this.owned = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.LandValue, 0.3, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.3)]);
     }
 }
 
@@ -3843,21 +3237,12 @@ export class CleanPond extends Building {
         this.owned = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.3, "hasFilthDynamicEffect")]);
     }
 
     public hasFilthDynamicEffect(city: City, building: Building | null, x: number, y: number) {
         //0 if there's filth placed atop it, 1 if it's been cleaned up.
         return [...city.getBuildingsInArea(this.x, this.y, 1, 1, 0, 0)].filter(p => p != this).length ? 0 : 1;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.LandValue, 0.3, this, "hasFilthDynamicEffect"), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
     }
 }
 
@@ -3889,16 +3274,7 @@ export class HotSpring extends Building {
         this.owned = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
-    }
-
-    override place(city: City, x: number, y: number): void {
-        super.place(city, x, y);
-        city.spreadEffect(new Effect(EffectType.LandValue, 0.25, this), this.areaIndicatorRadiusX, this.areaIndicatorRadiusY, this.areaIndicatorRounded);
-    }
-
-    override remove(city: City, justMoving: boolean = false): void {
-        city.stopEffects(this, this.areaIndicatorRadiusX, this.areaIndicatorRadiusY);
-        super.remove(city, justMoving);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.25)]);
     }
 }
 

@@ -307,7 +307,7 @@ export class Fire extends CityEvent {
 
     private getFireEpicenter(city: City): Building | undefined {
         //Pick a random flammable (low fire protection) building
-        const buildings = city.buildings.filter(p => p.owned && !p.isRoad && p.fireHazard * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) > p.getHighestEffect(city, EffectType.FirePrevention));
+        const buildings = city.buildings.filter(p => p.owned && !p.isRoad && p.fireHazard * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) > p.getHighestEffect(city, EffectType.FireProtection));
         return inPlaceShuffle(buildings)[0];
     }
 
@@ -333,7 +333,7 @@ export class Fire extends CityEvent {
         potentiallyDamaged.sort((a, b) => Math.abs(a.x - epicenter.x) + Math.abs(a.y - epicenter.y) - Math.abs(b.x - epicenter.x) - Math.abs(b.y - epicenter.y));
         for (const building of potentiallyDamaged) {
             if (building === epicenter || building instanceof FireBay || building instanceof FireStation || building.damagedEfficiency < 1 - intensity || !building.owned) continue;
-            const coverage = building.getHighestEffect(city, EffectType.FirePrevention);
+            const coverage = building.getHighestEffect(city, EffectType.FireProtection);
             building.damagedEfficiency = Math.max(0, building.damagedEfficiency - (0.8 + Math.random() * 0.2) * intensity * (1.1 - coverage));
             intensity *= 0.9;
             if (--buildingsToDamage === 0) break;
@@ -363,7 +363,7 @@ export class Riot extends CityEvent {
     private calculatePoliceCoverage(city: City, epicenter: Building): number {
         const tiles = city.getTilesInArea(epicenter.x, epicenter.y, epicenter.width, epicenter.height, 5, 5);
         const sum = [...tiles].reduce((sum, tile) => sum +
-            city.effectGrid[tile.y][tile.x].filter(p => p.type === EffectType.PolicePresence).reduce((sum, p) => sum + p.getEffect(city, null, tile.x, tile.y), 0)
+            city.effectGrid[tile.y][tile.x].filter(p => p.type === EffectType.PoliceProtection).reduce((sum, p) => sum + p.getEffect(city, null, tile.x, tile.y), 0)
             , 0);
         return sum / tiles.size;
     }
@@ -375,7 +375,7 @@ export class Riot extends CityEvent {
         if (!epicenter) return; //Shouldn't have started the riot in the first place
 
         //Even perfect fire coverage can only reduce it to 0.1
-        let intensity = Math.max(0.1, 0.3 + 0.3 * Math.random() - 0.6 * epicenter.getHighestEffect(city, EffectType.FirePrevention));
+        let intensity = Math.max(0.1, 0.3 + 0.3 * Math.random() - 0.6 * epicenter.getHighestEffect(city, EffectType.FireProtection));
         epicenter.damagedEfficiency = Math.max(0, epicenter.damagedEfficiency - intensity);
         intensity *= 0.9;
 

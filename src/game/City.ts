@@ -1326,10 +1326,10 @@ export class City {
         return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.Luxury).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));
     }
     getPoliceProtection(x: number, y: number): number {
-        return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.PolicePresence).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));
+        return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.PoliceProtection).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));
     }
     getFireProtection(x: number, y: number): number {
-        return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.FirePrevention).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));
+        return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.FireProtection).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));
     }
     getHealthcare(x: number, y: number): number {
         return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.Healthcare).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));

@@ -3,8 +3,10 @@ import { BuildingCategory } from "../game/BuildingCategory.js";
 import { CityHall, InformationCenter } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
+import { Effect } from "../game/Effect.js";
 import { TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICKS_PER_LONG_TICK } from "../game/FundamentalConstants.js";
+import { EffectType } from "../game/GridType.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -209,10 +211,42 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 nextY += iconSize + 5;
             }
 
+            nextY += padding;
             //A bit of a mess, but do similar for power if idealPowerProduction is nonzero.
             if (idealPowerProduction) nextY = this.addPowerProductionInfo(infoDrawable, padding, nextY, iconSize, building, barWidth, idealPowerProduction);
             if (building instanceof CityHall) nextY = this.addBudgetInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
-            nextY += padding;
+        }
+
+        //Effects that buildings spread
+        if (building.effects) {
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: "Area effects:",
+            }));
+            nextY += 24 + 5;
+            for (const effectDef of building.effects.effects) {
+                const effect = new Effect(effectDef.type, effectDef.magnitude, building, effectDef.dynamicCalculation);
+                const mag = Math.round(effect.getEffect(this.city, null, building.x, building.y) * 1000) / 1000;
+                infoDrawable.addChild(new Drawable({
+                    x: padding,
+                    y: nextY,
+                    width: iconSize + "px",
+                    height: iconSize + "px",
+                    image: new TextureInfo(iconSize, iconSize, `ui/${EffectType[effectDef.type].toLowerCase()}`), //EffectType strings match icon IDs now
+                    fallbackColor: '#333333',
+                }));
+                infoDrawable.addChild(new Drawable({
+                    x: padding + iconSize + 5,
+                    y: nextY + 8,
+                    width: (barWidth - padding * 2 - iconSize - 5) + "px",
+                    height: iconSize + "px",
+                    text: EffectType[effect.type].replace(/([A-Z])/g, ' $1').trim() + " " + (mag >= 0 ? "+" + mag : mag), //Effect type enum is almost a display name; we just add the spaces here.
+                }));
+                nextY += iconSize + padding + 5;
+            }
         }
 
         //Storage
@@ -238,8 +272,6 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             if (building.businessPatronCap && (building.roadConnected || !building.needsRoad)) {
                 nextY = this.addBusinessStats(infoDrawable, padding, nextY, building, barWidth, true);
             }
-
-            //TODO: Effects they spread--exact numbers would be great. Business presence, luxury, land value, pollution types, crime types at least. Can reuse the icons from the views bar. Really requires a generic way of storing effects in Building instead of always just calling spreadEffect in place().
 
             //Warnings
             const warnings: {icon: string, text: string}[] = [];

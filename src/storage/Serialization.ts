@@ -168,8 +168,6 @@ export class CitySerializer {
             bf: o.businessFailed || undefined, //not for templates unless there was an upgrade
             fc: o.businessFailureCounter || undefined, //not for templates unless there was an upgrade
             pe: o.patronageEfficiency !== 1 ? o.patronageEfficiency : undefined, //not for templates unless there was an upgrade; defaults to 1 so we don't need to serialize it if it's 1
-            ax: "upgradedRadius" in o ? o.areaIndicatorRadiusX : undefined, //only in case of upgraded value--which is only needed for clinic and hospital at the moment.
-            ay: "upgradedRadius" in o ? o.areaIndicatorRadiusY : undefined,
             sa: (<any>o).storeAmount || undefined,
         };
         if (isTemplate) {
@@ -406,10 +404,6 @@ export class CityDeserializer {
         if (o.bf !== undefined) r.businessFailed = o.bf;
         if (o.fc !== undefined) r.businessFailureCounter = o.fc;
         r.patronageEfficiency = o.pe === undefined ? 1 : o.pe;
-        if ("upgradedRadius" in r) {
-            if (o.ax !== undefined) r.areaIndicatorRadiusX = o.ax;
-            if (o.ay !== undefined) r.areaIndicatorRadiusY = o.ay;
-        }
         if (o.va !== undefined) r.variant = o.va;
         if ("storeAmount" in r) (<any>r).storeAmount = o.sa;
         if ("trafficQuantity" in r) (<any>r).trafficQuantity = o.tq || 0;

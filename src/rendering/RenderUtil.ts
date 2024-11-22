@@ -86,7 +86,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
         /*NotificationsMenu*/ 'unread', 'notice',
         /*Events (could be automatic/generic)*/ 'coldsnap', 'blackout',
         /*Views bar*/ 'residentialdesirability', 'landvalue', 'luxury', 'businesspresence', 'pettycrime', 'organizedcrime', 'noise', 'particulatepollution', 'greenhousegases', 'placementgrid', 'hidebuildings', 'fadebuildings', //Others Copilot spat out, some of which I likely do want: 'firehazard', 'healthhazard', 'unemployment', 'traffic', 'infrastructure', 'happiness', 'population'
-        /*errors and view-specific icons on any building*/ 'noroad', 'nopower', 'outage', 'fire', 'provision', 'cannotprovision', 'reopen', 'errorbackdrop', 'warningbackdrop', 'collectionbackdrop', 'resourceborder', 'willupgrade',
+        /*errors and view-specific icons on any building*/ 'noroad', 'nopower', 'outage', 'fire', 'provision', 'cannotprovision', 'reopen', 'errorbackdrop', 'warningbackdrop', 'collectionbackdrop', 'resourceborder', 'willupgrade', 'publictransport',
     ];
     for (const sprite of otherSprites) {
         urls["ui/" + sprite] = `assets/ui/${sprite}.png`;
@@ -111,6 +111,8 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     delete urls["resource/foodhealth"];
     delete urls["resource/health"];
     delete urls["resource/greenhousegases"];
+    delete urls["resource/prodeff"];
+    delete urls["resource/untappedpatronage"];
 
     //TODO: Any other UI elements would also need to be here. Could actually just grab the Drawables, but...a bit heavyweight
     return urls;

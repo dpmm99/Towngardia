@@ -45,7 +45,7 @@ export class HappinessCalculator {
                 this.relevantTileCount++;
 
                 //We will only possibly penalize for these effect types
-                const unaffectedTypes = new Set([EffectType.PolicePresence, EffectType.FirePrevention, EffectType.Healthcare, EffectType.Luxury]);
+                const unaffectedTypes = new Set([EffectType.PoliceProtection, EffectType.FireProtection, EffectType.Healthcare, EffectType.Luxury]);
                 for (const effect of this.city.effectGrid[y][x]) {
                     const currentSum = this.effectSums.get(effect.type) || 0;
                     this.effectSums.set(effect.type, currentSum + effect.getEffect(this.city, null, y, x));
@@ -84,18 +84,18 @@ export class HappinessCalculator {
         let safety = 0;
 
         if (this.city.flags.has(CityFlags.PoliceProtectionMatters)) {
-            const policePresence = this.getAverageEffect(EffectType.PolicePresence); //Note: since it's not a linear factor, it would make a little bit more sense to sum the net of individual tiles (e.g., high-crime areas should be more important than having decent overall coverage)
+            const policePresence = this.getAverageEffect(EffectType.PoliceProtection); //Note: since it's not a linear factor, it would make a little bit more sense to sum the net of individual tiles (e.g., high-crime areas should be more important than having decent overall coverage)
             const pettyCrime = this.getAverageEffect(EffectType.PettyCrime);
             const organizedCrime = this.getAverageEffect(EffectType.OrganizedCrime);
             const difference = Math.sqrt(Math.max(0, policePresence)) - pettyCrime - 2 * organizedCrime;
             safety += Math.min(0.5, difference) * (difference > 0 ? 0.1 : 0.15); //Caps at +0.05, no cap in the other direction, but even worse impact if below zero
-            if (this.city.peakPopulation > 150) safety += (this.uncoveredTiles.get(EffectType.PolicePresence) || 0) / this.relevantTileCount * -0.1; //Extra penalty for zero coverage kicks in a bit later
+            if (this.city.peakPopulation > 150) safety += (this.uncoveredTiles.get(EffectType.PoliceProtection) || 0) / this.relevantTileCount * -0.1; //Extra penalty for zero coverage kicks in a bit later
             this.setDisplayStats("Police and crime", safety, 0.05);
         } else safety += 0.04;
 
         if (this.city.flags.has(CityFlags.FireProtectionMatters)) {
-            let fire = Math.min(1, Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.FirePrevention)))) * 0.05; //Caps at +0.05, no cap in the other direction
-            if (this.city.peakPopulation > 325) fire += (this.uncoveredTiles.get(EffectType.FirePrevention) || 0) / this.relevantTileCount * -0.1; //Extra penalty for zero coverage kicks in a bit later
+            let fire = Math.min(1, Math.sqrt(Math.max(0, this.getAverageEffect(EffectType.FireProtection)))) * 0.05; //Caps at +0.05, no cap in the other direction
+            if (this.city.peakPopulation > 325) fire += (this.uncoveredTiles.get(EffectType.FireProtection) || 0) / this.relevantTileCount * -0.1; //Extra penalty for zero coverage kicks in a bit later
             this.setDisplayStats("Fire protection", fire, 0.05);
             safety += fire;
         } else safety += 0.045;
