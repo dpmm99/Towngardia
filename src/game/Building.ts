@@ -181,6 +181,7 @@ export class Building implements IHasDrawable {
                 if (!justMoving) { //Auto-sell if you can't store it all anymore or your configuration says to.
                     const amountToSell = Math.max(0, cityResource.amount - Math.floor(cityResource.autoSellAbove * cityResource.capacity));
                     if (amountToSell) city.sell(resource, amountToSell);
+                    resource.amount -= amountToSell;
                 }
             }
         }
