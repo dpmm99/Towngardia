@@ -110,8 +110,9 @@ export class BuildTypeBar implements IHasDrawable, IOnResizeEvent {
 
             //Building icon
             const buildingIconDrawable = expandedDrawable.addChild(new Drawable({
-                x: x,
+                x: x + this.buildingIconSize / 2,
                 y: this.buildingPadding,
+                centerOnOwnX: true,
                 width: this.buildingIconSize + "px",
                 height: this.buildingIconSize + "px",
                 image: new TextureInfo(this.buildingIconSize, this.buildingIconSize, "building/" + buildingType.type),
@@ -162,7 +163,9 @@ export class BuildTypeBar implements IHasDrawable, IOnResizeEvent {
             }));
 
             // Add resource costs
-            addResourceCosts(expandedDrawable, buildingType.getCosts(this.city), x - 2, this.buildingPadding + this.buildingIconSize + 24, true, true, true, undefined, undefined, undefined, 4, grayscale, reddize, this.city);
+            const costs = buildingType.getCosts(this.city);
+            const costsX = x + this.buildingIconSize / 2 - costs.length * 8 - (costs.length - 1); //Centered on the image
+            addResourceCosts(expandedDrawable, costs, costsX, this.buildingPadding + this.buildingIconSize + 24, true, true, true, 16, 2, 14, 4, grayscale, reddize, this.city);
             x += itemWidth;
         });
 
