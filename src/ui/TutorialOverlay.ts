@@ -9,6 +9,7 @@ import { BIGGER_MOBILE_RATIO } from "../rendering/RenderUtil.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { StandardScroller } from "./StandardScroller.js";
 import { CityFlags } from "../game/CityFlags.js";
+import { HIGH_TECH_UNLOCK_EDU } from "../game/HappinessCalculator.js";
 
 type TutorialStep = {
     title: string;
@@ -722,7 +723,7 @@ export class TutorialOverlay implements IHasDrawable {
                 ...fieldsNotNeededForExtras,
                 title: "Education",
                 content: {
-                    text: "Education is a key factor in your citizens' happiness, but on top of that, the higher the average education level, the more research points the city earns each day. Furthermore, many high-tech buildings require a high-quality education--try to get a fully-funded College covering at least 90% of your residences, and your construction options will expand immensely.",
+                    text: "Education is a key factor in your citizens' happiness, but on top of that, the higher the average education level, the more research points the city earns each day. Furthermore, many high-tech buildings require a high-quality education--try to get a fully-funded College covering at least " + (Math.ceil(HIGH_TECH_UNLOCK_EDU * 100) / 100) + "% of your residences, for example, and your construction options will expand immensely.",
                 }
             });
 

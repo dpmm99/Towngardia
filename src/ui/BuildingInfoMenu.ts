@@ -1,12 +1,13 @@
 import { Building } from "../game/Building.js";
 import { BuildingCategory } from "../game/BuildingCategory.js";
-import { CityHall, InformationCenter } from "../game/BuildingTypes.js";
+import { CityHall, DepartmentOfEnergy, InformationCenter, PostOffice } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
 import { Effect } from "../game/Effect.js";
 import { TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICKS_PER_LONG_TICK } from "../game/FundamentalConstants.js";
 import { EffectType } from "../game/GridType.js";
+import { HIGH_TECH_UNLOCK_EDU } from "../game/HappinessCalculator.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -80,7 +81,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         nextY += 24 + padding;
 
         // Upkeep costs
-        const powerUpkeep = building.getPowerUpkeep(this.city, true);
+        const powerUpkeep = building.getPowerUpkeep(this.city, true) * this.city.powerUsageMultiplier;
         const upkeepCosts = building.getUpkeep(this.city, 1);
         if (powerUpkeep) upkeepCosts.unshift({ type: 'power', amount: powerUpkeep }); //Assumes getUpkeep returns a new copy each time
         if (upkeepCosts.length > 0) {
@@ -252,6 +253,29 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         //Storage
         if (building.stores.length) nextY = this.addBuildingStorageStats(infoDrawable, padding, nextY, iconSize * 0.75, building, barWidth);
 
+        //Education
+        if (!this.city.flags.has(CityFlags.UnlockedGameDev) && building.effects?.effects.some(p => p.type === EffectType.Education)) {
+            const avgEducation = this.city.getCityAverageEducation();
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: `Average education: ${Math.floor(avgEducation * 100) / 100}`,
+            }));
+            nextY += 24 + 5;
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: `High-tech buildings unlock at ${Math.ceil(HIGH_TECH_UNLOCK_EDU * 100) / 100}`,
+            }));
+            nextY += 24 + padding;
+        }
+
+        //TODO: Consider showing event-based info, such as the risk of epidemic if it's a healthcare facility.
+
         //These apply to your own buildings excluding a few special cases
         if (building.x !== -1 && building.owned) {
             //Efficiency
@@ -267,6 +291,8 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 nextY += 24 + padding;
             }
             if (building instanceof InformationCenter) nextY = this.addTourismInfo(infoDrawable, padding, nextY, iconSize, barWidth);
+            if (building instanceof PostOffice) nextY = this.addPostOfficeInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
+            if (building instanceof DepartmentOfEnergy) nextY = this.addDepartmentOfEnergyInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
 
             //Patronage
             if (building.businessPatronCap && (building.roadConnected || !building.needsRoad)) {
@@ -275,6 +301,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
             //Warnings
             const warnings: {icon: string, text: string}[] = [];
+            if (building.fireHazard > building.getHighestEffect(this.city, EffectType.FireProtection)) warnings.push({ icon: "fire", text: "At risk of fires" });
             if (building.needsRoad && !building.roadConnected) warnings.push({ icon: "noroad", text: "No road access" });
             if (!building.powerConnected && building.needsPower) warnings.push({ icon: "nopower", text: "No power connection" });
             if (!building.powered && building.needsPower && !building.isNew) warnings.push({ icon: "outage", text: "Not enough " + (idealPowerProduction && building.inputResources.length ? "fuel" : "power") });
@@ -649,6 +676,40 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 nextY += 24 + padding;
             }
         }
+        return nextY;
+    }
+
+    private addPostOfficeInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: PostOffice, barWidth: number): number {
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2 - iconSize - 5) + "px",
+            height: iconSize + "px",
+            text: "Business revenue +" + humanizeFloor(this.city.getPostOfficeBonus(building.x === -1) * 100 - 100) + "%",
+        }));
+        nextY += iconSize + padding;
+        return nextY;
+    }
+
+    private addDepartmentOfEnergyInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: DepartmentOfEnergy, barWidth: number): number {
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: iconSize + "px",
+            text: "City power usage -" + (Math.floor(10000 - this.city.powerUsageMultiplier * 10000) / 100) + "%",
+        }));
+        nextY += iconSize + 5;
+
+        const rate = building.lastEfficiency * this.city.getPowerUsageMultiplierLastDayChange(); //Really just an estimate
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: iconSize + "px",
+            text: "Usage dropping by " + (Math.floor(100000 * rate) / 1000) + "%/day",
+        }));
+        nextY += iconSize + padding;
         return nextY;
     }
 

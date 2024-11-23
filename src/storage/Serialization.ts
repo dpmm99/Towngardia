@@ -36,7 +36,7 @@ export class CitySerializer {
             cs: o.recentConstructionResourcesSold,
             pp: o.peakPopulation,
             nb: o.nextBuildingID,
-            eg: this.effectGrid(o.effectGrid),
+            eg: this.effectGrid(o.effectGrid), //TODO: Consider recalculating this on load; could save as much as 83% of the network/storage cost. We only need to store effects that don't originate from a building, or we could make a separate effect emitter system for those and store no effects.
             fl: [...o.flags.values()],
             id: o.id,
             na: o.name,
@@ -197,9 +197,9 @@ export class CitySerializer {
                     x: o.x,
                     y: o.y,
                     ab: o.affectingBuildingCount, //could just recalculate by calling addBuilding during load
-                    po: o.powered,
-                    pc: o.powerConnected,
-                    rc: o.roadConnected,
+                    po: o.powered ? undefined : false, //I only want to store these if they're false, for storage efficiency reasons.
+                    pc: o.powerConnected ? undefined : false,
+                    rc: o.roadConnected ? undefined : false,
                 });
             }
         }
@@ -426,9 +426,9 @@ export class CityDeserializer {
                 r.x = o.x;
                 r.y = o.y;
                 r.affectingBuildingCount = o.ab;
-                r.powered = o.po;
-                r.powerConnected = o.pc;
-                r.roadConnected = o.rc;
+                r.powered = o.po ?? true; //Only stored if false, or if it's an old version of the data, so undefined -> true.
+                r.powerConnected = o.pc ?? true;
+                r.roadConnected = o.rc ?? true;
             }
         }
         return o.loaded = r; //Store the loaded building in the input object to make the second pass easy.

@@ -45,6 +45,16 @@ export class ProductionEfficiency extends Resource {
     }
 }
 
+export class DeptOfEnergyBonus extends Resource {
+    constructor(initialCount: number = 0) {
+        super(
+            "doebonus", "Dept of Energy Bonus",
+            initialCount, 0, Number.MAX_SAFE_INTEGER, 0,
+            true
+        );
+    }
+}
+
 export class Flunds extends Resource {
     constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
         super(
@@ -649,9 +659,19 @@ export const RESOURCE_TYPES = <Resource[]>([
     /*Fuel and ingredients*/ Coal, Copper, Gemstones, Lithium, Oil, Plastics, Rubber, Sand, Silicon, Textiles, Tritium, Uranium,
     /*Manufactured goods*/ Apps, Batteries, Clothing, Electronics, Furniture, Paper, Pharmaceuticals, Toys,
     /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays,
-    /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency,
+    /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, DeptOfEnergyBonus,
     /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Water].map(p => new p()));
 
 //For easy checking if something is a food.
 export const FOOD_TYPES = new Set([Apples, Berries, Dairy, Fish, Grain, LabGrownMeat, LeafyGreens, Legumes, PlantBasedDairy, Poultry, RedMeat, RootVegetables, VitaminB12].map(p => new p().type));
 export const ANIMAL_PRODUCTS = new Set([Dairy, Fish, Poultry, RedMeat].map(p => new p().type)); //No, I'm not counting oil... or people... :) or lab-grown meat because it doesn't require sustained animal farming. Pharmaceuticals are questionable.
+
+//This is a cache for the type string of a class. It's used to avoid creating an instance of a class just to get its type. //TODO: Use this everywhere I've used the resource type ID string. Make a wrapper in City to get the city's Resource instance, too, if needed. The point is being able to see where all specific resources are used via CodeLens.
+const resourceTypeCache = new Map<Function, string>(RESOURCE_TYPES.map(p => [p.constructor, p.type]));
+export function getResourceType<T extends { new(...args: any[]): {} }>(cls: T): string {
+    if (!resourceTypeCache.has(cls)) {
+        const instance = new cls();
+        resourceTypeCache.set(cls, (instance as any).type);
+    }
+    return resourceTypeCache.get(cls)!;
+}

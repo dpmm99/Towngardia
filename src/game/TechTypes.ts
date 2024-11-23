@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { AlgaeFarm, CarbonCapturePlant, Carnicultivator, Clinic, DataCenter, Farm, FusionFuelTruck, FusionPowerPlant, GeothermalPowerPlant, Hospital, Nanogigafactory, PoliceUAVHub, QuantumComputingLab, ShowHome, TreeFarm, VerticalFarm, WeatherControlMachine, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, CarbonCapturePlant, Carnicultivator, Clinic, DataCenter, DepartmentOfEnergy, Farm, FusionFuelTruck, FusionPowerPlant, GeothermalPowerPlant, Hospital, Nanogigafactory, PoliceUAVHub, QuantumComputingLab, ShowHome, TreeFarm, VerticalFarm, WeatherControlMachine, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CAPACITY_MULTIPLIER, Lithium } from "./ResourceTypes.js";
 import { Tech } from "./Tech.js";
@@ -76,7 +76,7 @@ export class SmartHomeSystems extends Tech {
         super(
             'smarthome',
             'Smart Home Systems',
-            'Integrated systems that optimize energy usage in homes through automated control of heating, cooling, and appliances.',
+            'Integrated systems that optimize energy usage in homes through automated control of heating, cooling, and appliances. Also unlocks Show Home and Department of Energy.',
             [{ type: 'research', amount: 25 }, { type: 'electronics', amount: 50 }, { type: 'plastics', amount: 30 }],
             0.03, 0.015,
             520, 300,
@@ -86,6 +86,7 @@ export class SmartHomeSystems extends Tech {
 
     override applyEffects(city: City) {
         city.unlock(getBuildingType(ShowHome));
+        city.unlock(getBuildingType(DepartmentOfEnergy));
     }
 }
 

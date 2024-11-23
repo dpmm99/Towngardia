@@ -113,6 +113,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     delete urls["resource/greenhousegases"];
     delete urls["resource/prodeff"];
     delete urls["resource/untappedpatronage"];
+    delete urls["resource/doebonus"];
 
     //TODO: Any other UI elements would also need to be here. Could actually just grab the Drawables, but...a bit heavyweight
     return urls;

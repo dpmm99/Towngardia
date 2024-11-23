@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, Dorm, ElementarySchool, FireBay, FireStation, GregsGrogBarr, HighSchool, Hospital, InformationCenter, MediumPark, Mountain, MysteriousRubble, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, Dorm, ElementarySchool, FireBay, FireStation, GregsGrogBarr, HighSchool, Hospital, InformationCenter, MediumPark, Mountain, MysteriousRubble, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SauceCode, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -37,6 +37,7 @@ export class City {
     public citizenDietSystem: CitizenDietSystem; //No persistent data other than constants and lastDietComposition
     public canBuildResources: boolean = false; //Is set to true by the construction cheat so I can lay out 'regions'
     public game: GameState | null = null; //Set when the city is loaded in a writable mode (i.e., it's your own city and it's not on the server)
+    public powerUsageMultiplier: number = 0; //Set on-load and on-long-tick; calculated from DeptOfEnergyBonus.
     //Just aliases
     public flunds: Resource;
     public networkRoot!: Building; //You need to call startNew() or fake() immediately after the constructor.
@@ -131,6 +132,9 @@ export class City {
         this.cityHall = this.buildings.find(p => p instanceof CityHall) as CityHall;
         this.postOffice = this.buildings.find(p => p instanceof PostOffice) as PostOffice;
         region?.apply(this);
+
+        //Cached calculated values that normally get calculated on long tick
+        this.calculatePowerUsageMultiplier();
     }
 
     private ensureNewerUnlocks() {
@@ -138,6 +142,7 @@ export class City {
         if (this.flags.has(CityFlags.UnlockedTourism)) this.unlock(getBuildingType(ConventionCenter));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(HighSchool));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Dorm));
+        if (this.flags.has(CityFlags.UnlockedGameDev)) this.unlock(getBuildingType(SauceCode));
         if (this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount < 150) this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount = 150;
 
         //Version changes that aren't as simple as an unlock
@@ -256,6 +261,17 @@ export class City {
             }
             this.buildingTypesByCategory.get(buildingType.category)!.push(buildingType);
         }
+    }
+
+    private calculatePowerUsageMultiplier(): void {
+        this.powerUsageMultiplier = 1 - 0.01 * Math.log2(1 + this.resources.get(new ResourceTypes.DeptOfEnergyBonus().type)!.amount / LONG_TICKS_PER_DAY / 60);
+    }
+
+    //It's gonna be a positive number or 0. It's only affected by Department of Energy reducing the power usage multiplier.
+    public getPowerUsageMultiplierLastDayChange(): number {
+        const amount = this.resources.get(new ResourceTypes.DeptOfEnergyBonus().type)!.amount;
+        if (amount < LONG_TICKS_PER_DAY) return 0.01 * Math.log2(1 + LONG_TICKS_PER_DAY / LONG_TICKS_PER_DAY / 60); //Just give the FIRST day's change amount instead.
+        return 1 - this.powerUsageMultiplier - 0.01 * Math.log2(1 + (amount - LONG_TICKS_PER_DAY) / LONG_TICKS_PER_DAY / 60);
     }
 
     /**
@@ -470,7 +486,7 @@ export class City {
 
     private applyPower(building: Building, multiplier: number) { //NOTE: Techs that affect power upkeep and are adopted gradually make this incorrect, as would machine epsilon. I don't think it's super important.
         const power = this.resources.get('power')!;
-        this.desiredPower += multiplier * building.getPowerUpkeep(this, true);
+        this.desiredPower += multiplier * building.getPowerUpkeep(this, true) * this.powerUsageMultiplier;
         const production = multiplier * building.getPowerProduction(this); //Considered using productionRate, but if power is variable...
         power.amount += production; //To make it apply more quickly when you place a new power producer.
         power.productionRate += production;
@@ -529,7 +545,7 @@ export class City {
         this.buildings.push(building);
         building.place(this, x ?? building.x, y ?? building.y);
         this.placeOnGrid(building);
-        this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) + 1);
+        this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) + 1); //TODO: should only increase if the building was freshly purchased or granted, not if it was just moved or taken from the stash. Doesn't hurt anything right now, except the counts increase every time you move a building, wasting some storage space with kinda random numbers.
         building.placed(this);
 
         //Ensure the thing built on top is always listed BEFORE the thing it's built on, in case the built-on-top one needs to fuel the other.
@@ -1189,6 +1205,9 @@ export class City {
             greenhouseGases.amount = Math.max(0, greenhouseGases.amount + this.getCityAverageGreenhouseGases() * 0.01);
         }
 
+        //Recalculate cached values
+        this.calculatePowerUsageMultiplier();
+
         this.checkAndAwardTitle(TitleTypes.Carnivorism.id);
         this.checkAndAwardTitle(TitleTypes.VeganRetreat.id);
         this.checkAndAwardAchievement(AchievementTypes.SelfSufficiencity.id);
@@ -1217,7 +1236,7 @@ export class City {
         //Random order to allow rolling blackouts if the city can't even buy enough power. Entirely ignore buildings that need but lack a road connection.
         const connectedBuildings = this.buildings.filter(p => p.powerConnected && (!p.needsRoad || p.roadConnected));
         inPlaceShuffle(connectedBuildings).forEach(building => {
-            const powerNeeded = building.getPowerUpkeep(this);
+            const powerNeeded = building.getPowerUpkeep(this) * this.powerUsageMultiplier;
             power.consumptionRate += powerNeeded;
             building.powered = power.amount + importablePower >= powerNeeded || powerNeeded === 0; //Buildings will be unpowered if they need more power than is available even via trading
             if (building.powered) {
@@ -1420,8 +1439,8 @@ export class City {
     /**
      * @returns 1 plus up to 5% depending on the post office's presence and last efficiency
      */
-    getPostOfficeBonus(): number {
-        return 1 + 0.05 * (this.postOffice?.lastEfficiency || 0);
+    getPostOfficeBonus(ideal: boolean = false): number {
+        return 1 + 0.05 * (ideal ? 1 : this.postOffice?.lastEfficiency || 0);
     }
 
     private updatePopulation(): void {
