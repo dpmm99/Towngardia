@@ -26,7 +26,7 @@ import { Resource } from "./Resource.js";
 import * as ResourceTypes from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
 
-const CITY_DATA_VERSION = 1; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
+const CITY_DATA_VERSION = 2; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
     //Not serialized
     public uiManager: UIManager | null = null;
@@ -139,7 +139,6 @@ export class City {
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(HighSchool));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Dorm));
         if (this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount < 150) this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount = 150;
-        if (this.happinessBreakdown.has("Food satisfaction")) this.happinessBreakdown.delete("Food satisfaction"); //I renamed it to "Food gratification" to match the citizen diet screen later
 
         //Version changes that aren't as simple as an unlock
         if (this.dataVersion < 1) {
@@ -175,6 +174,18 @@ export class City {
                 }
             }
             this.dataVersion = 1;
+        }
+        if (this.dataVersion < 2) {
+            //I had made effect radii larger than intended, so fix that by just clearing the whole map of effects (by setting the radius to bigger than the map) and then reapplying.
+            for (const building of this.buildings.filter(p => p.effects?.effects.length)) {
+                building.areaIndicatorRadiusX += this.width;
+                building.areaIndicatorRadiusY += this.height;
+                building.effects!.stopEffects(building, this);
+                building.areaIndicatorRadiusX -= this.width;
+                building.areaIndicatorRadiusY -= this.height;
+                building.effects!.applyEffects(building, this);
+            }
+            this.dataVersion = 2;
         }
     }
 

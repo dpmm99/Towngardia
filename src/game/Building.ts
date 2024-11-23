@@ -311,8 +311,13 @@ export class Building implements IHasDrawable {
     }
 
     //You can use this for dynamic effects based on the building's current efficiency.
-    public dynamicEffectByEfficiency(city: City, building: Building | null, x: number, y: number) {
+    public dynamicEffectByEfficiency(city: City, building: Building | null, x: number, y: number): number {
         return this.x === -1 ? 1 : this.lastEfficiency;
+    }
+
+    //Business presence is a fixed magnitude unless the business isn't properly connected or has failed.
+    public dynamicEffectForBusiness(city: City, building: Building | null, x: number, y: number): number {
+        return this.x !== -1 && (this.businessFailed || (!this.roadConnected && this.needsRoad) || (!this.powerConnected && this.needsPower)) ? 0 : 1;
     }
 
     //Where you'd do stuff like produce resources

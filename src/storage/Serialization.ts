@@ -281,6 +281,7 @@ export class CityDeserializer {
         if (o.as) r.assists = this.assists(o.as, r);
         if (o.gc) r.residenceSpawner.globalSpawnChance = o.gc;
         if (o.hb) r.happinessBreakdown = new Map(o.hb);
+        if (r.happinessBreakdown.has("Food satisfaction")) r.happinessBreakdown.delete("Food satisfaction"); //I renamed it to "Food gratification" to match the citizen diet screen later
         if (o.hx) r.happinessMaxima = new Map(o.hx);
         return r;
     }

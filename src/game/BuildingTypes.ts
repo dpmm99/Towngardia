@@ -2032,7 +2032,7 @@ export class CornerStore extends Building {
         this.businessValue = 20;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.05)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.05, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2053,7 +2053,7 @@ export class Junkyard extends Building {
         this.businessValue = 90;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.1),
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.1, "dynamicEffectForBusiness"),
             new EffectDefinition(EffectType.Luxury, -0.25, undefined, undefined, -1, -1)]);
     }
 
@@ -2076,7 +2076,7 @@ export class SuckasCandy extends Building {
         this.businessValue = 90;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.15)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.15, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2099,7 +2099,7 @@ export class Cafe extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2122,7 +2122,7 @@ export class TheLoadedDie extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2145,7 +2145,7 @@ export class Whalemart extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.15)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.15, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2168,7 +2168,7 @@ export class Bar extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2),
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2, "dynamicEffectForBusiness"),
             new EffectDefinition(EffectType.PettyCrime, 0.15, "dynamicEffectByEfficiency")]);
     }
 
@@ -2194,7 +2194,7 @@ export class PalmNomNom extends Building {
         this.isRestaurant = true;
         this.isEntertainment = true;
         this.outputResources.push(new Tourists(1.25, 1.25, 0, 50)); //Brings in 50 tourists per long tick, but it takes 10 days to get up to full steam (50/LONG_TICKS_PER_DAY/10).
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2216,7 +2216,7 @@ export class GregsGrogBarr extends Building {
         this.businessValue = 240; //Feeds into sales tax--this is the max value it could be worth per long tick before being multiplied by the sales tax rate (i.e., this is its max sales).
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25),
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25, "dynamicEffectForBusiness"),
             new EffectDefinition(EffectType.PettyCrime, 0.2, "dynamicEffectByEfficiency"),
             new EffectDefinition(EffectType.OrganizedCrime, 0.05, "dynamicEffectByEfficiency", undefined, -2, -2)]);
     }
@@ -2241,7 +2241,7 @@ export class IceCreamTruck extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 9;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.05)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.05, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2268,7 +2268,7 @@ export class FurnitureStore extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.inputResources.push(new Furniture(0, 0, 0.5));
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2292,7 +2292,7 @@ export class Casino extends Building {
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
         this.isEntertainment = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25),
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25, "dynamicEffectForBusiness"),
             new EffectDefinition(EffectType.OrganizedCrime, 0.2, "dynamicEffectByEfficiency", undefined, -1, -1)]);
     }
 
@@ -2317,7 +2317,7 @@ export class GameDevStudio extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.3)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.3, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2339,7 +2339,7 @@ export class BlankCheckBank extends Building {
         this.businessValue = 170;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.3),
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.3, "dynamicEffectForBusiness"),
             new EffectDefinition(EffectType.OrganizedCrime, 0.15, "dynamicEffectByEfficiency", undefined, -1, -1)]);
     }
 
@@ -2370,7 +2370,7 @@ export class ResortHotel extends Building {
         this.outputResources.push(new Tourists(5, 5, 0, 200)); //Brings in 200 tourists per long tick, but it takes 10 days to get up to full steam.
         this.isRestaurant = true;
         this.isEntertainment = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25), new EffectDefinition(EffectType.Luxury, 0.1)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25, "dynamicEffectForBusiness"), new EffectDefinition(EffectType.Luxury, 0.1)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2398,7 +2398,7 @@ export class HotSpringInn extends Building {
         //The weirdest footprint yet: it must fully cover the Hot Spring, but the inn itself (y=0) shouldn't be on top of the hot spring.
         this.checkFootprint[1][0] = this.checkFootprint[1][2] = this.checkFootprint[2][0] = this.checkFootprint[2][2] = FootprintType.HOT_SPRING | FootprintType.EMPTY | FootprintType.RESIDENCE;
         this.checkFootprint[1][1] = this.checkFootprint[2][1] = FootprintType.HOT_SPRING;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25), new EffectDefinition(EffectType.Luxury, 0.1)]);
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25, "dynamicEffectForBusiness"), new EffectDefinition(EffectType.Luxury, 0.1)]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2433,7 +2433,7 @@ export class ConventionCenter extends Building {
         this.isRestaurant = true;
         this.isEntertainment = true;
         this.maxVariant = 3;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25)]); //TODO: Business presence should stop if the business fails. I don't really want to make it affected by efficiency in general, though.
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
