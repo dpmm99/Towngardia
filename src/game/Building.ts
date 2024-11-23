@@ -105,7 +105,7 @@ export class Building implements IHasDrawable {
     }
 
     getRadiusUpgradeAmount(city: City): number {
-        return this.effects?.getRadiusUpgradeAmount(this, city) ?? 0;
+        return this.effects?.getRadiusUpgradeAmount(city) ?? 0;
     }
 
     upgradeRadius(city: City) { //Only runs for already-placed clinics and hospitals when the telemedicine tech gets researched.
@@ -164,6 +164,7 @@ export class Building implements IHasDrawable {
 
     //Call City.removeBuilding instead of this (except in City, of course). This happens after removeFromGrid, so we clear builtOn here.
     remove(city: City, justMoving: boolean = false): void {
+        this.effects?.stopEffects(this, city);
         if (!justMoving) {
             this.x = -1;
             this.y = -1;

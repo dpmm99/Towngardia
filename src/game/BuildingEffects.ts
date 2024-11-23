@@ -28,14 +28,13 @@ export class BuildingEffects {
     }
 
     // Calculate current radius based on tech research
-    public getRadiusUpgradeAmount(building: Building, city: City): number {
-        return Math.max(building.areaIndicatorRadiusX, building.areaIndicatorRadiusY) +
-            this.radiusUpgrades.filter(upgrade => city.techManager.techs.get(upgrade.tech)?.researched).reduce((sum, upgrade) => sum + upgrade.amount, 0);
+    public getRadiusUpgradeAmount(city: City): number {
+        return this.radiusUpgrades.filter(upgrade => city.techManager.techs.get(upgrade.tech)?.researched).reduce((sum, upgrade) => sum + upgrade.amount, 0);
     }
 
     // Apply all effects for this building
     applyEffects(building: Building, city: City): void {
-        const radiusBonus = this.getRadiusUpgradeAmount(building, city);
+        const radiusBonus = this.getRadiusUpgradeAmount(city);
 
         for (const effect of this.effects) {
             const radiusX = radiusBonus + effect.radiusX + (effect.addRadius ? building.areaIndicatorRadiusX : 0);
@@ -56,7 +55,7 @@ export class BuildingEffects {
     }
 
     stopEffects(building: Building, city: City): void {
-        const radiusBonus = this.getRadiusUpgradeAmount(building, city);
+        const radiusBonus = this.getRadiusUpgradeAmount(city);
         const maxRadius = radiusBonus + this.effects.reduce((max, effect) => Math.max(max,
             effect.radiusX + (effect.addRadius ? building.areaIndicatorRadiusX : 0),
             effect.radiusY + (effect.addRadius ? building.areaIndicatorRadiusY : 0)
