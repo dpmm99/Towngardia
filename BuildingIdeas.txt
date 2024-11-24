@@ -17,9 +17,9 @@ Bowling alleys
 Brothels
 ~ Bus depots
 ~ Cafes
-Campsites
+~ Campsites
 Candy factories
-Car dealerships
+~ Car dealerships
 ~ Carbon capture plants
 ~ Casinos
 ~ Cement mills
@@ -75,7 +75,7 @@ Internet cafes
 ~ Junkyards
 Karaoke booths
 Large houses
-Libraries
+~ Libraries
 Lighthouses
 ~ Livestock farms
 Live theaters
@@ -87,7 +87,7 @@ Metal refineries
 Minigolf courses
 ~ Moho mine
 Movie theaters
-Museums
+~ Museums
 Natural gas power plants
 ~ Nuclear fission power plants
 Observatories

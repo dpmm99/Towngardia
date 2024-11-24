@@ -1,4 +1,5 @@
 import { TitleTypes } from "./AchievementTypes.js";
+import { CartersCars, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { inPlaceShuffle } from "./MiscFunctions.js";
 import { Research } from "./ResourceTypes.js";
@@ -18,10 +19,14 @@ export class TechManager {
             this.techs.set(tech.id, tech.clone());
     }
 
-    updateAdoptionRates(): void {
+    updateAdoptionRates(city: City): void {
         this.techs.forEach(tech => {
             if (tech.researched && tech.adoptionRate < 1) {
                 tech.adoptionRate = Math.min(1, tech.adoptionRate + tech.adoptionGrowth);
+                if (tech.id === "autonomousvehicles") {
+                    const dealershipBonus = city.buildings.filter(p => p.type === getBuildingType(CartersCars)).reduce((acc, val) => acc + val.lastEfficiency, 0);
+                    tech.adoptionRate = Math.min(1, tech.adoptionRate + tech.adoptionGrowth * dealershipBonus * 0.3); //30% bonus for one dealership (reduce by ~7 days), 60% for 2 (reduce by ~11 days), 90% for 3 (reduce by ~14 days).
+                }
             }
         });
     }

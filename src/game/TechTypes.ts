@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { AlgaeFarm, CarbonCapturePlant, Carnicultivator, Clinic, DataCenter, DepartmentOfEnergy, Farm, FusionFuelTruck, FusionPowerPlant, GeothermalPowerPlant, Hospital, Nanogigafactory, PoliceUAVHub, QuantumComputingLab, ShowHome, TreeFarm, VerticalFarm, WeatherControlMachine, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, CarbonCapturePlant, Carnicultivator, Clinic, DataCenter, DepartmentOfEnergy, Farm, FusionFuelTruck, FusionPowerPlant, GeothermalPowerPlant, Hospital, Nanogigafactory, PoliceUAVHub, QuantumComputingLab, ShowHome, TreeFarm, UrbanCampDome, VerticalFarm, WeatherControlMachine, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CAPACITY_MULTIPLIER, Lithium } from "./ResourceTypes.js";
 import { Tech } from "./Tech.js";
@@ -44,7 +44,7 @@ export class VacuumInsulatedWindows extends Tech {
         super(
             'vacuumwindows',
             'Vacuum Insulated Windows',
-            'These windows use a vacuum between panes to dramatically reduce heat transfer, improving building energy efficiency. They also greatly help with noise pollution.',
+            'Windows with a vacuum between panes to dramatically reduce noise and heat transfer, improving building energy efficiency. Also unlocks Urban Camp Dome.',
             [{ type: 'research', amount: 20 }, { type: 'glass', amount: 50 }],
             0.05, 0.02,
             200, 240,
@@ -54,6 +54,7 @@ export class VacuumInsulatedWindows extends Tech {
 
     override applyEffects(city: City) {
         city.checkAndAwardTitle(TitleTypes.Pioneergreen.id);
+        city.unlock(getBuildingType(UrbanCampDome));
     }
 }
 
@@ -365,7 +366,7 @@ export class AutonomousVehicles extends Tech {
             'Autonomous Vehicles',
             'Self-driving vehicles that reduce traffic congestion and improve transportation efficiency. Also unlocks Police UAV Hub.',
             [{ type: 'research', amount: 100 }, { type: 'electronics', amount: 150 }, { type: 'batteries', amount: 30 }],
-            0.05, 0.025, //~10 days to fully adopt
+            0.05, 0.008, //~30 days to fully adopt
             1820, 140,
             [{ id: "graphenebattery", path: [] }]
         );

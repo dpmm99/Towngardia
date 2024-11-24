@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, Dorm, ElementarySchool, FireBay, FireStation, GregsGrogBarr, HighSchool, Hospital, InformationCenter, MediumPark, Mountain, MysteriousRubble, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SauceCode, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, ElementarySchool, FireBay, FireStation, GregsGrogBarr, HighSchool, Hospital, InformationCenter, Library, MediumPark, Mountain, MysteriousRubble, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SauceCode, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -25,6 +25,7 @@ import { ResidenceSpawningSystem } from "./ResidenceSpawningSystem.js";
 import { Resource } from "./Resource.js";
 import * as ResourceTypes from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
+import { SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
 
 const CITY_DATA_VERSION = 2; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
@@ -140,9 +141,12 @@ export class City {
     private ensureNewerUnlocks() {
         if (this.player.finishedTutorial) this.buildingTypes.filter(p => TUTORIAL_COMPLETION_BUILDING_UNLOCKS.has(p.type)).forEach(p => p.locked = false);
         if (this.flags.has(CityFlags.UnlockedTourism)) this.unlock(getBuildingType(ConventionCenter));
+        if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Library));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(HighSchool));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Dorm));
         if (this.flags.has(CityFlags.UnlockedGameDev)) this.unlock(getBuildingType(SauceCode));
+        if (this.techManager.techs.get(new SmartHomeSystems().id)!.researched) this.unlock(getBuildingType(DepartmentOfEnergy));
+        if (this.techManager.techs.get(new VacuumInsulatedWindows().id)!.researched) this.unlock(getBuildingType(UrbanCampDome));
         if (this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount < 150) this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount = 150;
 
         //Version changes that aren't as simple as an unlock
@@ -1109,7 +1113,7 @@ export class City {
 
         this.updatePopulation();
         this.updateTourists();
-        this.techManager.updateAdoptionRates();
+        this.techManager.updateAdoptionRates(this);
 
         //Traffic can be reduced by up to 80% globally; the rest would have to be (mostly) accounted for by nearby public transportation facilities.
         this.trafficPrecalculation =
@@ -1179,7 +1183,7 @@ export class City {
         //Gain about 1 research point a day, or a max of around 5.4 a day for a city of 250k.
         const research = this.resources.get("research")!;
         const innovatorBonus = this.titles.get(TitleTypes.CityOfInnovators.id)?.attained ? 1.1 : 1;
-        research.amount += Math.max(1, Math.min(research.productionRate, Math.log10(this.resources.get("population")!.amount) * this.getCityAverageEducation())) * innovatorBonus / LONG_TICKS_PER_DAY;
+        research.produce(Math.max(1, Math.min(research.productionRate, Math.log10(this.resources.get("population")!.amount) * this.getCityAverageEducation())) * innovatorBonus / LONG_TICKS_PER_DAY);
 
         //Cap the auto-buy amounts
         this.resources.forEach(resource => resource.buyableAmount = Math.min(resource.buyableAmount, resource.buyCapacity));
@@ -1560,6 +1564,7 @@ export class City {
         }
         if (this.peakPopulation >= 600 && !this.flags.has(CityFlags.EducationMatters)) {
             this.notify(new Notification("(Smart) Help Wanted", "You've reached a population of 600! You can now build schools to provide education to your citizens. They'll be unhappy without it in a town of this size, anyway. Plus, if they're smart enough, they might help you research a bit faster. Most importantly, you need to thoroughly educate your population before you can build higher-tech facilities. See Tutorials in the main menu for more info.", "education"));
+            this.unlock(getBuildingType(Library));
             this.unlock(getBuildingType(ElementarySchool));
             this.unlock(getBuildingType(HighSchool));
             this.unlock(getBuildingType(Dorm));

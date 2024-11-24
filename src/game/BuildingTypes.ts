@@ -2378,6 +2378,28 @@ export class Casino extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
 }
 
+export class CartersCars extends Building {
+    constructor() {
+        super(
+            "carterscars", "Carter's Cars", "A dealership managed by your run-of-the-mill eccentric whose laugh sounds just like 'carcarcar.' Watch in amazement as salespeople perform their ancient ritual of turning 'catastrophic engine failure' into 'quirky personality' and 'rust damage' into 'vintage charm.' The complimentary water bottles are actually tears from previous customers. If you research Autonomous Vehicles, each dealership increases the adoption growth rate by 30%.",
+            BuildingCategory.COMMERCIAL,
+            3, 3, 0,
+            0.4,
+        );
+        this.businessPatronCap = 440;
+        this.businessValue = 650;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2, "dynamicEffectForBusiness")]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 500 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 20 }, { type: "glass", amount: 10 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+}
+
 export class GameDevStudio extends Building {
     constructor() {
         super(
@@ -2756,6 +2778,47 @@ export class Playground extends Building {
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 210 }, { type: "plastics", amount: 10 }]; }
 }
 
+export class UrbanCampDome extends Building {
+    constructor() {
+        super(
+            "urbancampdome", "Urban Camp Dome", "Welcome to the great indoors, where nature meets nurture under climate-controlled conditions! It's like someone took a forest, gave it a roof, and convinced urban professionals they're \"roughing it\" despite having Wi-Fi and barista-made coffee within arm's reach. Watch as city dwellers proudly pitch their designer tents on perfectly level ground while real squirrels judge them from carefully manicured branches. But hey, at least you won't get eaten by bears.",
+            BuildingCategory.LUXURY,
+            2, 2, 0,
+            0.2,
+        );
+        this.needsPower = this.needsRoad = false;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 7;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.18)]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 240 }, { type: "glass", amount: 30 }, { type: "plastics", amount: 5 }]; }
+}
+
+export class H2Whoa extends Building { //Light-up water jets, just a local luxury
+    constructor() {
+        super(
+            "h2whoa", "H2Whoa", "A glorified sprinkler system masquerading as public art. Watch as children and inebriated adults alike try to predict the pattern of the water jets and fail spectacularly. Disabled during droughts.",
+            BuildingCategory.LUXURY,
+            1, 1, 0,
+            0,
+        );
+        this.needsRoad = false; //DOES need power, unlike most luxury buildings.
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.13)]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 370 }, { type: "concrete", amount: 5 }, { type: "electronics", amount: 1 }]; }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2; }
+
+    override onLongTick(city: City): void {
+        this.upkeepEfficiency = city.events.find(p => p.type === "drought") ? 0 : 1;
+        super.onLongTick(city);
+    }
+}
+
 export class SesharTower extends Building {
     constructor() {
         super(
@@ -2764,7 +2827,7 @@ export class SesharTower extends Building {
             3, 3, 0,
             0.2,
         );
-        this.outputResources.push(new Tourists(15, 15, 0, 150)); //The tower can only bring in 150 tourists per long tick, and it takes 2.5 days to get up to full steam (assuming it's connected and powered).
+        this.outputResources.push(new Tourists(7.5, 7.5, 0, 150)); //The tower can only bring in 150 tourists per long tick, and it takes 2.5 days to get up to full steam (assuming it's connected and powered).
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2772,6 +2835,26 @@ export class SesharTower extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+}
+
+export class MuseumOfFutureArts extends Building { //Unlocked by Quantum Computing Lab after some time if you've played a perfect game of Monobrynth
+    constructor() {
+        super(
+            "futurearts", "Museum of Future Arts", "A gallery where today's \"what if?\" becomes tomorrow's \"why, though?\" Visitors are advised that understanding the art is strictly optional and possibly temporally impossible. Not even the curator can do it, and she has a PhD in Post-Post-Post-Modern Design. The gift shop sells postcards from next Tuesday, which is enough to fund the whole museum because some of them include lottery numbers.",
+            BuildingCategory.LUXURY,
+            2, 2, 0,
+            0.2,
+        );
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
+        this.areaIndicatorRounded = true;
+        this.outputResources.push(new Tourists(10, 10, 0, 200));
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 2200 }, { type: "glass", amount: 30 }, { type: "electronics", amount: 20 }, { type: "gemstones", amount: 20 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 15; }
 }
 
 //# Services
@@ -3004,6 +3087,36 @@ export class Hospital extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 24; }
 }
 
+export class Library extends Building {
+    constructor() {
+        super(
+            "library", "Library", "When someone asked, \"How do we make learning fun?\" the architect responded by making the building look like a book instead of actually solving the problem. Provides education at a quality level best described as \"well, it's better than nothing... probably,\" because most students aren't motivated by a fear of getting bad grades on open-book self-tests. Plus, half of them can't read.",
+            BuildingCategory.GOVERNMENT,
+            1, 2, 0,
+            0.3,
+        );
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 7;
+        this.serviceAllocationType = "education";
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Education, 0.25, "dynamicEffectByEfficiency")]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 130 }, { type: "wood", amount: 10 }, { type: "paper", amount: 20 }];
+    }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 7 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
+    }
+
+    override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
+
+    public dynamicEffectByEfficiency(city: City, building: Building | null, x: number, y: number) {
+        return (this.x === -1 ? 1 : this.lastEfficiency) * (1 + city.techManager.getAdoption("braininterface") * 0.6); //Massively more effective with brain-computer interface.
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+}
+
 export class ElementarySchool extends Building { //TODO: Strongly consider splitting up education into lower, middle, and upper. Then all three school types could spread a wider area effect of 0.9 (since there are techs to upgrade them) and libraries could spread two or all three types of education with a smaller strength.
     constructor() {
         super(
@@ -3147,6 +3260,12 @@ export class QuantumComputingLab extends Building {
         if (this.lastEfficiency > 0.9 && Math.random() < 0.01) { //1% per long tick, about 24.6% chance a week or 68% chance a month
             const researchProgress = 0.3 + Math.random() * 0.2; //30%-50% of the base cost
             city.techManager.randomFreeResearch(city, researchProgress); //Apply research to one of the researchable techs
+        }
+
+        //Teleportation Pod unlocked and Museum of Future Arts locked -> 10% chance per long tick to unlock Museum of Future Arts
+        if (Math.random() < 0.1 * this.lastEfficiency && !city.buildingTypes.find(p => p.type === getBuildingType(TeleportationPod))?.locked && city.buildingTypes.find(p => p.type === getBuildingType(MuseumOfFutureArts))?.locked) {
+            city.unlock(getBuildingType(MuseumOfFutureArts));
+            city.notify(new Notification("Particle Accelerator Accident", "Thanks to what we're legally required to call an 'unexpected synergistic intersection of experimental technologies' (but was actually just an intern trying to teleport his lunch while the particle accelerator was running and someone was using the quantum computer to mine cryptocurrency), we now have access to art from approximately 47 years in the future. The good news: temporal art tourism is now possible! The bad news: future art critics are still just as pretentious. You can now build the Museum of Future Arts from the Luxury construction category.", "luxury"));
         }
     }
 
@@ -3471,15 +3590,15 @@ export const BLOCKER_TYPES: Map<string, Building> = new Map([
 
 export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Residential*/ SmallHouse, Quadplex, SmallApartment, Highrise, Skyscraper, Dorm, ShowHome,
-    /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, MaidTwoTeas, SauceCode, Casino, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter,
+    /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, MaidTwoTeas, SauceCode, Casino, CartersCars, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter,
     /*Industrial*/ MountainIronMine, Quarry, CementMill, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks, SiliconRefinery, CrystalMine, AssemblyHouse, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory, ToyManufacturer, Furnifactory, LithiumMine, MohoMine, Nanogigafactory, PharmaceuticalsLab, SpaceLaunchSite,
     /*Power*/ StarterSolarPanel, WindTurbine, SolarFarm, OilPowerPlant, OilTruck, GeothermalPowerPlant, CoalPowerPlant, CoalTruck, NuclearPowerPlant, NuclearFuelTruck, FusionPowerPlant, FusionFuelTruck,
     /*Agriculture*/ TreeFarm, Farm, Ranch, FishFarm, AlgaeFarm, PlantMilkPlant, VerticalFarm, Carnicultivator,
     /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, TeleportationPod, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, DataCenter, NuclearStorage,
     /*Government*/ CityHall, InformationCenter, PostOffice, DepartmentOfEnergy,
-    /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, QuantumComputingLab, WeatherControlMachine,
+    /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, Library, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, QuantumComputingLab, WeatherControlMachine,
     /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse,
-    /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, Greenhouse, Playground, SesharTower,
+    /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, Greenhouse, Playground, UrbanCampDome, H2Whoa, SesharTower,
     ].map(p => new p()).map(p => [p.type, p]));
 export function get(type: string): Building {
     return BUILDING_TYPES.get(type)!;
@@ -3492,5 +3611,5 @@ export const TUTORIAL_COMPLETION_BUILDING_UNLOCKS: Set<string> = new Set([
     SiliconRefinery, CrystalMine, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory,
     ToyManufacturer, Furnifactory, LithiumMine,
     IceCreamTruck, PlantMilkPlant,
-    SuckasCandy, Cafe, TheLoadedDie, Whalemart, Bar, PalmNomNom, GregsGrogBarr, Casino, BlankCheckBank,
-    SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, Greenhouse].map(getBuildingType));
+    SuckasCandy, Cafe, TheLoadedDie, Whalemart, Bar, PalmNomNom, GregsGrogBarr, Casino, CartersCars, BlankCheckBank,
+    SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, Greenhouse, H2Whoa].map(getBuildingType));
