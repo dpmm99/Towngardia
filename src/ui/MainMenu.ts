@@ -78,7 +78,7 @@ export class MainMenu implements IHasDrawable {
                 text: "Save city",
                 onClick: () => {
                     this.shown = false;
-                    this.game.storage.saveCity(this.game.player!.id, this.game.city!);
+                    this.game.fullSave();
                 }
             }));
         } else {

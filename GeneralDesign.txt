@@ -71,9 +71,7 @@ new buildings:
 	Community Center - swappable bonuses (fitness classes, workshops, social events, whatever)
 	Distribution Center - a building that can convert some of the unused resources directly into bonuses (happiness, healthcare, education, research, traffic reduction, luxury, etc.)
 	Minigame Research Lab - allows you to adjust the rewards from minigames a bit, like "more tritium, less flunds"; a minigame reward could even be a power cost reduction by "getting the citizens to go outside" for a day or a temporary traffic reduction
-	Environmental Lab - pollution reduction over time - I particularly like this idea because I only had 1 or 2 buildings in the "environment" budget category previously
 	Social Sciences Center - happiness research
-	Sands of Time monument - allows you to advance time by one tick occasionally
 	Bamboo garden - produces more wood using less space (maybe unlocked with GM crops or as another tech after it)
 	Advanced Recycling Center - converts waste to basic resources - could just produce some random resources based on the nearby building count
 	Molecular Assembler - slow high-tier resource generation

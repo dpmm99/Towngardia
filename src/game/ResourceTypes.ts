@@ -55,6 +55,16 @@ export class DeptOfEnergyBonus extends Resource {
     }
 }
 
+export class EnvironmentalLabBonus extends Resource {
+    constructor(initialCount: number = 0) {
+        super(
+            "elbonus", "Environmental Lab Bonus",
+            initialCount, 0, Number.MAX_SAFE_INTEGER, 0,
+            true
+        );
+    }
+}
+
 export class Flunds extends Resource {
     constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
         super(
@@ -129,6 +139,16 @@ export class NepotismNetworkingPlays extends Resource {
     constructor(initialCount: number = 0, productionRate: number = 0.25, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER * 2) {
         super(
             "neponetplays", "Nepotism Networking Plays",
+            initialCount, productionRate, capacity, consumptionRate,
+            true
+        );
+    }
+}
+
+export class Timeslips extends Resource {
+    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = 4) {
+        super(
+            "timeslips", "Timeslips",
             initialCount, productionRate, capacity, consumptionRate,
             true
         );
@@ -659,8 +679,8 @@ export const RESOURCE_TYPES = <Resource[]>([
     /*Fuel and ingredients*/ Coal, Copper, Gemstones, Lithium, Oil, Plastics, Rubber, Sand, Silicon, Textiles, Tritium, Uranium,
     /*Manufactured goods*/ Apps, Batteries, Clothing, Electronics, Furniture, Paper, Pharmaceuticals, Toys,
     /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays,
-    /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, DeptOfEnergyBonus,
-    /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Water].map(p => new p()));
+    /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, DeptOfEnergyBonus, EnvironmentalLabBonus,
+    /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Timeslips, Water].map(p => new p()));
 
 //For easy checking if something is a food.
 export const FOOD_TYPES = new Set([Apples, Berries, Dairy, Fish, Grain, LabGrownMeat, LeafyGreens, Legumes, PlantBasedDairy, Poultry, RedMeat, RootVegetables, VitaminB12].map(p => new p().type));

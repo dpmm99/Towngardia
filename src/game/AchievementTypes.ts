@@ -37,7 +37,7 @@ const AchievementTypes =
         const farms = city.buildings.filter(p => p instanceof Farm || p instanceof FishFarm || p instanceof Ranch || p instanceof TreeFarm || p instanceof VerticalFarm);
         if (!farms.length) return 0;
 
-        const worstPolluted = Math.max(...farms.map(p => p.getHighestEffect(city, EffectType.ParticulatePollution)));
+        const worstPolluted = Math.max(...farms.map(p => p.getHighestEffect(city, EffectType.ParticulatePollution))); //Deliberately chose to ignore the particulatePollutionMultiplier factor here.
         return worstPolluted / 0.7; //0.7 is considered very high in this case.
     }),
     NoAdultLeftADolt: new Achievement("noadultleftadolt", "No Adult Left A Dolt", "Have colleges covering all residences in a city with at least 1000 population", (me: Achievement, player: Player, city: City): number => {

@@ -1,6 +1,9 @@
 import { Building } from "../game/Building.js";
+import { SandsOfTime } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
+import { LONG_TICK_TIME } from "../game/FundamentalConstants.js";
 import { GameState } from "../game/GameState.js";
+import { Timeslips } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { TextureInfo } from "./TextureInfo.js";
@@ -123,6 +126,19 @@ export class ContextMenu implements IHasDrawable {
                 image: new TextureInfo(childWidth, childHeight, "ui/switch"),
                 id: menu.id + ".switch",
                 onClick: () => { this.switchingOutputs = true; }
+            }));
+        }
+        if (building.owned && this.uiManager.isMyCity && building instanceof SandsOfTime && (this.city?.resources.get(new Timeslips().type)?.amount ?? 0) >= 1) {
+            menu.addChild(new Drawable({
+                image: new TextureInfo(childWidth, childHeight, "ui/fastforward"),
+                id: menu.id + ".fastforward",
+                onClick: () => {
+                    //Skip one long tick of time if the player (still) has any Timeslips
+                    if (this.city?.checkAndSpendResources([{ type: new Timeslips().type, amount: 1 }])) {
+                        this.city.lastShortTick -= LONG_TICK_TIME;
+                        this.city.lastLongTick -= LONG_TICK_TIME;
+                    }
+                }
             }));
         }
 

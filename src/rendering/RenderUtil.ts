@@ -80,7 +80,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
         /*top bar*/ 'resources', 'menu', 'progressbg', 'progressfg', 'diet', 'foodsufficiency', 'foodsatisfaction', 'foodhealth',
         /*resource bar*/ 'tradesettingson', 'tradesettingsoff', 'autobuyhandle', 'autosellhandle', 'arrowleft', 'arrowright',
         /*ConstructMenu*/ 'ok', 'x',
-        /*ContextMenu*/ 'info', 'move', 'remove', 'demolish', 'buildcopy', 'switch',
+        /*ContextMenu*/ 'info', 'move', 'remove', 'demolish', 'buildcopy', 'switch', 'fastforward',
         /*BudgetMenu*/ 'incometax', 'propertytax', 'salestax', 'budgetok', "fireprotection", "policeprotection", "healthcare", "education", "environment", "infrastructure", //Services might be resources, dunno
         /*TechTreeMenu*/ 'completeresearch', 'progressresearch', 'cannotresearch', 'adoptionrate',
         /*NotificationsMenu*/ 'unread', 'notice',
@@ -114,6 +114,8 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     delete urls["resource/prodeff"];
     delete urls["resource/untappedpatronage"];
     delete urls["resource/doebonus"];
+    delete urls["resource/elbonus"];
+    delete urls["resource/timeslips"];
 
     //TODO: Any other UI elements would also need to be here. Could actually just grab the Drawables, but...a bit heavyweight
     return urls;

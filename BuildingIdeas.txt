@@ -83,14 +83,14 @@ Mechanics
 Medium houses
 Mental health centers
 ~ Metal mines
-Metal refineries
+~ Metal refineries
 Minigolf courses
 ~ Moho mine
-Movie theaters
+~ Movie theaters
 ~ Museums
 Natural gas power plants
 ~ Nuclear fission power plants
-Observatories
+~ Observatories
 Office buildings
 ~ Oil derricks
 ~ Oil power plants
@@ -109,7 +109,7 @@ Prisons
 Radio stations
 Recycling centers
 Rental shops
-Research labs
+~ Research labs
 ~ Restaurants
 Sawmills
 Seaports
@@ -129,7 +129,7 @@ Sports stadiums (or smaller sports shops, gyms, batting cages, wrestling arenas,
 ~ Steel mills
 ~ Stone quarries
 Strip clubs
-Supermarkets
+~ Supermarkets
 Swimming pools
 Telecommunications towers
 ~ Teleportation pods (huge traffic reduction but high power cost)

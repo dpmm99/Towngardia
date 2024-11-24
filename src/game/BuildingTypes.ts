@@ -5,7 +5,7 @@ import { Business } from "./Business.js";
 import { City } from "./City.js";
 import { FootprintType } from "./FootprintType.js";
 import { EffectType } from "./GridType.js";
-import { Apples, Apps, Batteries, Berries, Bricks, CAPACITY_MULTIPLIER, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Electronics, Fish, Flunds, Furniture, Gemstones, Glass, Grain, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, Steel, Stone, Textiles, Tourists, Toys, Tritium, Uranium, VitaminB12, Wood } from "./ResourceTypes.js";
+import { Apples, Apps, Batteries, Berries, Bricks, CAPACITY_MULTIPLIER, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Electronics, EnvironmentalLabBonus, Fish, Flunds, Furniture, Gemstones, Glass, Grain, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, Steel, Stone, Textiles, Timeslips, Tourists, Toys, Tritium, Uranium, VitaminB12, Wood } from "./ResourceTypes.js";
 import { Geothermal } from "./TechTypes.js";
 import { Notification } from "./Notification.js";
 import { LONG_TICKS_PER_DAY } from "./FundamentalConstants.js";
@@ -110,6 +110,7 @@ export class BikeRental extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.needsRoad = false;
+        this.serviceAllocationType = "infrastructure";
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 0.2, "dynamicEffectByEfficiency")]);
     }
 
@@ -118,8 +119,10 @@ export class BikeRental extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1.25 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 1.25 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
     }
+
+    override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * 1;
@@ -136,6 +139,7 @@ export class BusStation extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 9;
         this.areaIndicatorRounded = true;
+        this.serviceAllocationType = "infrastructure";
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 1, "dynamicEffectByEfficiency")]);
     }
 
@@ -144,8 +148,10 @@ export class BusStation extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 14 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 14 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
     }
+
+    override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * 6;
@@ -162,6 +168,7 @@ export class ECarRental extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
         this.areaIndicatorRounded = true;
+        this.serviceAllocationType = "infrastructure";
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 1.1, "dynamicEffectByEfficiency")]);
     }
 
@@ -170,24 +177,27 @@ export class ECarRental extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 8 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 8 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * 18;
     }
+
+    override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 }
 
 export class TeleportationPod extends Building {
     constructor() {
         super(
-            "teleportationpod", "Teleportation Pod", "Folds space-time like origami through the power of scientific hand-waving, massively reducing road noise and pollution in the area--because, come on, it's a teleportation pod; everyone's dying to use it. Warning: may occasionally swap a few of your carbon atoms. It's easy to get them confused since they all look alike.",
+            "teleportationpod", "Teleportation Pod", "Folds space-time like origami through the power of scientific hand-waving, massively reducing road noise and pollution in the area--because, come on, it's a teleportation pod; everyone's dying to use it. Warning: may occasionally swap a few of your carbon atoms. It's easy to get them confused since they all look alike. May lead to happy scientific accidents if you also have a Quantum Computing Lab, like, I don't know, maybe a museum of future arts that later unlocks another building with a time fast-forwarding ability? Just a shot in the dark!",
             BuildingCategory.INFRASTRUCTURE,
             1, 1, 0,
             0.4,
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
         this.areaIndicatorRounded = true;
+        this.serviceAllocationType = "infrastructure";
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 5, "dynamicEffectByEfficiency")]);
     }
 
@@ -196,12 +206,14 @@ export class TeleportationPod extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 8 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 8 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * 38;
     }
+
+    override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 }
 
 export class Warehouse extends Building {
@@ -543,11 +555,12 @@ export class PostOffice extends Building {
 export class DepartmentOfEnergy extends Building { //Unlocked by a tech. Increases city-wide power efficiency.
     constructor() {
         super(
-            "deptofenergy", "Department of Energy", "A power efficiency research facility where the staff celebrate their victories in milliwatts and consider a 5% improvement over five years to be on par with discovering cold fusion. We've already picked all the low-hanging fruit, so now they're basically trying to coax slightly better performance out of already-optimized systems through interpretive dance and strongly worded memos. Slowly increases city-wide power efficiency as long as it's connected and powered, but the rate of improvement decreases over time because, as it turns out, you can only tell people to turn off their lights so many times. The efficiency bonus still applies even if you disconnect or stash the building.",
+            "deptofenergy", "Department of Energy", "A power efficiency research facility where the staff celebrate their victories in milliwatts and consider a 5% improvement over five years to be on par with discovering cold fusion. We've already picked all the low-hanging fruit, so now they're basically trying to coax slightly better performance out of already-optimized systems through interpretive dance and strongly worded memos. Slowly increases city-wide power efficiency as long as it's connected and powered, but the rate of improvement decreases over time because, as it turns out, you can only tell people to turn off their lights so many times. The efficiency bonus still applies even if you disconnect or stash the building. Falls under Environment in the budget.",
             BuildingCategory.GOVERNMENT,
             2, 2, 0,
             0.4,
         );
+        this.serviceAllocationType = "environment";
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1700 }, { type: "batteries", amount: 20 }]; }
@@ -557,7 +570,13 @@ export class DepartmentOfEnergy extends Building { //Unlocked by a tech. Increas
         return super.isBuyable(city, bySpawner) && (bySpawner || !city.presentBuildingCount.get(this.type));
     }
 
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 3 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
+    }
+
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 30; }
+
+    override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
     //We'll target about a 1% energy cost reduction each nextDays * LONG_TICKS_PER_DAY, and start nextDays at 60 and double it each time. 60=1% (2 mo), 60+120=2% (6 mo), 60+120+240=3% (~14 mo), 4% at ~30 mo, 5% at ~60 mo...nobody's gonna be playing that long. :)
     //At 20MW, that's 60*4*20*1.44 (worst case with power imports) or 60*4*20*0.177 (best case with fusion power) for the first 1% (e.g., maybe about 10MW for a city with ~2000 population).
@@ -566,6 +585,38 @@ export class DepartmentOfEnergy extends Building { //Unlocked by a tech. Increas
     override onLongTick(city: City): void {
         super.onLongTick(city);
         city.resources.get(new DeptOfEnergyBonus().type)!.amount += this.lastEfficiency;
+    }
+}
+
+export class EnvironmentalLab extends Building { //Unlocked by a tech. Decreases particulate pollution effects.
+    constructor() {
+        super(
+            "environmentallab", "Environmental Lab", "A research facility dedicated to keeping the city habitable. Watch as they gradually reduce pollution through a combination of advanced technology, precise measurements, and sternly worded emails to factory owners. Slowly decreases particulate pollution across the city as long as it's connected and powered, but the rate of improvement decreases over time because, as it turns out, you can only tell people to stop spraying toxic waste into the air so many times before they start filing restraining orders. The pollution reduction bonus still applies even if you disconnect or stash the building.",
+            BuildingCategory.GOVERNMENT,
+            3, 3, 0,
+            0.4,
+        );
+        this.serviceAllocationType = "environment";
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1400 }, { type: "concrete", amount: 20 }, { type: "steel", amount: 10 }]; }
+
+    override isBuyable(city: City, bySpawner: boolean = false): boolean {
+        //Can only have one
+        return super.isBuyable(city, bySpawner) && (bySpawner || !city.presentBuildingCount.get(this.type));
+    }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 3 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
+
+    override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
+
+    override onLongTick(city: City): void {
+        super.onLongTick(city);
+        city.resources.get(new EnvironmentalLabBonus().type)!.amount += this.lastEfficiency;
     }
 }
 
@@ -2161,6 +2212,29 @@ export class TheLoadedDie extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 }
 
+export class Cinema extends Building {
+    constructor() {
+        super(
+            "cinema", "Plot Hole Cinema", "A dark cave where people pay extra to watch things they could see at home in two months, but with the bonus of getting to listen to strangers chew. Features seats that are slightly sticky for reasons nobody wants to investigate and floors with the unique texture of 40 years of spilled soda and popcorn. A relatively weak earner despite snacks having 1100% markup, but it takes a lot of patrons on a journey through someone else's trope-dense dreams every day.",
+            BuildingCategory.COMMERCIAL,
+            3, 3, 0,
+            0.2,
+        );
+        this.businessPatronCap = 410;
+        this.businessValue = 280;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
+        this.areaIndicatorRounded = true;
+        this.isEntertainment = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.15, "dynamicEffectForBusiness")]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 260 }, { type: "wood", amount: 25 }, { type: "textiles", amount: 10 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
+}
+
 export class Whalemart extends Building {
     constructor() {
         super(
@@ -2761,6 +2835,22 @@ export class Greenhouse extends Building {
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 150 }, { type: "glass", amount: 10 }]; }
 }
 
+export class CrystalSpire extends Building {
+    constructor() {
+        super(
+            "crystalspire", "Crystal Spire", "A transparent testament to the city's love affair with geometric shapes, catching sunlight and redistributing it directly into drivers' eyes with democratic fairness. The stone base adds that perfect touch of \"we ran out of crystal budget.\" On cloudy days, it's just an expensive lightning rod with delusions of grandeur.",
+            BuildingCategory.LUXURY,
+            1, 1, 0,
+            0.18,
+        );
+        this.needsPower = this.needsRoad = false;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.18)]);
+    }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 250 }, { type: "gemstones", amount: 10 }, { type: "stone", amount: 5 }]; }
+}
+
 export class Playground extends Building {
     constructor() {
         super(
@@ -2822,7 +2912,7 @@ export class H2Whoa extends Building { //Light-up water jets, just a local luxur
 export class SesharTower extends Building {
     constructor() {
         super(
-            "seshartower", "Seshar Tower", "A tower erected in honor of Seshar... aaand to attract tourists. Come see the tower that answers the question, \"What if we built something really tall and slapped the name 'Seshar' on it?\" ...Okay, yes, it's mainly to attract tourists.",
+            "seshartower", "Seshar Tower", "A tower erected in honor of Seshar... aaand to attract tourists. Come see the tower that answers the question, \"What if we built something really tall and slapped the name 'Seshar' on it?\" ...Okay, yes, it's mainly to attract tourists. Requires a road, unlike most Luxury structures.",
             BuildingCategory.LUXURY,
             3, 3, 0,
             0.2,
@@ -2840,7 +2930,7 @@ export class SesharTower extends Building {
 export class MuseumOfFutureArts extends Building { //Unlocked by Quantum Computing Lab after some time if you've played a perfect game of Monobrynth
     constructor() {
         super(
-            "futurearts", "Museum of Future Arts", "A gallery where today's \"what if?\" becomes tomorrow's \"why, though?\" Visitors are advised that understanding the art is strictly optional and possibly temporally impossible. Not even the curator can do it, and she has a PhD in Post-Post-Post-Modern Design. The gift shop sells postcards from next Tuesday, which is enough to fund the whole museum because some of them include lottery numbers.",
+            "futurearts", "Museum of Future Arts", "A gallery where today's \"what if?\" becomes tomorrow's \"why, though?\" Visitors are advised that understanding the art is strictly optional and possibly temporally impossible. Not even the curator can do it, and she has a PhD in Post-Post-Post-Modern Design. The gift shop sells postcards from next Tuesday, which is enough to fund the whole museum because some of them include lottery numbers. May lead to unlocking technology from the future. Requires a road, unlike most Luxury structures.",
             BuildingCategory.LUXURY,
             2, 2, 0,
             0.2,
@@ -2855,6 +2945,35 @@ export class MuseumOfFutureArts extends Building { //Unlocked by Quantum Computi
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 15; }
+
+    override onLongTick(city: City): void {
+        super.onLongTick(city);
+        if (this.outputResources[0].amount > 150 && Math.random() < 0.1 * this.lastEfficiency && city.buildingTypes.find(p => p.type === getBuildingType(SandsOfTime))?.locked) {
+            city.unlock(getBuildingType(SandsOfTime));
+            city.notify(new Notification("Illusion of Time", "The Museum of Future Arts has discovered alien technology that can manipulate time! You can now build Sands of Time monuments from the Luxury construction category.", "fastforward"));
+        }
+    }
+}
+
+export class SandsOfTime extends Building { //Unlocked by having Museum of Future Arts for a while
+    constructor() {
+        super(
+            "sandsoftime", "Sands of Time", "A monument to the passage of time, built with sand and glass, which is also made from sand. Oh, yeah, and it's actually a time machine based on alien technology we found in the Museum of Future Arts. It can advance time by a few hours every several days, but it's limited by how easy it is to accidentally unravel the fabric of time itself and destroy the universe, so your daily fast-forward allowance is fixed no matter how many you construct. To advance time, tap the clock icon in the building's context menu when you have at least 1 available timeslip.",
+            BuildingCategory.LUXURY,
+            2, 2, 0,
+            0.1,
+        );
+        this.needsRoad = false;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.25)]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 2600 }, { type: "glass", amount: 40 }, { type: "sand", amount: 30 }, { type: "concrete", amount: 10 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
 }
 
 //# Services
@@ -3189,7 +3308,7 @@ export class College extends Building {
         this.stampFootprint[0][2] = this.stampFootprint[1][2] = this.stampFootprint[0][3] = this.stampFootprint[1][3] = FootprintType.COLLEGE; //Allows two dorms on it
         this.stampFootprint[2][0] = this.stampFootprint[2][1] = this.stampFootprint[3][0] = this.stampFootprint[3][1] = FootprintType.COLLEGE;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
-        this.outputResources.push(new Research(0, 0.1));
+        this.outputResources.push(new Research(0, 0.0625)); //0.25 a day
         this.serviceAllocationType = "education";
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Education, 0.8, "dynamicEffectByEfficiency"),
             new EffectDefinition(EffectType.Noise, 0.2, undefined, true, 4, 4, false)]);
@@ -3242,6 +3361,23 @@ export class CarbonCapturePlant extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
 }
 
+export class Observatory extends Building {
+    constructor() {
+        super(
+            "observatory", "Observatory", "Where stargazing scientists sit alone in the dark, ruminating over objects of unimaginable size at an incomprehensible distance and the relative insignificance of our own lives. Features a roof that opens dramatically only to reveal it's cloudy for the 47th night in a row.",
+            BuildingCategory.GOVERNMENT,
+            2, 2, 0,
+            0.3,
+            true,
+        );
+        this.outputResources.push(new Research(0, 0.0375)); //0.15 a day
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 780 }, { type: "steel", amount: 20 }, { type: "glass", amount: 15 }, { type: "electronics", amount: 10 }]; }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 7 * (atEfficiency || this.poweredTimeDuringLongTick) }]; }
+}
+
 export class QuantumComputingLab extends Building {
     constructor() {
         super(
@@ -3263,7 +3399,7 @@ export class QuantumComputingLab extends Building {
         }
 
         //Teleportation Pod unlocked and Museum of Future Arts locked -> 10% chance per long tick to unlock Museum of Future Arts
-        if (Math.random() < 0.1 * this.lastEfficiency && !city.buildingTypes.find(p => p.type === getBuildingType(TeleportationPod))?.locked && city.buildingTypes.find(p => p.type === getBuildingType(MuseumOfFutureArts))?.locked) {
+        if (this.outputResources[0].amount > 200 && Math.random() < 0.1 * this.lastEfficiency && !city.buildingTypes.find(p => p.type === getBuildingType(TeleportationPod))?.locked && city.buildingTypes.find(p => p.type === getBuildingType(MuseumOfFutureArts))?.locked) {
             city.unlock(getBuildingType(MuseumOfFutureArts));
             city.notify(new Notification("Particle Accelerator Accident", "Thanks to what we're legally required to call an 'unexpected synergistic intersection of experimental technologies' (but was actually just an intern trying to teleport his lunch while the particle accelerator was running and someone was using the quantum computer to mine cryptocurrency), we now have access to art from approximately 47 years in the future. The good news: temporal art tourism is now possible! The bad news: future art critics are still just as pretentious. You can now build the Museum of Future Arts from the Luxury construction category.", "luxury"));
         }
@@ -3590,15 +3726,15 @@ export const BLOCKER_TYPES: Map<string, Building> = new Map([
 
 export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Residential*/ SmallHouse, Quadplex, SmallApartment, Highrise, Skyscraper, Dorm, ShowHome,
-    /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, MaidTwoTeas, SauceCode, Casino, CartersCars, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter,
+    /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, MaidTwoTeas, SauceCode, Casino, CartersCars, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter,
     /*Industrial*/ MountainIronMine, Quarry, CementMill, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks, SiliconRefinery, CrystalMine, AssemblyHouse, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory, ToyManufacturer, Furnifactory, LithiumMine, MohoMine, Nanogigafactory, PharmaceuticalsLab, SpaceLaunchSite,
     /*Power*/ StarterSolarPanel, WindTurbine, SolarFarm, OilPowerPlant, OilTruck, GeothermalPowerPlant, CoalPowerPlant, CoalTruck, NuclearPowerPlant, NuclearFuelTruck, FusionPowerPlant, FusionFuelTruck,
     /*Agriculture*/ TreeFarm, Farm, Ranch, FishFarm, AlgaeFarm, PlantMilkPlant, VerticalFarm, Carnicultivator,
     /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, TeleportationPod, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, DataCenter, NuclearStorage,
-    /*Government*/ CityHall, InformationCenter, PostOffice, DepartmentOfEnergy,
-    /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, Library, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, QuantumComputingLab, WeatherControlMachine,
+    /*Government*/ CityHall, InformationCenter, PostOffice, DepartmentOfEnergy, EnvironmentalLab,
+    /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, Library, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, Observatory, QuantumComputingLab, WeatherControlMachine,
     /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse,
-    /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, Greenhouse, Playground, UrbanCampDome, H2Whoa, SesharTower,
+    /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, Playground, UrbanCampDome, H2Whoa, SesharTower, MuseumOfFutureArts, SandsOfTime,
     ].map(p => new p()).map(p => [p.type, p]));
 export function get(type: string): Building {
     return BUILDING_TYPES.get(type)!;
@@ -3611,5 +3747,5 @@ export const TUTORIAL_COMPLETION_BUILDING_UNLOCKS: Set<string> = new Set([
     SiliconRefinery, CrystalMine, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory,
     ToyManufacturer, Furnifactory, LithiumMine,
     IceCreamTruck, PlantMilkPlant,
-    SuckasCandy, Cafe, TheLoadedDie, Whalemart, Bar, PalmNomNom, GregsGrogBarr, Casino, CartersCars, BlankCheckBank,
-    SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, Greenhouse, H2Whoa].map(getBuildingType));
+    SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, PalmNomNom, GregsGrogBarr, Casino, CartersCars, BlankCheckBank,
+    SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, H2Whoa].map(getBuildingType));

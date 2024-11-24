@@ -475,7 +475,7 @@ export class Epidemic extends CityEvent {
                 relevantTileCount++;
                 for (const effect of city.effectGrid[y][x]) {
                     if (effect.type === EffectType.Healthcare) effectSum += effect.getEffect(city, null, y, x);
-                    else if (effect.type === EffectType.ParticulatePollution) effectSum -= effect.getEffect(city, null, y, x);
+                    else if (effect.type === EffectType.ParticulatePollution) effectSum -= effect.getEffect(city, null, y, x) * city.particulatePollutionMultiplier;
                 }
             }
         }

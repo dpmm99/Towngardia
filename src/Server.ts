@@ -36,22 +36,25 @@ app.get(urlRootPath + '/bundle.js', (req, res) => {
 const isAuthenticated = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const sessionId = <string | null>req.cookies.sessionId;
     if (!sessionId) {
+        console.log(new Date().toISOString(), "NoSession", req.originalUrl);
         return res.redirect(urlRootPath + '/');
     }
 
     const session = await db.loadSession(sessionId);
     if (!session) {
+        console.log(new Date().toISOString(), "SessionExpired", sessionId, req.originalUrl);
         res.clearCookie('sessionId');
         return res.redirect(urlRootPath + '/');
     }
 
     req.playerId = session.playerId;
+    console.log(new Date().toISOString(), req.playerId, req.originalUrl);
     next();
 };
 
 // Anti-crash middleware
 app.use((err: any, req: any, res: any, next: any) => {
-    console.error(err.stack);
+    console.error(new Date().toISOString(), req.playerId ?? "UnknownPlayer", err.stack);
     res.status(500).send('Something went wrong!');
 });
 const asyncHandler = (fn: any) => (req: any, res: any, next: any) => {

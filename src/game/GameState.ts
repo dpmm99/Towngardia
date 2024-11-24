@@ -8,7 +8,7 @@ import { UIManager } from "../ui/UIManager.js";
 import { AchievementTypes } from "./AchievementTypes.js";
 import { Assist } from "./Assist.js";
 import { Building } from "./Building.js";
-import { BUILDING_TYPES, BigBoulder, CityHall, GeothermalVent, InformationCenter, MediumBoulder, OilSeep, Road, SesharTower, SmallBoulder } from "./BuildingTypes.js";
+import { BUILDING_TYPES, BigBoulder, GeothermalVent, MediumBoulder, OilSeep, Road, SmallBoulder } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { Effect } from "./Effect.js";
 import { LONG_TICK_TIME, SHORT_TICK_TIME } from "./FundamentalConstants.js";
@@ -26,6 +26,7 @@ export class GameState {
     public renderer: IRenderer | null = null;
     private buildingTypes: Building[] = [...BUILDING_TYPES.values()];
     saveWhenHiding: boolean = true;
+    loading: boolean = false;
 
     constructor(
         public storage: IStorage,
@@ -70,7 +71,9 @@ export class GameState {
         if (!(toCity instanceof City)) {
             const cityID = toCity.toString();
             this.onLoadStart?.();
+            this.loading = true;
             try {
+                console.trace("Loading in switchCity; see stack");
                 toCity = (await this.storage.loadCity(owner, cityID))!;
             } catch (err) {
                 console.error('Failed to load city:', err);
@@ -80,6 +83,7 @@ export class GameState {
                 }
                 return;
             }
+            this.loading = false; //DO NOT reset if it failed to load, because that means we probably don't want to save.
             this.onLoadEnd?.();
 
             //Put it in the player's city list. Add or replace.
@@ -156,6 +160,8 @@ export class GameState {
 
         //Player does not necessarily have any cities to start off. Create one if so. Otherwise, load their first city.
         this.onLoadStart?.();
+        this.loading = true;
+        console.log("Loading in initialize");
         this.city = await this.storage.loadCity(this.player, cityID);
         if (this.city && !this.city.id) this.city.id = cityID;
         if (!this.city) {
@@ -165,6 +171,7 @@ export class GameState {
         this.city.game = this; //Enables city to call back to this object for things like saving
         const cityIndex = this.player.cities.findIndex(c => c.id == this.city!.id); //ID might be numeric when deserialized from the server.
         if (cityIndex >= 0) this.player.cities[cityIndex] = this.city; else this.player.addCity(this.city);
+        this.loading = false;
         this.onLoadEnd?.();
 
         //Has to be done after the city is loaded
@@ -239,7 +246,9 @@ export class GameState {
 
     public async fullSave() {
         if (!this.city) throw new Error("City not yet loaded.");
+        if (this.loading) throw new Error("City load is still in progress or failed.");
         try {
+            console.trace("Saving; see stack.");
             await this.storage.updatePlayer(this.player!);
             await this.storage.saveCity(this.player!.id, this.city);
         } catch (err) { //TODO: Break up the error into at least 3 parts: 1. session expired, 2. mandatory client version update, 3. unexpected server error

@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { AlgaeFarm, CarbonCapturePlant, Carnicultivator, Clinic, DataCenter, DepartmentOfEnergy, Farm, FusionFuelTruck, FusionPowerPlant, GeothermalPowerPlant, Hospital, Nanogigafactory, PoliceUAVHub, QuantumComputingLab, ShowHome, TreeFarm, UrbanCampDome, VerticalFarm, WeatherControlMachine, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, CarbonCapturePlant, Carnicultivator, Clinic, DataCenter, DepartmentOfEnergy, EnvironmentalLab, Farm, FusionFuelTruck, FusionPowerPlant, GeothermalPowerPlant, Hospital, Nanogigafactory, PoliceUAVHub, QuantumComputingLab, ShowHome, TreeFarm, UrbanCampDome, VerticalFarm, WeatherControlMachine, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CAPACITY_MULTIPLIER, Lithium } from "./ResourceTypes.js";
 import { Tech } from "./Tech.js";
@@ -96,7 +96,7 @@ export class CoalPowerScrubbers extends Tech {
         super(
             'coalscrubbers',
             'Coal Power Scrubbers',
-            'Advanced filtration systems that significantly reduce pollutant emissions from coal power plants.',
+            'Advanced filtration systems that significantly reduce pollutant emissions from coal power plants. Also unlocks Environmental Lab.',
             [{ type: 'research', amount: 40 }, { type: 'steel', amount: 100 }, { type: 'coal', amount: 20 }],
             0.1, 0.05,
             200, 0,
@@ -106,6 +106,7 @@ export class CoalPowerScrubbers extends Tech {
 
     override applyEffects(city: City) {
         city.checkAndAwardTitle(TitleTypes.Pioneergreen.id);
+        city.unlock(getBuildingType(EnvironmentalLab));
     }
 }
 

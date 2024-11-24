@@ -1,6 +1,6 @@
 import { Building } from "../game/Building.js";
 import { BuildingCategory } from "../game/BuildingCategory.js";
-import { CityHall, DepartmentOfEnergy, InformationCenter, PostOffice } from "../game/BuildingTypes.js";
+import { CityHall, DepartmentOfEnergy, EnvironmentalLab, InformationCenter, PostOffice, SandsOfTime } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
 import { Effect } from "../game/Effect.js";
@@ -8,6 +8,7 @@ import { TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICKS_PER_LONG_TICK } from "../game/FundamentalConstants.js";
 import { EffectType } from "../game/GridType.js";
 import { HIGH_TECH_UNLOCK_EDU } from "../game/HappinessCalculator.js";
+import { Timeslips } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -291,8 +292,10 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 nextY += 24 + padding;
             }
             if (building instanceof InformationCenter) nextY = this.addTourismInfo(infoDrawable, padding, nextY, iconSize, barWidth);
-            if (building instanceof PostOffice) nextY = this.addPostOfficeInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
-            if (building instanceof DepartmentOfEnergy) nextY = this.addDepartmentOfEnergyInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
+            else if (building instanceof PostOffice) nextY = this.addPostOfficeInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
+            else if (building instanceof DepartmentOfEnergy) nextY = this.addDepartmentOfEnergyInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
+            else if (building instanceof EnvironmentalLab) nextY = this.addEnvironmentalLabInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
+            else if (building instanceof SandsOfTime) nextY = this.addSandsOfTimeInfo(infoDrawable, padding, nextY, iconSize, barWidth);
 
             //Patronage
             if (building.businessPatronCap && (building.roadConnected || !building.needsRoad)) {
@@ -710,6 +713,48 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             text: "Usage dropping by " + (Math.floor(100000 * rate) / 1000) + "%/day",
         }));
         nextY += iconSize + padding;
+        return nextY;
+    }
+
+    private addEnvironmentalLabInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: Building, barWidth: number): number {
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: iconSize + "px",
+            text: "City particulates -" + (Math.floor(10000 - this.city.particulatePollutionMultiplier * 10000) / 100) + "%",
+        }));
+        nextY += iconSize + 5;
+
+        const rate = building.lastEfficiency * this.city.getParticulatePollutionMultiplierLastDayChange(); //Really just an estimate
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: iconSize + "px",
+            text: "Pollution dropping by " + (Math.floor(100000 * rate) / 1000) + "%/day",
+        }));
+        nextY += iconSize + padding;
+        return nextY;
+    }
+
+    private addSandsOfTimeInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, barWidth: number): number {
+        const timeslips = this.city.resources.get(new Timeslips().type)!;
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: iconSize + "px",
+            height: iconSize + "px",
+            image: new TextureInfo(iconSize, iconSize, `ui/fastforward`),
+        }));
+        infoDrawable.addChild(new Drawable({
+            x: padding + iconSize + 5,
+            y: nextY + 8,
+            width: (barWidth - padding * 2 - iconSize - 5) + "px",
+            height: iconSize + "px",
+            text: "Available timeslips: " + Math.floor(timeslips.amount * 100) / 100 + "/" + timeslips.capacity,
+        }));
+        nextY += iconSize + 5;
         return nextY;
     }
 

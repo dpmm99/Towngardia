@@ -773,8 +773,7 @@ export class TutorialOverlay implements IHasDrawable {
             this.city.buildingTypes.filter(p => TUTORIAL_COMPLETION_BUILDING_UNLOCKS.has(p.type)).forEach(p => p.locked = false);
             this.city.tutorialStepIndex = -1;
             this.player.finishedTutorial = true;
-            this.uiManager.game.storage.updatePlayer(this.player);
-            this.uiManager.game.storage.saveCity(this.player.id, this.city);
+            this.uiManager.game.fullSave();
         }
     }
 
@@ -787,8 +786,7 @@ export class TutorialOverlay implements IHasDrawable {
             this.steps[this.city.tutorialStepIndex].onStart();
             this.minimized = false;
             if (!fastForward) {
-                this.uiManager.game.storage.saveCity(this.player.id, this.city); //Make sure the player's progress gets saved each step of the way.
-                this.uiManager.game.storage.updatePlayer(this.player);
+                this.uiManager.game.fullSave(); //Make sure the player's progress gets saved each step of the way.
             }
         } else if (this.city.tutorialStepIndex === this.steps.length - 1) {
             this.stop();

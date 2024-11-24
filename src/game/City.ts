@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, ElementarySchool, FireBay, FireStation, GregsGrogBarr, HighSchool, Hospital, InformationCenter, Library, MediumPark, Mountain, MysteriousRubble, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SauceCode, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, ElementarySchool, FireBay, FireStation, GregsGrogBarr, HighSchool, Hospital, InformationCenter, Library, MediumPark, Mountain, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -39,6 +39,7 @@ export class City {
     public canBuildResources: boolean = false; //Is set to true by the construction cheat so I can lay out 'regions'
     public game: GameState | null = null; //Set when the city is loaded in a writable mode (i.e., it's your own city and it's not on the server)
     public powerUsageMultiplier: number = 0; //Set on-load and on-long-tick; calculated from DeptOfEnergyBonus.
+    public particulatePollutionMultiplier: number = 0; //Samey, but for EnvironmentalLab and particulate pollution
     //Just aliases
     public flunds: Resource;
     public networkRoot!: Building; //You need to call startNew() or fake() immediately after the constructor.
@@ -136,6 +137,7 @@ export class City {
 
         //Cached calculated values that normally get calculated on long tick
         this.calculatePowerUsageMultiplier();
+        this.calculateParticulatePollutionMultiplier();
     }
 
     private ensureNewerUnlocks() {
@@ -145,6 +147,7 @@ export class City {
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(HighSchool));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Dorm));
         if (this.flags.has(CityFlags.UnlockedGameDev)) this.unlock(getBuildingType(SauceCode));
+        if (this.flags.has(CityFlags.UnlockedGameDev)) this.unlock(getBuildingType(Observatory));
         if (this.techManager.techs.get(new SmartHomeSystems().id)!.researched) this.unlock(getBuildingType(DepartmentOfEnergy));
         if (this.techManager.techs.get(new VacuumInsulatedWindows().id)!.researched) this.unlock(getBuildingType(UrbanCampDome));
         if (this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount < 150) this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount = 150;
@@ -267,15 +270,34 @@ export class City {
         }
     }
 
+    private powerUsageReductionFormula(n: number): number {
+        return 0.01 * Math.log2(1 + n / LONG_TICKS_PER_DAY / 60);
+    }
+
     private calculatePowerUsageMultiplier(): void {
-        this.powerUsageMultiplier = 1 - 0.01 * Math.log2(1 + this.resources.get(new ResourceTypes.DeptOfEnergyBonus().type)!.amount / LONG_TICKS_PER_DAY / 60);
+        this.powerUsageMultiplier = 1 - this.powerUsageReductionFormula(this.resources.get(new ResourceTypes.DeptOfEnergyBonus().type)!.amount);
     }
 
     //It's gonna be a positive number or 0. It's only affected by Department of Energy reducing the power usage multiplier.
     public getPowerUsageMultiplierLastDayChange(): number {
         const amount = this.resources.get(new ResourceTypes.DeptOfEnergyBonus().type)!.amount;
-        if (amount < LONG_TICKS_PER_DAY) return 0.01 * Math.log2(1 + LONG_TICKS_PER_DAY / LONG_TICKS_PER_DAY / 60); //Just give the FIRST day's change amount instead.
-        return 1 - this.powerUsageMultiplier - 0.01 * Math.log2(1 + (amount - LONG_TICKS_PER_DAY) / LONG_TICKS_PER_DAY / 60);
+        if (amount < LONG_TICKS_PER_DAY) return this.powerUsageReductionFormula(LONG_TICKS_PER_DAY); //Just give the FIRST day's change amount instead.
+        return 1 - this.powerUsageMultiplier - this.powerUsageReductionFormula(amount - LONG_TICKS_PER_DAY);
+    }
+
+    private particulatePollutionReductionFormula(n: number): number {
+        //~1% after 2.5 days, ~5% after 12.5 days, ~10% after 25 days, ~15% after 50 days, ~22% after 100 days, ~28% after 6 months, ~33% after a year, never exceeds 40%.
+        return 0.4 - 4 / (10 + n / LONG_TICKS_PER_DAY / 8);
+    }
+
+    private calculateParticulatePollutionMultiplier(): void {
+        this.particulatePollutionMultiplier = 1 - this.particulatePollutionReductionFormula(this.resources.get(new ResourceTypes.EnvironmentalLabBonus().type)!.amount);
+    }
+
+    public getParticulatePollutionMultiplierLastDayChange(): number {
+        const amount = this.resources.get(new ResourceTypes.EnvironmentalLabBonus().type)!.amount;
+        if (amount < LONG_TICKS_PER_DAY) return this.particulatePollutionReductionFormula(LONG_TICKS_PER_DAY); //Just give the FIRST day's change amount instead.
+        return 1 - this.particulatePollutionMultiplier - this.particulatePollutionReductionFormula(amount - LONG_TICKS_PER_DAY);
     }
 
     /**
@@ -1158,6 +1180,10 @@ export class City {
         this.updateHappiness(); //Do before resetting powered time, because it uses it
         this.updateMinigamePlays();
 
+        //The Sands of Time monument generates timeslips, but not with diminishing returns, but ONLY based on whichever one has the highest efficiency. Basically, you can skip 1 long tick every 5 days.
+        const timeMonuments = this.buildings.filter(p => p instanceof SandsOfTime).sort((a, b) => b.lastEfficiency - a.lastEfficiency);
+        if (timeMonuments.length) this.resources.get(new ResourceTypes.Timeslips().type)!.produce(0.05 * timeMonuments[0].lastEfficiency);
+
         //Go back and reset the amount of power consumed during the long tick for each building; this is likely used in efficiency calculations
         this.buildings.forEach(building => building.poweredTimeDuringLongTick = 0);
 
@@ -1211,6 +1237,7 @@ export class City {
 
         //Recalculate cached values
         this.calculatePowerUsageMultiplier();
+        this.calculateParticulatePollutionMultiplier();
 
         this.checkAndAwardTitle(TitleTypes.Carnivorism.id);
         this.checkAndAwardTitle(TitleTypes.VeganRetreat.id);
@@ -1343,8 +1370,8 @@ export class City {
     getNetOrganizedCrime(x: number, y: number): number {
         return Math.max(0, this.getOrganizedCrime(x, y) - (this.getPoliceProtection(x, y) - this.getPettyCrime(x, y)) * 0.5); //Reduce petty crime first arbitrarily
     }
-    getParticulatePollution(x: number, y: number): number { //Negative effect on health
-        return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.ParticulatePollution).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));
+    getParticulatePollution(x: number, y: number): number { //Negative effect on health; has a direct bonus at the city level here rather than at the effect level.
+        return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.ParticulatePollution).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0)) * this.particulatePollutionMultiplier;
     }
     getGreenhouseGases(x: number, y: number): number { //The odd one out: should increase on each tick--the longer you have factories and no air cleaning, the worse. But doesn't affect happiness so much.
         //const greenhouseGases = this.resources.get("greenhousegases")!; //Originally made the cumulative amount visible, but it makes the production areas impossible to see.

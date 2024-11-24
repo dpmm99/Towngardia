@@ -37,6 +37,7 @@ async function initGame() {
 
         //If it's been at least 5 minutes since the last frame, we should reload the city.
         if (game.city && game.uiManager && currentTime - lastFocusLostTime > 1000 * 60 * 5) {
+            console.log("Reloaded due to out-of-focus time");
             await game.uiManager.switchCity((game.visitingCity || game.city).id, (game.visitingCity || game.city).player);
             lastTime = performance.now(); //Consider it caught up for the moment
             game.uiManager?.draw();
@@ -68,12 +69,8 @@ async function initGame() {
     //Save when the user looks away. Otherwise, it's currently only saving on long ticks. I WOULD like to only send the *changes* to the server at some point (see GameAction).
     document.addEventListener('visibilitychange', async () => {
         if (document.hidden && game.city && game.saveWhenHiding) {
-            try {
-                await game.storage.saveCity(game.player!.id, game.city);
-                await game.storage.updatePlayer(game.player!);
-            } catch (err) {
-                game.uiManager?.showWarning("Save failed. Check your connection and open a new tab to log in again, then save via the menu. Tap this message to hide it.");
-            }
+            console.log("Saved due to visibilitychange");
+            await game.fullSave();
             lastFocusLostTime = performance.now();
         }
     });
