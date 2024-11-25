@@ -25,7 +25,6 @@ export class CitySerializer {
             _v: o.dataVersion,
             bu: o.buildings.map(p => this.building(p)),
             ub: o.unplacedBuildings.map(p => this.building(p)),
-            ob: [...o.presentBuildingCount], //A map. Could easily just be recalculated at startup. It's meant to be an optimization anyway.
             re: Array.from(o.resources).map(p => this.resource(p[1])), //Is a map, but the keys are repeats.
             ri: o.regionID,
             rv: o.regionVersion,
@@ -36,7 +35,7 @@ export class CitySerializer {
             cs: o.recentConstructionResourcesSold,
             pp: o.peakPopulation,
             nb: o.nextBuildingID,
-            eg: this.effectGrid(o.effectGrid), //TODO: Consider recalculating this on load; could save as much as 83% of the network/storage cost. We only need to store effects that don't originate from a building, or we could make a separate effect emitter system for those and store no effects.
+            eg: this.effectGrid(o.effectGrid), //TODO: Consider recalculating this on load; could save as much as 83% of the network/storage cost. We only need to store effects that don't originate from a building, or we could make a separate effect emitter system for those and store no effects. Only need to call "building.effects?.applyEffects(building, this);" in a loop in city startup and filter the effects by simply 'effect.building' when saving.
             fl: [...o.flags.values()],
             id: o.id,
             na: o.name,
@@ -257,7 +256,7 @@ export class CityDeserializer {
 
         const r = new City(player, o.id + "", o.na, o.wi, o.he, [...this.buildingTypes.values()], o.re.map((p: any) => this.resource(p)), unplacedBuildings, events,
             techManager, budget, undefined, titles, grid, [...eventTypes.values()], effectGrid, buildings, o.lt, o.st, o.nb, o.ri, o.rv, o.fl ? new Set(o.fl) : new Set(), o._v ?? 0);
-        r.presentBuildingCount = new Map(o.ob);
+        if (o.ob && r.presentBuildingCount.size === 0) r.presentBuildingCount = new Map(o.ob); //Shim so players don't have to refresh the page just because I removed 'ob' from the save data.
         r.desiredPower = o.dp;
         r.createdDate = new Date(o.cd);
         r.notifications = o.no.map((p: any) => new Notification(p.title, p.body, p.icon, new Date(p.date), p.seen));

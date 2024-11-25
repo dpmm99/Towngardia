@@ -278,8 +278,8 @@ export class Building implements IHasDrawable {
     }
 
     //Returns true if the building is a business and has failed.
-    public updateBusinessFailures(city: City, revenue: number) {
-        if (revenue < 0.1 * this.businessPatronCap) { //No special consideration needed for businessPatronCap === -1 since revenue wouldn't be negative. :)
+    public updateBusinessFailures(city: City, patrons: number) {
+        if (patrons < 0.1 * this.businessPatronCap) { //No special consideration needed for businessPatronCap === -1 since revenue wouldn't be negative. :)
             this.businessFailureCounter++;
             if (!this.businessFailed && this.businessFailureCounter >= 20) { // Business fails after 5 days of poor performance
                 this.businessFailed = true;

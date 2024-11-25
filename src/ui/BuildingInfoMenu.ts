@@ -388,6 +388,19 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             id: `${infoDrawable.id}.salesTax`,
         }));
         nextY += 24 + padding;
+
+        if (building.businessPatronCap !== -1 && building.patronageEfficiency < 0.1 && building.businessFailureCounter > 0 && !building.businessFailed) {
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: "Too few patrons; at risk of closing",
+                reddize: true,
+            }));
+            nextY += 24 + padding;
+        }
+
         //Citywide untapped patronage number. If present, you need to build more businesses.
         const untappedPatronage = this.city.resources.get("untappedpatronage")!.amount;
         if (untappedPatronage) {

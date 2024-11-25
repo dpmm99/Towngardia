@@ -135,6 +135,11 @@ export class City {
         this.postOffice = this.buildings.find(p => p instanceof PostOffice) as PostOffice;
         region?.apply(this);
 
+        //Calculate present building counts so they don't need stored
+        for (const building of this.buildings.concat(this.unplacedBuildings)) {
+            this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) + 1);
+        }
+
         //Cached calculated values that normally get calculated on long tick
         this.calculatePowerUsageMultiplier();
         this.calculateParticulatePollutionMultiplier();
@@ -567,11 +572,13 @@ export class City {
     }
 
     addBuilding(building: Building, x: number | null = null, y: number | null = null): void {
-        if (!building.id) building.id = this.nextBuildingID++; //Assumes buildings are never GRANTED to the city without also being built at that time--or we also need to do this same thing when granting buildings.
+        if (!building.id) {
+            building.id = this.nextBuildingID++; //IDs aren't being assigned when buildings are granted but not placed; that's okay because they're in a separate list.
+            this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) + 1); //Only change if the building was freshly purchased or placed for the first time after being granted.
+        }
         this.buildings.push(building);
         building.place(this, x ?? building.x, y ?? building.y);
         this.placeOnGrid(building);
-        this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) + 1); //TODO: should only increase if the building was freshly purchased or granted, not if it was just moved or taken from the stash. Doesn't hurt anything right now, except the counts increase every time you move a building, wasting some storage space with kinda random numbers.
         building.placed(this);
 
         //Ensure the thing built on top is always listed BEFORE the thing it's built on, in case the built-on-top one needs to fuel the other.
