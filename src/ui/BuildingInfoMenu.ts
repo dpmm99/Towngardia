@@ -745,7 +745,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             y: nextY,
             width: iconSize + "px",
             height: iconSize + "px",
-            image: new TextureInfo(iconSize, iconSize, `ui/fastforward`),
+            image: new TextureInfo(iconSize, iconSize, `ui/fastforwardnobg`),
         }));
         infoDrawable.addChild(new Drawable({
             x: padding + iconSize + 5,

@@ -2950,7 +2950,7 @@ export class MuseumOfFutureArts extends Building { //Unlocked by Quantum Computi
         super.onLongTick(city);
         if (this.outputResources[0].amount > 150 && Math.random() < 0.1 * this.lastEfficiency && city.buildingTypes.find(p => p.type === getBuildingType(SandsOfTime))?.locked) {
             city.unlock(getBuildingType(SandsOfTime));
-            city.notify(new Notification("Illusion of Time", "The Museum of Future Arts has discovered alien technology that can manipulate time! You can now build Sands of Time monuments from the Luxury construction category.", "fastforward"));
+            city.notify(new Notification("Illusion of Time", "The Museum of Future Arts has discovered alien technology that can manipulate time! You can now build Sands of Time monuments from the Luxury construction category.", "fastforwardnobg"));
         }
     }
 }

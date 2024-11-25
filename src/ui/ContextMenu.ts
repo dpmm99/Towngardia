@@ -181,7 +181,7 @@ export class ContextMenu implements IHasDrawable {
             y: 10,
             width: "48px",
             height: "48px",
-            image: new TextureInfo(48, 48, "ui/demolish"),
+            image: new TextureInfo(48, 48, "ui/demolishnobg"),
         }));
 
         //'Demolish' text
@@ -458,7 +458,7 @@ export class ContextMenu implements IHasDrawable {
             y: 10,
             width: "48px",
             height: "48px",
-            image: new TextureInfo(48, 48, "ui/switch"),
+            image: new TextureInfo(48, 48, "ui/switchnobg"),
         }));
 
         //'Switch output' text

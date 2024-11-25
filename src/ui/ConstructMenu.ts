@@ -127,8 +127,10 @@ export class ConstructMenu implements IHasDrawable {
         });
 
         parentDrawable.addChild(new Drawable({
-            x: -10,
-            y: -5,
+            x: this.buildingType!.width * -10,
+            y: this.buildingType!.height * -5,
+            width: "32px",
+            height: "32px",
             image: new TextureInfo(32, 32, this.canPlace ? "ui/ok" : "ui/x"),
             id: parentDrawable.id + ".confirm",
         }));
