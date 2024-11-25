@@ -35,7 +35,7 @@ export class CitySerializer {
             cs: o.recentConstructionResourcesSold,
             pp: o.peakPopulation,
             nb: o.nextBuildingID,
-            eg: this.effectGrid(o.effectGrid), //TODO: Consider recalculating this on load; could save as much as 83% of the network/storage cost. We only need to store effects that don't originate from a building, or we could make a separate effect emitter system for those and store no effects. Only need to call "building.effects?.applyEffects(building, this);" in a loop in city startup and filter the effects by simply 'effect.building' when saving.
+            eg: this.effectGrid(o.effectGrid),
             fl: [...o.flags.values()],
             id: o.id,
             na: o.name,
@@ -125,7 +125,7 @@ export class CitySerializer {
     }
 
     effectGrid(effects: Effect[][][]) {
-        return effects.map(row => row.map(cell => cell.map(effect => this.effect(effect))));
+        return effects.map(row => row.map(cell => cell.filter(effect => !effect.building).map(effect => this.effect(effect)))); //Only saving effects that DIDN'T come from a building
     }
 
     effect(o: Effect) {
@@ -296,7 +296,7 @@ export class CityDeserializer {
     }
 
     effectGrid(o: any, buildingsByID: Map<number, Building>) {
-        return o.map((row: any) => row.map((cell: any) => cell.map((effect: any) => this.effect(effect, buildingsByID))));
+        return o.map((row: any) => row.map((cell: any) => cell.filter((effect: any) => !effect.bi).map((effect: any) => this.effect(effect, buildingsByID)))); //No longer loading effects that came from a building.
     }
 
     effect(o: any, buildingsByID: Map<number, Building>) {

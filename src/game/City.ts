@@ -140,6 +140,9 @@ export class City {
             this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) + 1);
         }
 
+        //Reapply building-originated effects so they don't have to be saved
+        for (const building of this.buildings) building.effects?.applyEffects(building, this);
+
         //Cached calculated values that normally get calculated on long tick
         this.calculatePowerUsageMultiplier();
         this.calculateParticulatePollutionMultiplier();
@@ -190,18 +193,8 @@ export class City {
                     }
                 }
             }
-            this.dataVersion = 1;
-        }
-        if (this.dataVersion < 2) {
-            //I had made effect radii larger than intended, so fix that by just clearing the whole map of effects (by setting the radius to bigger than the map) and then reapplying.
-            for (const building of this.buildings.filter(p => p.effects?.effects.length)) {
-                building.areaIndicatorRadiusX += this.width;
-                building.areaIndicatorRadiusY += this.height;
-                building.effects!.stopEffects(building, this);
-                building.areaIndicatorRadiusX -= this.width;
-                building.areaIndicatorRadiusY -= this.height;
-                building.effects!.applyEffects(building, this);
-            }
+
+            //For v2, I had made some buildings' effect radii larger than intended, but I am no longer saving/loading building effects, so that data shim is no longer needed.
             this.dataVersion = 2;
         }
     }
