@@ -14,4 +14,6 @@ export enum CityFlags { //These values are SAVED in the database, so do not add 
     UnlockedTourism,
     UnlockedPost,
     UnlockedMonobrynth,
+    RemindedAboutResidencesNeedingBusinesses,
+    RemindedAboutUntappedPatrons,
 }

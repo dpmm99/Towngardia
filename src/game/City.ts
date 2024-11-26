@@ -1398,6 +1398,9 @@ export class City {
     getEducation(x: number, y: number): number {
         return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.Education).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));
     }
+    getEfficiency(x: number, y: number): number {
+        return this.grid[y][x]?.lastEfficiency ?? 0;
+    }
     getResidentialDesirability(x: number, y: number): number {
         return this.residenceSpawner.calculateDesirability(x, y);
     }
@@ -1572,7 +1575,7 @@ export class City {
             this.uiManager?.updateTutorialSteps();
         }
         if (this.peakPopulation >= 325 && !this.flags.has(CityFlags.BlockersPointedOut)) {
-            this.notify(new Notification("Metaphorical Hermit Crab", "Our city sprawls across the landscape, asphalt tendrils like roots feeding upon the lush soil, yet its healthy growth is stifled, pressured by obstructions on every side. We should consider clearing out construction blockers in the surrounding area to make room for continued expansion. The city must grow.", "environment"));
+            this.notify(new Notification("Metaphorical Hermit Crab", "Melodrama from your advisor: Our city sprawls across the landscape, asphalt tendrils like roots feeding upon the lush soil, yet its healthy growth is stifled, pressured by obstructions on every side. We should consider clearing out construction blockers in the surrounding area to make room for continued expansion. The city must grow.", "advisor"));
             this.flags.add(CityFlags.BlockersPointedOut);
         }
         if (this.peakPopulation >= 400 && !this.flags.has(CityFlags.UnlockedTourism)) {

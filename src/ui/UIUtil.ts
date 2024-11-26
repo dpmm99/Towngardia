@@ -67,8 +67,9 @@ export function addResourceCosts(parentDrawable: Drawable, costs: { type: string
 
         // Resource amount
         parentDrawable.addChild(new Drawable({
-            x: x,
+            x: x + resourceIconSize / 2,
             y: y + resourceIconSize + resourcePadding,
+            centerOnOwnX: true,
             width: resourceIconSize + "px",
             height: fontHeight + "px",
             text: floor ? humanizeFloor(cost.amount) : humanizeCeil(cost.amount), //Never show a lower cost than the actual amount

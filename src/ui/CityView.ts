@@ -29,6 +29,7 @@ export class CityView {
     public drawEducation = false;
     public drawLuxury = false;
     public drawBusiness = false;
+    public drawEfficiency = false;
     public drawGrid = false;
     public gradient: number[][] = [];
     constructor(public city: City, public uiManager: UIManager) {
@@ -258,6 +259,15 @@ export class BusinessPresenceView extends CityView {
         super(city, uiManager);
         this.showCollectibles = false;
         this.drawBusiness = true;
+        this.gradient = RedOrangeGreenCyanGradient;
+    }
+}
+
+export class EfficiencyView extends CityView {
+    constructor(public city: City, public uiManager: UIManager) {
+        super(city, uiManager);
+        this.showCollectibles = false;
+        this.drawEfficiency = true;
         this.gradient = RedOrangeGreenCyanGradient;
     }
 }

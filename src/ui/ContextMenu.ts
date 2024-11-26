@@ -1,5 +1,5 @@
 import { Building } from "../game/Building.js";
-import { SandsOfTime } from "../game/BuildingTypes.js";
+import { CityHall, SandsOfTime } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { LONG_TICK_TIME } from "../game/FundamentalConstants.js";
 import { GameState } from "../game/GameState.js";
@@ -22,6 +22,8 @@ export class ContextMenu implements IHasDrawable {
     public reopening: boolean = false;
     public repairing: boolean = false;
     public switchingOutputs: boolean = false;
+    public collecting: boolean = false;
+    public collectedResources: { type: string, amount: number }[] = [];
 
     constructor(private uiManager: UIManager, private game: GameState) {
     }
@@ -38,6 +40,7 @@ export class ContextMenu implements IHasDrawable {
         this.reopening = false;
         this.repairing = false;
         this.switchingOutputs = false;
+        this.collecting = false;
         if (this.building) city.drawInFrontBuildings = [this.building];
         else city.drawInFrontBuildings = [];
     }
@@ -58,7 +61,8 @@ export class ContextMenu implements IHasDrawable {
         if (!this.isShown()) return this.lastDrawable = new Drawable({ width: "0px" }); //Nothing
         const building = this.building!; //Null checked in advance
 
-        //Demolition menu (just price to demolish and an OK button with a backdrop)
+        //Windows that pop up at a location in world coordinates, which are just some info, maybe a title and some icons, and 1-2 buttons
+        if (this.collecting) return this.lastDrawable = this.drawCollection(building);
         if (this.demolishing) return this.lastDrawable = this.drawDemolitionConfirmation(building);
         if (this.repairing) return this.lastDrawable = this.drawRepairConfirmation(building);
         if (this.reopening) return this.lastDrawable = this.drawReopenConfirmation(building);
@@ -512,6 +516,60 @@ export class ContextMenu implements IHasDrawable {
 
         confirmation.height = nextY - 6 + "px";
 
+        return confirmation;
+    }
+
+    //Shows the resources that you just collected, plus a button to collect all other resources from the city.
+    private drawCollection(building: Building) {
+        const confirmation = new Drawable({
+            x: building.x + (building.width - 1) / 2 + 0.8, //+0.8 x and +2.5 y for rough centering
+            y: building.y - 1 + (building.height - 1) / 2 + 2.5,
+            width: "100px",
+            fallbackColor: '#222222',
+            id: "collectionMenu",
+        });
+        let nextY = 5;
+        confirmation.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "90px",
+            height: "16px",
+            text: "Got",
+        }));
+        nextY += 16;
+        //Center the resources. Note: max is 3 output resources per building. Mayyy change in the future, particularly if I do something like an event that makes factories produce an extra resource type.
+        const left = 50 - this.collectedResources.length * 14 - (this.collectedResources.length - 1) * 1.5;
+        addResourceCosts(confirmation, this.collectedResources, left, nextY, false, false, false, 28, 3, 24, 3, undefined, undefined, undefined, true);
+        nextY += 60;
+        if (this.city?.player.name === "eabrace") { //TODO: Consider locking behind a tech or a building (e.g., logistics center)
+            confirmation.addChild(new Drawable({
+                x: 5,
+                y: nextY,
+                width: "90px",
+                height: "24px",
+                fallbackColor: '#444444',
+                onClick: () => {
+                    this.city?.buildings.filter(b => b.outputResources.some(p => p.amount > 0 && (!p.isSpecial || p instanceof CityHall))).forEach(b => this.city?.transferResourcesFrom(b.outputResources, "produce"));
+                    this.game.fullSave();
+                    this.building = null;
+                    this.collecting = false;
+                    this.collectedResources = [];
+                },
+                children: [
+                    new Drawable({
+                        anchors: ['centerX'],
+                        centerOnOwnX: true,
+                        y: 5,
+                        width: "calc(100% - 10px)",
+                        height: "20px",
+                        text: "Collect All In City"
+                    }),
+                ],
+            }));
+            nextY += 29;
+        }
+        confirmation.height = nextY + "px";
         return confirmation;
     }
 }

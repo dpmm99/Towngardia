@@ -18,7 +18,7 @@ import { BudgetMenu } from "./BudgetMenu.js";
 import { BuildTypeBar } from "./BuildTypeBar.js";
 import { BuildingInfoMenu } from "./BuildingInfoMenu.js";
 import { CitizenDietWindow } from "./CitizenDietWindow.js";
-import { BusinessPresenceView, CityView, EducationView, FireProtectionView, GreenhouseGasesView, HealthcareView, LandValueView, LuxuryView, NoiseView, OrganizedCrimeView, ParticulatePollutionView, PettyCrimeView, PlacementGridView, PoliceView, ProvisioningView, ResidentialDesirabilityView } from "./CityView.js";
+import { BusinessPresenceView, CityView, EducationView, EfficiencyView, FireProtectionView, GreenhouseGasesView, HealthcareView, LandValueView, LuxuryView, NoiseView, OrganizedCrimeView, ParticulatePollutionView, PettyCrimeView, PlacementGridView, PoliceView, ProvisioningView, ResidentialDesirabilityView } from "./CityView.js";
 import { ConstructMenu } from "./ConstructMenu.js";
 import { ContextMenu } from "./ContextMenu.js";
 import { Drawable } from "./Drawable.js";
@@ -273,7 +273,7 @@ export class UIManager {
                 //Don't remove the building right away, but keep it in a "moving" state until the player clicks again to place it as if they had built it
                 this.buildTypeBar.selectedBuilding = contextMenuBuildingWas;
                 this.enterConstructionMode();
-            } else if (this.contextMenu.demolishing || this.contextMenu.switchingOutputs) this.contextMenu.building = contextMenuBuildingWas; //Put it back. :)
+            } else if (this.contextMenu.demolishing || this.contextMenu.switchingOutputs || this.contextMenu.collecting) this.contextMenu.building = contextMenuBuildingWas; //Put it back. :)
             return true;
         }
 
@@ -424,6 +424,11 @@ export class UIManager {
     }
     toggleBusinessPresenceView() {
         this.cityView = this.cityView instanceof BusinessPresenceView ? new CityView(this.city, this) : new BusinessPresenceView(this.city, this);
+        this.bottomBar.shown = this.rightBar.shown = true;
+        if (!this.isMyCity) this.cityView.showCollectibles = this.bottomBar.shown = false;
+    }
+    toggleEfficiencyView() {
+        this.cityView = this.cityView instanceof EfficiencyView ? new CityView(this.city, this) : new EfficiencyView(this.city, this);
         this.bottomBar.shown = this.rightBar.shown = true;
         if (!this.isMyCity) this.cityView.showCollectibles = this.bottomBar.shown = false;
     }
@@ -740,6 +745,13 @@ export class UIManager {
             this.constructMenu.update(this.city, this.renderer, this.buildTypeBar.selectedBuilding, x, y, this.contextMenu.moving);
             this.requestRedraw();
         }
+    }
+
+    public collectedResources(building: Building) {
+        this.contextMenu.update(this.city, building.x, building.y); //Make sure it doesn't recall its previous state since we're overwriting it
+        this.contextMenu.building = building; //Also make sure it has the right building since some can be placed on top of each other
+        this.contextMenu.collecting = true; //But we want the context menu to just show the collected resources
+        this.contextMenu.collectedResources = building.outputResources.map(p => ({ type: p.type, amount: p.amount }));
     }
 
     private addEventListeners() {

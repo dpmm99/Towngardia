@@ -67,6 +67,7 @@ export class ViewsBar implements IHasDrawable, IOnResizeEvent {
             //{ id: "traffic", action: () => this.uiManager.toggleTrafficView() },
             //{ id: "firehazard", action: () => this.uiManager.toggleFireHazardView() },
             { id: "placementgrid", action: () => { this.lastClickedButtonText = "Placement Grid"; this.uiManager.togglePlacementGridView(); } },
+            { id: "efficiencyview", action: () => { this.lastClickedButtonText = "Efficiency"; this.uiManager.toggleEfficiencyView() } },
             { id: "hidebuildings", action: () => this.uiManager.toggleBuildings() },
             { id: "fadebuildings", action: () => this.uiManager.toggleBuildingFade() },
         ];

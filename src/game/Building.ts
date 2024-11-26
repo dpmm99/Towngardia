@@ -381,7 +381,10 @@ export class Building implements IHasDrawable {
                 height: "64px",
                 image: new TextureInfo(128, 128, 'ui/collectionbackdrop'),
                 fallbackColor: "#0055bbaa",
-                onClick: () => city.transferResourcesFrom(this.outputResources, "produce"),
+                onClick: () => {
+                    city.uiManager?.collectedResources(this);
+                    city.transferResourcesFrom(this.outputResources, "produce");
+                },
                 children: [
                     new Drawable({
                         x: 16,

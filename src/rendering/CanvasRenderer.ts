@@ -1,4 +1,5 @@
 import { Building } from "../game/Building.js";
+import { CityHall, InformationCenter } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { FootprintType } from "../game/FootprintType.js";
 import { EffectType } from "../game/GridType.js";
@@ -8,7 +9,7 @@ import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { FilteredImageCache } from "./FilteredImageCache.js";
 import { IRenderer } from "./IRenderer.js";
-import { BIGGER_MOBILE_RATIO, DEVICE_PIXEL_RATIO, INVERSE_BIGGER_MOBILE_RATIO, TILE_HEIGHT, TILE_WIDTH, calculateScreenPosition, cssDimToPixels, domPreloadSprites, screenToWorldCoordinates, worldToScreenCoordinates } from "./RenderUtil.js";
+import { BIGGER_MOBILE_RATIO, DEVICE_PIXEL_RATIO, INVERSE_BIGGER_MOBILE_RATIO, TILE_HEIGHT, TILE_WIDTH, calculateScreenPosition, domPreloadSprites, screenToWorldCoordinates, worldToScreenCoordinates } from "./RenderUtil.js";
 import { TextRenderer } from "./TextRenderer.js";
 
 const BACKGROUND_TILE_WIDTH = 8;
@@ -108,6 +109,10 @@ export class CanvasRenderer implements IRenderer {
         if (view.drawFireCoverage) this.drawTiles(city, city.getFireProtection);
         if (view.drawHealthCoverage) this.drawTiles(city, city.getHealthcare);
         if (view.drawEducation) this.drawTiles(city, city.getEducation);
+        if (view.drawEfficiency) this.drawTiles(city, city.getEfficiency, (x, y) => {
+            const building = city.grid[y][x];
+            return building !== null && !(building instanceof CityHall || building instanceof InformationCenter || building.isRoad || !building.owned); //Buildings without a meaningful efficiency.
+        });
         if (view.drawGrid) this.drawGridTiles(city);
 
         for (const drawable of this.postTileDrawables) { //TODO: Clean up if you can by putting the final position and size into the Drawable instead of having it relative to the building position.

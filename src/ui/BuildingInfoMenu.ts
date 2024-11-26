@@ -81,6 +81,37 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         }));
         nextY += 24 + padding;
 
+        //If unplaced, show dimensions, whether it needs a road, and the number you own
+        if (building.x === -1) {
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: `Dimensions: ${building.width}x${building.height}`,
+                id: `${infoDrawable.id}.dimensions`,
+            }));
+            nextY += 24 + padding;
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: building.needsRoad ? "Must be connected to road" : "No road needed",
+                id: `${infoDrawable.id}.needsRoad`,
+            }));
+            nextY += 24 + padding;
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: `Owned: ${this.city.presentBuildingCount.get(building.type) ?? 0}`,
+                id: `${infoDrawable.id}.owned`,
+            }));
+            nextY += 24 + padding;
+        }
+
         // Upkeep costs
         const powerUpkeep = building.getPowerUpkeep(this.city, true) * this.city.powerUsageMultiplier;
         const upkeepCosts = building.getUpkeep(this.city, 1);
@@ -502,6 +533,22 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             id: `${infoDrawable.id}.output.power.citys`,
         }));
         nextY += 28;
+
+        //New buildings generally start at 0% efficiency and therefore 0 power demand, so we get 1 update to warn the player about the increasing demand.
+        const nextDemandIncrease = this.city.buildings.filter(p => p.isNew).reduce((acc, p) => acc + p.getPowerUpkeep(this.city, true) - p.getPowerUpkeep(this.city), 0);
+        if (nextDemandIncrease) {
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: "Next demand increase: " + humanizePowerFloor(nextDemandIncrease),
+                id: `${infoDrawable.id}.output.power.cityn`,
+                reddize: nextDemandIncrease > surplus,
+            }));
+            nextY += 28;
+        }
+
         infoDrawable.addChild(new Drawable({
             x: padding,
             y: nextY,
