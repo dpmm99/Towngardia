@@ -494,6 +494,10 @@ export class CityHall extends Building {
 
         //Store the untapped business potential somewhere
         city.resources.get("untappedpatronage")!.amount = Math.max(0, remainingPeople);
+        if (!city.flags.has(CityFlags.RemindedAboutUntappedPatrons) && remainingPeople > 50) {
+            city.notify(new Notification("Crying Capitalism", "Unsolicited (but totally correct) advice from your advisor: You've successfully created a city full of people with money burning holes in their pockets and precisely nowhere to spend it. It's like trying to pack your clothes for a 12-day cruise into a single shoe. Build more businesses to free your citizens of their unspent cash woes. Your treasurer is begging you. You can check the untapped patronage by viewing the info of any business.", "advisor"));
+            city.flags.add(CityFlags.RemindedAboutUntappedPatrons);
+        }
     }
 
     override isBuyable(city: City, bySpawner: boolean = false): boolean {

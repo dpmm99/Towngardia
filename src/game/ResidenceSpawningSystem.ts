@@ -43,10 +43,6 @@ export class ResidenceSpawningSystem {
             this.city.notify(new Notification("Horizontal Heresy", "Mutterings from your caffeine-fueled advisor: Your city planning strategy appears to be 'dramatically spread out and hope for the best.' Pro tip: Citizens love spending money. Squeeze those businesses close enough that they can hear each other's cash registers, and apartments (or better) will pop up faster than rumors at a small-town coffee shop. Key takeaways: one bigger residence costs you less and earns you more than several smaller residences, but they won't be built without several businesses around, and apartments are 2x2 tiles. Check the Business Presence view to see which houses may upgrade.", "advisor"));
             this.city.flags.add(CityFlags.RemindedAboutResidencesNeedingBusinesses);
         }
-        if (!this.city.flags.has(CityFlags.RemindedAboutUntappedPatrons) && this.city.resources.get(getResourceType(UntappedPatronage))!.amount > 50) {
-            this.city.notify(new Notification("Crying Capitalism", "Unsolicited (but totally correct) advice from your advisor: You've successfully created a city full of people with money burning holes in their pockets and precisely nowhere to spend it. It's like trying to pack your clothes for a 12-day cruise into a single shoe. Build more businesses to free your citizens of their unspent cash woes. Your treasurer is begging you. You can check the untapped patronage by viewing the info of any business.", "advisor"));
-            this.city.flags.add(CityFlags.RemindedAboutUntappedPatrons);
-        }
     }
 
     private updateGlobalFactors(): void {

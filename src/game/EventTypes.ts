@@ -7,6 +7,7 @@ import { CityFlags } from "./CityFlags.js";
 import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICK_TIME } from "./FundamentalConstants.js";
 import { EffectType } from "./GridType.js";
 import { inPlaceShuffle } from "./MiscFunctions.js";
+import { Notification } from "./Notification.js";
 import { GreenhouseGases, PowerCosts, ProductionEfficiency, getResourceType } from "./ResourceTypes.js";
 
 export class Hauntymonth extends CityEvent {
@@ -324,13 +325,22 @@ export class Fire extends CityEvent {
             "", "fire");
     }
 
+    private getAtRiskBuildings(city: City): Building[] {
+        return city.buildings.filter(p => p.owned && !p.isRoad && p.fireHazard * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) > p.getHighestEffect(city, EffectType.FireProtection));
+    }
+
     private getFireEpicenter(city: City): Building | undefined {
         //Pick a random flammable (low fire protection) building
-        const buildings = city.buildings.filter(p => p.owned && !p.isRoad && p.fireHazard * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) > p.getHighestEffect(city, EffectType.FireProtection));
-        return inPlaceShuffle(buildings)[0];
+        return inPlaceShuffle(this.getAtRiskBuildings(city))[0];
     }
 
     override shouldStart(city: City, date: Date): boolean {
+        //Give the player a reminder if they're not building enough fire protection when the city is still small.
+        if (!city.flags.has(CityFlags.RemindedToCheckFireView) && city.peakPopulation > 375 && city.peakPopulation < 900 && this.getAtRiskBuildings(city).length >= 5) {
+            city.notify(new Notification("Fear of Frying", "Your advisor's eyebrow-raising observation: you've still got buildings at risk of burning down unfettered. Remember to check the fire protection view when you're expanding the city's borders! Also keep in mind that a Fire Bay isn't enough protection for every type of building, such as Steel Mill, although it still helps reduce the maximum damage. If one building catches on fire, it'll spread to others, and you'll have to fork out your own resources and flunds to repair them all.", "advisor"));
+            city.flags.add(CityFlags.RemindedToCheckFireView);
+        }
+
         //Can only happen once every 5 days, and only to buildings with poor fire protection. Significant chance--about 35% in a day.
         //Don't start counting until the flag is set, giving them a chance to build fire stations before the first fire has a chance to break out.
         return city.flags.has(CityFlags.FireProtectionMatters) && this.checkedStart(this.skippedStarts > 5 * LONG_TICKS_PER_DAY && Math.random() < 0.1 && this.getFireEpicenter(city) !== undefined, city, date);
