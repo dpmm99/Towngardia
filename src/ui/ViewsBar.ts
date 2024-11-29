@@ -49,6 +49,8 @@ export class ViewsBar implements IHasDrawable, IOnResizeEvent {
         });
         
         const buttons = [
+            { id: "fadebuildings", action: () => this.uiManager.toggleBuildingFade() },
+            { id: "hidebuildings", action: () => this.uiManager.toggleBuildings() },
             { id: "residentialdesirability", action: () => { this.lastClickedButtonText = "Residential Desirability"; this.uiManager.toggleResidentialDesirabilityView(); } },
             { id: "landvalue", action: () => { this.lastClickedButtonText = "Land Value"; this.uiManager.toggleLandValueView(); } },
             { id: "luxury", action: () => { this.lastClickedButtonText = "Luxury"; this.uiManager.toggleLuxuryView(); } },
@@ -68,8 +70,6 @@ export class ViewsBar implements IHasDrawable, IOnResizeEvent {
             //{ id: "firehazard", action: () => this.uiManager.toggleFireHazardView() },
             { id: "placementgrid", action: () => { this.lastClickedButtonText = "Placement Grid"; this.uiManager.togglePlacementGridView(); } },
             { id: "efficiencyview", action: () => { this.lastClickedButtonText = "Efficiency"; this.uiManager.toggleEfficiencyView() } },
-            { id: "hidebuildings", action: () => this.uiManager.toggleBuildings() },
-            { id: "fadebuildings", action: () => this.uiManager.toggleBuildingFade() },
         ];
         if (!this.city.flags.has(CityFlags.EducationMatters)) buttons.splice(buttons.findIndex(b => b.id === "education"), 1);
         if (!this.city.flags.has(CityFlags.HealthcareMatters)) buttons.splice(buttons.findIndex(b => b.id === "healthcare"), 1);

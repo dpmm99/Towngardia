@@ -39,11 +39,9 @@ XYZ building, in the style of a detailed 3D realistic cartoon isometric city sim
 
 
 Main remaining features:
-Move the building fade and hide buttons to the start of the list (and update the tutorial about their location) because I use the fade button the most often and it's a pain to scroll to it every time
 Regions (ancient ocean, delta, tundra, volcanic yard)
 aaand probably being able to buy things (particularly the resources that aren't in every region) more easily if your friends are selling them. I was thinking sales go into a list for 5 days, but then you have to load and affect the other players' city data...
 Otherwise, I'm pretty well down to just making buildings, events, techs (though I already have 31), and titles/achievements. 
-December pseudo-minigame event: each day, a present spawns in a friend's city and stays there for 5 days (including past the end of the event). It always spawns in the biggest city on your friends list, and you have to find it and tap it to receive an assortment of random resources totaling a value of 25 flunds. The data would actually save to your own city, so if you have multiple cities, you get multiple packages a day (you have to cycle through your own cities to get them all). Even better if it came with some sort of treasure map telling you to follow some roads/landmarks to find it...
 
 Coolest open ideas:
 Sort businesses by patron value (or maybe do a fixed sort order for all building types, but need an indicator to show which ones are newly unlocked)
@@ -83,7 +81,6 @@ new buildings:
 	Supply Chain Center - production efficiency, e.g., could boost business patron cap and proportionally boost business revenue
 	Air quality monitoring and enforcement center - reduces pollution from nearby structures
 	Other environment building ideas: wildlife sanctuary (+tourism), ecosystem restoration center (improves land value)
-	Winter event buildings: could have a parade that you can place on the road, hot chocolate vendor, reindeer stuff, candy cane decorations, a Santa house thing, a huge tree...
 	More specific decorations: bronze dragon, giant wind instrument, giant steampunk chess set, plaza that looks like a compass rose, fancy bike path that both reduces traffic and spreads luxury, human-sized hamster wheels (maybe spreads a little healthcare and produces 0.1 MW for the laughs :))
 Mechanical failures - a few buildings would damage themselves slowly over time and show a wrench icon instead of fire when they're damaged, but the damage wouldn't harm efficiency for 5 days, then the backdrop turns from the 'warning' one into the 'error' one after that. A tech could unlock auto-repair.
 Disasters like snow accumulation, fission 'close call', lightning strike that only damages one building
@@ -105,12 +102,12 @@ space launch site or a tractor beam can be set to pull asteroids down to the gro
 timeline of city achievements/milestones preferably with screenshots
 (highly unlikely I would do this) underground city
 
-Unused resources:
-toys could be a regional or citywide effect minigame wherein you distribute them
+Underused/unused resources:
+toys could be a regional or citywide effect minigame wherein you distribute them (also distributed to increase happiness via Free Stuff Tables now)
 rubber for cars (plus batteries though they aren't unused), but dunno
-Unused and unproduceable: clay, bricks, paper, rubber, lumber... dunno.
-Tritium can only be obtained as high-end minigame rewards.
-pharmaceuticals for health
+Unused and unproduceable: clay, bricks, paper, rubber, lumber... dunno. (but paper is distributed to increase happiness via Free Stuff Tables now)
+Tritium can only be obtained as high-end minigame rewards. (but I made a couple minigames able to more reliably produce larger amounts of it)
+pharmaceuticals for health (also distributed to increase happiness via Free Stuff Tables now)
 
 
 
@@ -131,7 +128,10 @@ keep a Museum of Future Arts running for several days: Sands of Time
 750 population: post office
 900 population: healthcare, clinic, hospital
 1200 population: algae farm and more food requirements
+1500 population: logistics center and Free Stuff Tables
 1800 population: maximum food requirements
+2100 population: Minigame Minilab
+minigame minilab + playing the minigames: alternative reward sets as options for the minigames
 earthquake: geothermal tech and a hot spring inn
 8000 population: greenhouse gases begin to affect happiness and weather event chances
 and techs unlock 11 buildings

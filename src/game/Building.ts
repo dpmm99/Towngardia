@@ -159,6 +159,9 @@ export class Building implements IHasDrawable {
         //For buildings that spread effects
         this.effects?.applyEffects(this, city);
         if (this.upkeepScales) this.recalculateAffectingBuildings(city);
+
+        //Buildings with no needs may as well start at 100% efficiency. But upkeep and power costs have to be paid in advance for efficiency.
+        if (!this.needsPower && (!this.needsRoad || this.roadConnected) && !this.getUpkeep(city, 1).length && !this.inputResources.length) this.lastEfficiency = 1;
     }
 
     //Called after adding to the city grid
@@ -242,6 +245,7 @@ export class Building implements IHasDrawable {
     //Calculate the given type of effect for each cell the building covers and return the highest one.
     getHighestEffect(city: City, type: EffectType, atX: number = this.x, atY: number = this.y): number {
         let maxEffect = 0;
+        if (atX === -1) return 0; //Assume 0 effect for unplaced buildings
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 const effects = city.effectGrid[atY + y][atX + x].filter(p => p.type === type);

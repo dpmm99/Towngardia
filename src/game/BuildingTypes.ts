@@ -457,7 +457,7 @@ export class CityHall extends Building {
             // Update the building's lastEfficiency to include assigned people
             if (business.building.businessPatronCap === 0) throw new Error("Patron cap 0 on building " + business.building.type);
             business.building.patronageEfficiency = (business.totalAssigned / business.building.businessPatronCap);
-            totalRevenue += business.revenue;
+            totalRevenue += business.getRevenue(city);
         });
         totalRevenue *= city.getPostOfficeBonus(); //Save some multiplications by just doing it once.
 
@@ -2841,6 +2841,105 @@ export class HauntymonthHouse extends Building {
 
     override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
 }
+
+export class PeppermintPillar extends Building {
+    constructor() {
+        super(
+            "peppermintpillar", "Peppermint Pillar", "A candy cane decoration. Standing tall and proud, contributing absolutely nothing except a visual reminder that it's cold outside. And cold or not, it'll melt away at the end of the month.",
+            BuildingCategory.LUXURY,
+            1, 1, 0,
+            0.1,
+            true,
+        );
+        this.needsPower = this.needsRoad = false;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.12)]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        //Costs rise for each copy you've already bought.
+        return [{ type: "flunds", amount: 30 + 300 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "iron", amount: 5 }];
+    }
+
+    override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
+}
+
+export class CocoaCupCo extends Building {
+    constructor() {
+        super(
+            "cocoacupco", "Cocoa Cup Co.", "A tiny outpost of sugary salvation, dispensing hope in a cup and economic stimulation by the ounce. Businesses nearby will perk up faster than customers after their third choco-latte thanks to customers' melted inhibitions. It'll dissolve like a marshmallow at the end of the month.",
+            BuildingCategory.LUXURY,
+            1, 1, 0,
+            0.3,
+            true,
+        );
+        this.needsPower = this.needsRoad = false;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
+        this.areaIndicatorRounded = true;
+        this.isRestaurant = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.05),
+            new EffectDefinition(EffectType.BusinessValue, 0.05)]); //Doesn't affect sorting (for giving more revenue to higher earning businesses), failed business reopening costs, displayed efficiency numbers, or infinibusinesses.
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        //Costs rise for each copy you've already bought.
+        return [{ type: "flunds", amount: 90 + 900 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "plastics", amount: 10 }, { type: "stone", amount: 5 }];
+    }
+
+    override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
+}
+
+export class ReindeerRetreat extends Building {
+    constructor() {
+        super(
+            "reindeerretreat", "Reindeer Retreat", "A retreat for seasonally employed ungulates. Precision-aligned hooves, meticulously maintained antlers, and an air of professional pride that suggests these aren't just critters--they're dedicated to the job of spreading joy to the locals. They'll pack up and move out at the end of the month.",
+            BuildingCategory.LUXURY,
+            2, 2, 0,
+            0.2,
+            true,
+        );
+        this.needsRoad = false;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
+        this.areaIndicatorRounded = true;
+        this.outputResources.push(new Tourists(4.375, 4.375, 0, 70)); //Brings in 70 tourists per long tick, and it gets up to full steam in 4 days.
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.13)]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        //Costs rise for each copy you've already bought.
+        return [{ type: "flunds", amount: 45 + 450 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "wood", amount: 10 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2; }
+
+    override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
+}
+
+export class WrappedWonder extends Building {
+    constructor() {
+        super(
+            "wrappedwonder", "Wrapped Wonder", "Artificial arbor bedazzled with baubles and bulbs, communicating the dreams of the denizens, elevating the future. The gifts at the hem, however, are imitations, impairing the joy of kids who look at the material from nearby. Ostensibly, parents queried reply with surety that they think it's unproductive to vainly wish for world-famous xylophones to be yielded to youthful zealots...but I digress. Anyway, the presents are fake, and the tree will 'leave' on its own at the end of the month.",
+            BuildingCategory.LUXURY,
+            2, 2, 0,
+            0.3,
+            true,
+        );
+        this.needsRoad = false;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.25)]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        //Costs rise for each copy you've already bought.
+        return [{ type: "flunds", amount: 80 + 800 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "wood", amount: 40 }, { type: "glass", amount: 15 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
+
+    override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
+}
 //End of seasonal decorations
 
 export class SmallPark extends Building {
@@ -3884,7 +3983,7 @@ export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, TeleportationPod, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, LogisticsCenter, FreeStuffTable, DataCenter, NuclearStorage,
     /*Government*/ CityHall, InformationCenter, PostOffice, DepartmentOfEnergy, EnvironmentalLab, MinigameMinilab,
     /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, Library, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, Observatory, QuantumComputingLab, WeatherControlMachine,
-    /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse,
+    /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse, PeppermintPillar, CocoaCupCo, ReindeerRetreat, WrappedWonder,
     /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, Playground, UrbanCampDome, FlippinFun, H2Whoa, SesharTower, MuseumOfFutureArts, SandsOfTime,
     ].map(p => new p()).map(p => [p.type, p]));
 export function get(type: string): Building {

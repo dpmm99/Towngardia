@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { ColdStorage, FireBay, FireStation, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HotSpring, HotSpringInn, getBuildingType } from "./BuildingTypes.js";
+import { CocoaCupCo, ColdStorage, FireBay, FireStation, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HotSpring, HotSpringInn, PeppermintPillar, ReindeerRetreat, WrappedWonder, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -13,7 +13,7 @@ import { GreenhouseGases, PowerCosts, ProductionEfficiency, getResourceType } fr
 export class Hauntymonth extends CityEvent {
     constructor() {
         super("hauntymonth", "Hauntymonth", 31 * LONG_TICKS_PER_DAY,
-            "I don't know how a one-day celebration extended to a month of decorations and events, but here we are! Happy Hauntymonth!",
+            "I don't know how a one-day celebration extended to a month of decorations and events, but here we are! Happy Hauntymonth! You can find a few spooky temporary decorations in the Luxury construction category.",
             "The event culminated in one night of candy distribution and hauntings, but the decorations are no more. You'll get them back next year.");
     }
 
@@ -41,6 +41,39 @@ export class Hauntymonth extends CityEvent {
             if (buildingTemplate) buildingTemplate.isHidden = buildingTemplate.locked = locked;
 
             //Also remove the buildings from the city. The buildings' isPlaceable() function would have to check if this event is active, or the player can just put them right back.
+            if (locked) for (const building of city.buildings.filter(p => p.type === type)) city.removeBuilding(building);
+        }
+    }
+}
+
+export class Merrymonth extends CityEvent {
+    constructor() {
+        super("merrymonth", "Merrymonth", 31 * LONG_TICKS_PER_DAY,
+            "The city is all decked out for the countless winter holidays! It's Merrymonth, and temporary decorations of varying qualities are available now in the Luxury construction category.",
+            "The decorations have been taken down--keeping them up into January is illegal throughout the Towngardian nation--but the holiday spirit remains. You'll get your decorations back next year.");
+    }
+
+    override shouldStart(city: City, date: Date): boolean {
+        //Starts on December 1st; ends midnight January 1.
+        return this.checkedStart(date.getMonth() === 11 && !city.events.some(p => p.type === this.type), city, date);
+    }
+
+    override start(city: City, date: Date) { //Same logic as Hauntymonth
+        super.start(city, date);
+        this.duration = Math.floor((32 - date.getDate()) * LONG_TICKS_PER_DAY - Math.floor(date.getHours() * LONG_TICKS_PER_DAY / 24));
+        this.lockUnlockBuildings(city, false);
+    }
+
+    override end(city: City) {
+        super.end(city);
+        this.lockUnlockBuildings(city, true);
+    }
+
+    lockUnlockBuildings(city: City, locked: boolean): void {
+        const buildingTypeIDs = [getBuildingType(PeppermintPillar), getBuildingType(CocoaCupCo), getBuildingType(ReindeerRetreat), getBuildingType(WrappedWonder)];
+        for (const type of buildingTypeIDs) {
+            const buildingTemplate = city.buildingTypes.find(p => p.type === type);
+            if (buildingTemplate) buildingTemplate.isHidden = buildingTemplate.locked = locked;
             if (locked) for (const building of city.buildings.filter(p => p.type === type)) city.removeBuilding(building);
         }
     }
@@ -581,7 +614,7 @@ export class Spoilage extends CityEvent {
 //TODO: Close call - fission power plant has to shut down for a day to repair after the safety triggered
 
 export const EVENT_TYPES = <CityEvent[]>([
-    /*Fixed seasonal events*/ Hauntymonth,
+    /*Fixed seasonal events*/ Hauntymonth, Merrymonth,
     /*Minigame-triggered events*/ TourismReward, ProductionReward, PowerReward, //TODO: Others could be a temporary construction cost reduction and a temporary market buy price reduction
     /*Random negative events*/ Drought, Heatwave, ColdSnap, PowerOutage, Burglary, Heist, Epidemic, Fire, Earthquake, Riot, Spoilage,
     //...but Earthquake has positive effects, too: spawns a cheap geothermal power source sometimes, and spawns a hot spring the first time.

@@ -172,7 +172,7 @@ export class TutorialOverlay implements IHasDrawable {
                     x: 10, y: 170, width: "min(90%, 1000px)", height: "400px", scaleYOnMobile: true, biggerOnMobile: true,
                 },
                 content: {
-                    text: "Now find the faded house icon (that bar also scrolls) and tap it. That toggles a mode in which buildings fade out near the bottom of your screen. Drag the screen up and down a bit, and after you've checked out that fancy-schmancy visual, channel your inner lumberjack and bulldoze that pesky grove (long-tap it, then tap the bulldozer). Voila! From obstruction to resource!",
+                    text: "Now tap the faded house icon at the left. That toggles a mode in which buildings fade out near the bottom of your screen. Drag the screen up and down a bit, and after you've checked out that fancy-schmancy visual, channel your inner lumberjack and bulldoze that pesky grove (long-tap it, then tap the bulldozer). Voila! From obstruction to resource!",
                 },
                 nextButton: {
                     text: "I saw wood!",

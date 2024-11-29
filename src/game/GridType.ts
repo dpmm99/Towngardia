@@ -12,5 +12,6 @@
     Healthcare,
     BusinessPresence,
     Luxury,
-    PublicTransport
+    PublicTransport,
+    BusinessValue, //Currently only used for a December event building.
 }

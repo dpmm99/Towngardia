@@ -413,7 +413,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             y: nextY,
             width: (barWidth - padding * 2) + "px",
             height: "24px",
-            text: `Business value: ${humanizeFloor(building.businessValue)}`,
+            text: `Business value: ${humanizeFloor(building.businessValue * (1 + building.getHighestEffect(this.city, EffectType.BusinessValue)))}`,
             id: `${infoDrawable.id}.businessValue`,
         }));
         nextY += 24 + padding;
@@ -426,7 +426,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 `Tax revenue: ${humanizeFloor(LONG_TICKS_PER_DAY * this.city.getInfinibusinessRevenue(building.type, true, !isPlaced) * this.city.budget.taxRates["sales"])}/day`
                 : (isPlaced
                 //Calculation taken from Business.getRevenue()
-                    ? `Tax revenue: ${humanizeFloor(LONG_TICKS_PER_DAY * building.businessValue * building.lastEfficiency * this.city.getPostOfficeBonus() * this.city.budget.taxRates["sales"])}/day`
+                    ? `Tax revenue: ${humanizeFloor(LONG_TICKS_PER_DAY * building.businessValue * building.lastEfficiency * (1 + building.getHighestEffect(this.city, EffectType.BusinessValue)) * this.city.getPostOfficeBonus() * this.city.budget.taxRates["sales"])}/day`
                     : `Max tax revenue: ${humanizeFloor(LONG_TICKS_PER_DAY * building.businessValue * this.city.getPostOfficeBonus() * this.city.budget.taxRates["sales"])}/day`),
             id: `${infoDrawable.id}.salesTax`,
         }));

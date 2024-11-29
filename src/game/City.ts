@@ -740,6 +740,9 @@ export class City {
         if (this.constructionResourceTypes.has(cityResource.type)) this.recentConstructionResourcesSold += amount * cityResource.sellPrice;
         this.resourceEvents.push({ type: cityResource.type, event: "sell", amount: amount });
 
+        //Replenish the auto-buyable amount for this resource type as a sort of buy-back policy
+        cityResource.buyableAmount = Math.min(cityResource.buyCapacity, cityResource.buyableAmount + amount);
+
         //Resource Tycoon requires both producing AND selling, so check it both places
         this.checkAndAwardAchievement(AchievementTypes.ResourceTycoon.id);
     }
