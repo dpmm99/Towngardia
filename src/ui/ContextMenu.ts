@@ -1,5 +1,5 @@
 import { Building } from "../game/Building.js";
-import { CityHall, SandsOfTime } from "../game/BuildingTypes.js";
+import { CityHall, LogisticsCenter, SandsOfTime, getBuildingType } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { LONG_TICK_TIME } from "../game/FundamentalConstants.js";
 import { GameState } from "../game/GameState.js";
@@ -21,7 +21,7 @@ export class ContextMenu implements IHasDrawable {
     public demolishing: boolean = false;
     public reopening: boolean = false;
     public repairing: boolean = false;
-    public switchingOutputs: boolean = false;
+    public switchingRecipe: boolean = false;
     public collecting: boolean = false;
     public collectedResources: { type: string, amount: number }[] = [];
 
@@ -39,7 +39,7 @@ export class ContextMenu implements IHasDrawable {
         this.demolishing = false;
         this.reopening = false;
         this.repairing = false;
-        this.switchingOutputs = false;
+        this.switchingRecipe = false;
         this.collecting = false;
         if (this.building) city.drawInFrontBuildings = [this.building];
         else city.drawInFrontBuildings = [];
@@ -66,7 +66,7 @@ export class ContextMenu implements IHasDrawable {
         if (this.demolishing) return this.lastDrawable = this.drawDemolitionConfirmation(building);
         if (this.repairing) return this.lastDrawable = this.drawRepairConfirmation(building);
         if (this.reopening) return this.lastDrawable = this.drawReopenConfirmation(building);
-        if (this.switchingOutputs) return this.lastDrawable = this.drawOutputSwitch(building);
+        if (this.switchingRecipe) return this.lastDrawable = this.drawRecipeSwitch(building);
 
         //Radial menu
         const menu = new Drawable({
@@ -97,7 +97,7 @@ export class ContextMenu implements IHasDrawable {
         }
         if (building.canStow(this.city!) && this.uiManager.isMyCity) {
             menu.addChild(new Drawable({
-                image: new TextureInfo(childWidth, childHeight, "ui/remove"), //TODO: Need better icons for these
+                image: new TextureInfo(childWidth, childHeight, "ui/remove"),
                 id: menu.id + ".remove",
                 onClick: () => {
                     this.city?.removeBuilding(building);
@@ -125,11 +125,11 @@ export class ContextMenu implements IHasDrawable {
                 onClick: () => { this.copying = true; }
             }));
         }
-        if (building.owned && this.uiManager.isMyCity && building.outputResourceOptions.length > 1) {
+        if (building.owned && this.uiManager.isMyCity && (building.outputResourceOptions.length > 1 || building.inputResourceOptions.length > 1)) {
             menu.addChild(new Drawable({
                 image: new TextureInfo(childWidth, childHeight, "ui/switch"),
                 id: menu.id + ".switch",
-                onClick: () => { this.switchingOutputs = true; }
+                onClick: () => { this.switchingRecipe = true; }
             }));
         }
         if (building.owned && this.uiManager.isMyCity && building instanceof SandsOfTime && (this.city?.resources.get(new Timeslips().type)?.amount ?? 0) >= 1) {
@@ -428,7 +428,11 @@ export class ContextMenu implements IHasDrawable {
     }
 
     //Also similar to the above, but shows a list of output resources (building.outputResourceOptions) and you can click any one of them to switch the building's output.
-    private drawOutputSwitch(building: Building) {
+    private drawRecipeSwitch(building: Building) { //Note: reused for input resource switching, too. If one building could have both, it'd need split up to either have two booleans or keep the directionText at the class level.
+        const directionText = building.outputResourceOptions.length > 1 ? "output" : "input";
+        const currentResource = directionText === "output" ? building.outputResources[0] : building.inputResources[0];
+        const resourceOptions = directionText === "output" ? building.outputResourceOptions : building.inputResourceOptions;
+
         const confirmation = new Drawable({
             x: building.x + (building.width - 1) / 2 - 2, //-2 x and +3 y for rough centering
             y: building.y - 1 + (building.height - 1) / 2 + 3,
@@ -448,12 +452,12 @@ export class ContextMenu implements IHasDrawable {
         }));
 
         //Current output icon
-        confirmation.addChild(new Drawable({
+        if (currentResource) confirmation.addChild(new Drawable({
             x: 58,
             y: 10,
             width: "48px",
             height: "48px",
-            image: new TextureInfo(48, 48, `resource/${building.outputResources[0].type}`),
+            image: new TextureInfo(48, 48, `resource/${currentResource.type}`),
         }));
 
         //Switch icon
@@ -472,7 +476,7 @@ export class ContextMenu implements IHasDrawable {
             y: 22,
             width: "204px",
             height: "24px",
-            text: "Switch output",
+            text: `Switch ${directionText}`,
             rightAlign: true,
         }));
 
@@ -482,12 +486,12 @@ export class ContextMenu implements IHasDrawable {
             y: nextY,
             width: "310px",
             height: "24px",
-            text: "Switch this building's output type:",
+            text: `Switch this building's ${directionText} type:`,
             wordWrap: true,
         }));
         nextY += 56; //Assuming it's two lines
 
-        building.outputResourceOptions.forEach((resource) => {
+        resourceOptions.forEach((resource) => {
             //Icon first, to the left of the text
             confirmation.addChild(new Drawable({
                 x: 10,
@@ -503,12 +507,17 @@ export class ContextMenu implements IHasDrawable {
                 height: "24px",
                 text: resource.displayName,
                 onClick: () => {
-                    //Collect as if you had clicked the building first
-                    this.city?.transferResourcesFrom(building.outputResources, "produce");
-                    building.outputResources = [resource.clone()];
+                    if (directionText === "output") {
+                        //Collect as if you had clicked the building first
+                        this.city?.transferResourcesFrom(building.outputResources, "produce");
+                        building.outputResources = [resource.clone()];
+                    } else {
+                        this.city?.transferResourcesFrom(building.inputResources, "cancel"); //Currently the only way you can take resources back out of a building's input slots.
+                        building.inputResources = [resource.clone()];
+                    }
                     this.game.fullSave();
                     this.building = null;
-                    this.switchingOutputs = false;
+                    this.switchingRecipe = false;
                 },
             }));
             nextY += 30;
@@ -542,7 +551,7 @@ export class ContextMenu implements IHasDrawable {
         const left = 50 - this.collectedResources.length * 14 - (this.collectedResources.length - 1) * 1.5;
         addResourceCosts(confirmation, this.collectedResources, left, nextY, false, false, false, 28, 3, 24, 3, undefined, undefined, undefined, true);
         nextY += 60;
-        if (this.city?.player.name === "eabrace") { //TODO: Consider locking behind a tech or a building (e.g., logistics center)
+        if (this.city?.player.name === "eabrace" || this.city?.presentBuildingCount.get(getBuildingType(LogisticsCenter))) {
             confirmation.addChild(new Drawable({
                 x: 5,
                 y: nextY,

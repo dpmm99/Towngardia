@@ -1,6 +1,6 @@
 import { Building } from "../game/Building.js";
 import { BuildingCategory } from "../game/BuildingCategory.js";
-import { CityHall, DepartmentOfEnergy, EnvironmentalLab, InformationCenter, PostOffice, SandsOfTime } from "../game/BuildingTypes.js";
+import { CityHall, DepartmentOfEnergy, EnvironmentalLab, FreeStuffTable, InformationCenter, MinigameMinilab, PostOffice, SandsOfTime } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
 import { Effect } from "../game/Effect.js";
@@ -8,7 +8,7 @@ import { TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICKS_PER_LONG_TICK } from "../game/FundamentalConstants.js";
 import { EffectType } from "../game/GridType.js";
 import { HIGH_TECH_UNLOCK_EDU } from "../game/HappinessCalculator.js";
-import { Timeslips } from "../game/ResourceTypes.js";
+import { MinigameOptionResearch, Timeslips, getResourceType } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -22,8 +22,15 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
     private scroller = new StandardScroller(false, true);
     private timeout: NodeJS.Timeout | null = null;
 
-    constructor(public city: City, public uiManager: UIManager, public building?: Building | undefined) {
+    constructor(public city: City, public uiManager: UIManager, private building?: Building | undefined) {
     }
+
+    show(building: Building | undefined): void {
+        this.building = building;
+        this.scroller.resetScroll();
+    }
+
+    isShown(): boolean { return !!this.building; }
 
     onResize():void { this.scroller.onResize(); }
 
@@ -212,7 +219,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
             const outputBonus = building.getEfficiencyEffectMultiplier(this.city); //Also appears in the efficiency number, but it's a bit confusing either way. Might need to redesign.
             for (const resource of building.outputResources) {
-                let text = `${humanizeFloor(resource.productionRate * outputBonus * LONG_TICKS_PER_DAY)} ${resource.type}/day`;
+                let text = `${humanizeFloor(resource.productionRate * outputBonus * LONG_TICKS_PER_DAY)} ${resource.displayName}/day`;
                 let grayscale = false;
                 if (resource.type === 'population') {
                     text = `Housing for ${humanizeFloor(resource.capacity)}`;
@@ -220,9 +227,12 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                     if (building.x !== -1 && building.owned) text = `Tourism: ${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)}`;
                     else text = `Tourism: up to ${humanizeFloor(resource.capacity)}`;
                     if (!this.city.flags.has(CityFlags.UnlockedTourism)) grayscale = true;
-                } else if (building.x !== -1 && building.owned) { //Don't show capacity or the guaranteed-0 in-stock amount for unplaced buildings; it just isn't needed
+                } else if (building.x !== -1 && building.owned && resource.capacity !== 0) { //Don't show capacity or the guaranteed-0 in-stock amount for unplaced buildings or if capacity is 0; it just isn't needed
                     text += ` (${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)})`;
+                } else if (resource.type === 'happiness') { //Happiness bonus isn't a "per day" thing or a capacity like the above; draw it as a "+0.01%" thing.
+                    text = "+" + Math.floor(building.lastEfficiency * resource.productionRate * 1000) / 10 + "% Happiness";
                 }
+                
                 infoDrawable.addChild(new Drawable({
                     x: padding,
                     y: nextY,
@@ -327,6 +337,8 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             else if (building instanceof DepartmentOfEnergy) nextY = this.addDepartmentOfEnergyInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
             else if (building instanceof EnvironmentalLab) nextY = this.addEnvironmentalLabInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
             else if (building instanceof SandsOfTime) nextY = this.addSandsOfTimeInfo(infoDrawable, padding, nextY, iconSize, barWidth);
+            else if (building instanceof FreeStuffTable) nextY = this.addFreeStuffInfo(infoDrawable, padding, nextY, barWidth);
+            else if (building instanceof MinigameMinilab) nextY = this.addMinigameMinilabInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
 
             //Patronage
             if (building.businessPatronCap && (building.roadConnected || !building.needsRoad)) {
@@ -379,7 +391,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             id: `${infoDrawable.id}.description`,
         }));
 
-        this.scroller.setChildrenSize(nextY - baseY + 140); //TODO: reeeeally need a text height estimator or something
+        this.scroller.setChildrenSize(nextY - baseY + 240); //TODO: reeeeally need a text height estimator or something
 
         return this.lastDrawable = infoDrawable;
     }
@@ -815,6 +827,91 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             text: "Available timeslips: " + Math.floor(timeslips.amount * 100) / 100 + "/" + timeslips.capacity,
         }));
         nextY += iconSize + 5;
+        return nextY;
+    }
+
+    private addFreeStuffInfo(infoDrawable: Drawable, padding: number, nextY: number, barWidth: number): number {
+        //Draw total happiness bonus for all minilabs in the city. No icon this time.
+        const freeStuff = this.city.buildings.filter(p => p instanceof FreeStuffTable).reduce((a, b) => a + b.lastEfficiency * b.outputResources[0].productionRate, 0); //No cap, but only <=1% each.
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: "24px",
+            text: "Total from Free Stuff: +" + (Math.floor(freeStuff * 1000) / 10) + "%",
+        }));
+        nextY += 24 + padding;
+        return nextY;
+    }
+
+    private addMinigameMinilabInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: MinigameMinilab, barWidth: number): number {
+        const resource = this.city.resources.get(getResourceType(MinigameOptionResearch))!;
+        const researchItem = building.getCurrentResearch(this.city);
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: iconSize + "px",
+            height: iconSize + "px",
+            image: new TextureInfo(iconSize, iconSize, `ui/minigames`),
+        }));
+
+        if (!researchItem) {
+            infoDrawable.addChild(new Drawable({
+                x: padding + iconSize + 5,
+                y: nextY + 8,
+                width: (barWidth - padding * 2 - iconSize - 5) + "px",
+                height: iconSize + "px",
+                text: "No more options to research.",
+                reddize: true,
+            }));
+            nextY += iconSize + 5;
+        } else {
+            infoDrawable.addChild(new Drawable({
+                x: padding + iconSize + 5,
+                y: nextY + 8,
+                width: (barWidth - padding * 2 - iconSize - 5) + "px",
+                height: iconSize + "px",
+                text: "Currently researching option:",
+            }));
+            nextY += iconSize + padding;
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: iconSize + "px",
+                text: researchItem.name,
+            }));
+            nextY += iconSize + 5;
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: iconSize + "px",
+                text: "For " + researchItem.game,
+            }));
+            nextY += iconSize + 5;
+            infoDrawable.addChild(new Drawable({
+                y: nextY,
+                width: "100%",
+                noXStretch: false,
+                height: "30px",
+                fallbackColor: '#666666',
+                image: new TextureInfo(200, 20, "ui/progressbg"),
+                children: [
+                    new Drawable({
+                        width: "100%",
+                        clipWidth: 0.03 + Math.min(1, Math.max(0, resource.amount)) * 0.94,
+                        noXStretch: false,
+                        height: "100%",
+                        fallbackColor: '#00ff11',
+                        image: new TextureInfo(200, 20, "ui/progressfg"),
+                        id: "timerProgress",
+                    })
+                ]
+            }));
+            nextY += 30 + padding;
+        }
+
         return nextY;
     }
 

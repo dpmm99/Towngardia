@@ -1,7 +1,7 @@
 import { City } from "../game/City.js";
 import { UIManager } from "../ui/UIManager.js";
 import { Resource } from "../game/Resource.js";
-import { Clothing, Electronics, Flunds, Gemstones, MonobrynthPlays, Research, Silicon, Tritium } from "../game/ResourceTypes.js";
+import { Clothing, Coal, Copper, Electronics, Flunds, Gemstones, Iron, Lithium, MonobrynthPlays, Oil, Research, Silicon, Steel, Tritium, Uranium, getResourceType } from "../game/ResourceTypes.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { Drawable } from "../ui/Drawable.js";
 import { addResourceCosts } from "../ui/UIUtil.js";
@@ -12,6 +12,8 @@ import { CityFlags } from "../game/CityFlags.js";
 import { TeleportationPod, getBuildingType } from "../game/BuildingTypes.js";
 import { Notification } from "../game/Notification.js";
 import { GameState } from "../game/GameState.js";
+import { drawMinigameOptions } from "../ui/MinigameOptions.js";
+import { filterConvertAwardWinnings, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
 const SYMBOL_COUNT = 6;
 const GRID_WIDTH = 5;
@@ -265,17 +267,45 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         this.game.fullSave();
     }
 
+    private getBestFuelType(): string {
+        const coal = this.city.buildings.filter(p => p.inputResources.some(q => q.type === getResourceType(Coal))).length;
+        const oil = this.city.buildings.filter(p => p.inputResources.some(q => q.type === getResourceType(Oil))).length;
+        const uranium = this.city.buildings.filter(p => p.inputResources.some(q => q.type === getResourceType(Uranium))).length;
+        const tritium = this.city.buildings.filter(p => p.inputResources.some(q => q.type === getResourceType(Tritium))).length;
+        const best = Math.max(coal, oil, uranium, tritium);
+        return best === tritium ? getResourceType(Tritium) : best === uranium ? getResourceType(Uranium) : best === oil ? getResourceType(Oil) : getResourceType(Coal);
+    }
+
     private calculateWinnings(): void {
         this.winnings = [];
-        if (this.score >= 5) this.winnings.push(new Silicon(Math.min(4, Math.round((this.score - 4) * 5) / 10)));
-        if (this.score >= 10) this.winnings.push(new Electronics(Math.min(4, Math.round((this.score - 9) * 2) / 10)));
-        if (this.score >= 15) this.winnings.push(new Gemstones(Math.min(4, Math.round(this.score - 14) / 10)));
-        if (this.score >= 20) {
-            if (this.city.resources.get(new Tritium().type)?.capacity) this.winnings.push(new Tritium(Math.min(4, Math.round((this.score - 19) * 2) / 10)));
-            else this.winnings.push(new Flunds(Math.min(20, Math.round((this.score - 19) * 10) / 10)));
+
+        //This minigame has a fairly low skill cap, so the rewards aren't too high. Note: minimum possible score is 28 if you play it perfectly and get unlucky with the artifact types.
+        if (this.city.minigameOptions.get("mb-r") === "1") {
+            //"Scraps" reward set--much more metals, fewer electronics, no research
+            this.winnings.push(new Copper(rangeMapLinear(this.score, 0.1, 6, 5, 20, 0.1))); //6*3=18
+            this.winnings.push(new Silicon(rangeMapLinear(this.score, 0.1, 7, 10, 35, 0.1))); //7*7=49
+            this.winnings.push(new Iron(rangeMapLinear(this.score, 0.1, 8, 15, 35, 0.1))); //8*2=16
+            this.winnings.push(new Steel(rangeMapLinear(this.score, 0.1, 3, 25, 30, 0.1))); //3*5=15
+            this.winnings.push(new Gemstones(rangeMapLinear(this.score, 0.1, 1, 25, 45, 0.1))); //1*9.5=9.5
+            this.winnings.push(new Lithium(rangeMapLinear(this.score, 0.1, 4, 30, 40, 0.1))); //4*5=20
+            this.winnings.push(new Electronics(rangeMapLinear(this.score, 0.1, 3, 30, 40, 0.1))); //3*8.5=25.5. Total: 153 (but no research)
+        } else if (this.city.minigameOptions.get("mb-r") === "2") {
+            //"Fuel Replicator" reward set--just fuel, equivalent to 100 flunds worth at 50 points, depending on what fuel you're currently using the most (defaults to Coal)
+            const rewardType = this.city.resources.get(this.getBestFuelType())?.clone() ?? new Coal();
+            rewardType.amount = rangeMapLinear(this.score, 0.1, 100, 15, 50, 0.1) / rewardType.sellPrice; //100 flunds worth at 50 points
+            this.winnings.push(new Research(rangeMapLinear(this.score, 0.1, 2, 20, 50, 0.1))); //Making up for the rest with research points
+            this.winnings.push(rewardType);
+        } else {
+            //"Artifacts" reward set--mainly valuables
+            this.winnings.push(new Silicon(rangeMapLinear(this.score, 0.1, 4, 5, 20, 0.1))); //4*7=28
+            this.winnings.push(new Electronics(rangeMapLinear(this.score, 0.1, 4, 10, 25, 0.1))); //4*8.5=34
+            this.winnings.push(new Gemstones(rangeMapLinear(this.score, 0.1, 4, 15, 45, 0.1))); //4*9.5=38
+            this.winnings.push(new Tritium(rangeMapLinear(this.score, 0.1, 4, 20, 35, 0.1))); //4*12=48. Total: 148
+            this.winnings.push(new Research(rangeMapLinear(this.score, 0.1, 1.5, 25, 50, 0.1))); //A lower limit--research points were way too easy to earn
         }
-        if (this.score >= 25) this.winnings.push(new Research((this.score - 24) / 20)); //Was way too easy to earn research points. 1 a day is still a lot.
-        this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
+
+        this.winnings = filterConvertAwardWinnings(this.city, this.winnings);
+        progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.06, 28, 78, 0.001));
     }
 
     public startGame(): void {
@@ -363,12 +393,15 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
     private drawStartOverlay(parent: Drawable): void {
         const overlay = parent.addChild(new Drawable({
+            y: -this.scroller.getScroll(),
             anchors: ["centerX"],
             centerOnOwnX: true,
             width: "min(100%, 600px)",
             height: "100%",
             fallbackColor: '#000000CC',
             id: "startOverlay",
+            onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, overlay.screenArea); },
+            onDragEnd: () => { this.scroller.resetDrag(); },
         }));
 
         if (this.howToPlayShown) {
@@ -376,21 +409,23 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             return;
         }
 
+        let nextY = 10;
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 10,
+            y: nextY,
             width: "100%",
             height: "48px",
             text: "Monobrynth",
         }));
+        nextY += 70;
 
-        this.drawClothingSelector(overlay);
+        nextY = this.drawClothingSelector(overlay, nextY);
 
         const startButton = overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 144,
+            y: nextY,
             width: "220px",
             height: "48px",
             fallbackColor: '#444444',
@@ -410,12 +445,13 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
         const unaffordable = !this.city.hasResources(this.costs, false);
         addResourceCosts(startButton, this.costs, 62, 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
+        nextY += 176;
 
         //How to play button
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 320,
+            y: nextY,
             width: "220px",
             height: "48px",
             fallbackColor: '#444444',
@@ -431,13 +467,14 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
                 })
             ]
         }));
+        nextY += 60;
 
         if (this.winnings.length) {
             //Draw the winnings from the last playthrough
             const winningsArea = overlay.addChild(new Drawable({
                 anchors: ['centerX'],
                 centerOnOwnX: true,
-                y: 380,
+                y: nextY,
                 width: "min(100%, 500px)",
                 height: "500px",
                 fallbackColor: '#444444',
@@ -473,14 +510,22 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
                 scaleYOnMobile: true
             }));
             addResourceCosts(winningsArea.children[winningsArea.children.length - 1], this.winnings, 0, 0, false, false, false, 64, 10, 32, 4);
+            nextY += 510;
         }
+
+        nextY = drawMinigameOptions(this.city, overlay, nextY, [
+            { group: "mb-r", id: "0", text: "Artifacts (+silicon, electronics, gemstones, tritium, research)", icon: "resource/electronics" },
+            { group: "mb-r", id: "1", text: "Scraps (+metals, gemstones, electronics)", icon: "resource/steel" },
+            { group: "mb-r", id: "2", text: "Fuel Replicator (+needed fuel, research)", icon: "resource/" + this.getBestFuelType() }]);
+
+        this.scroller.setChildrenSize(nextY);
     }
 
-    private drawClothingSelector(parent: Drawable): void {
+    private drawClothingSelector(parent: Drawable, nextY: number): number {
         const selector = parent.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 80,
+            y: nextY,
             width: "360px",
             height: "48px",
             fallbackColor: '#00000000',
@@ -531,6 +576,8 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
                     })
                 ]
             }));
+
+        return nextY + 64;
     }
 
     private changeClothing(change: number): void {

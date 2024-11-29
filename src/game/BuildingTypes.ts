@@ -5,11 +5,12 @@ import { Business } from "./Business.js";
 import { City } from "./City.js";
 import { FootprintType } from "./FootprintType.js";
 import { EffectType } from "./GridType.js";
-import { Apples, Apps, Batteries, Berries, Bricks, CAPACITY_MULTIPLIER, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Electronics, EnvironmentalLabBonus, Fish, Flunds, Furniture, Gemstones, Glass, Grain, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, Steel, Stone, Textiles, Timeslips, Tourists, Toys, Tritium, Uranium, VitaminB12, Wood } from "./ResourceTypes.js";
+import { Apples, Apps, BarPlays, Batteries, Berries, Bricks, CAPACITY_MULTIPLIER, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Electronics, EnvironmentalLabBonus, Fish, Flunds, Furniture, Gemstones, Glass, Grain, Happiness, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, MinigameOptionResearch, MonobrynthPlays, NepotismNetworkingPlays, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, PowerCosts, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, SlotsPlays, StarboxPlays, Steel, Stone, Textiles, Tourists, Toys, Tritium, Uranium, VitaminB12, Wood, getResourceType } from "./ResourceTypes.js";
 import { Geothermal } from "./TechTypes.js";
 import { Notification } from "./Notification.js";
 import { LONG_TICKS_PER_DAY } from "./FundamentalConstants.js";
 import { BuildingEffects, EffectDefinition } from "./BuildingEffects.js";
+import { CityFlags } from "./CityFlags.js";
 
 //This is a cache for the type string of a class. It's used to avoid creating an instance of a class just to get its type.
 const buildingTypeCache = new Map<Function, string>();
@@ -552,6 +553,72 @@ export class PostOffice extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 }
 
+export class LogisticsCenter extends Building {
+    constructor() {
+        super(
+            "logisticscenter", "Logistics Center", "A resource storage and distribution facility that can hold a little bit of a lot of things. Building one unlocks a button for collecting all resources across the entire city. It also provides space for you to build multiple Free Stuff tables, which distribute resources in exchange for happiness.",
+            BuildingCategory.GOVERNMENT,
+            3, 3, 0,
+            0.3,
+        );
+        this.stores.push(
+            //Same storage as Silo, Warehouse, and Cold Storage, plus a few Secure Storage items. No oil, no nuclear fuel, no apps, and not the other Secure Storage resources.
+            new Grain(), new Coal(), new Plastics(), new Sand(),
+            new Clay(), new Stone(), new Bricks(), new Glass(), new Concrete(), new Wood(), new Lumber(), new Iron(), new Steel(), new Rubber(), new Textiles(),
+            new Apples(), new Berries(), new LeafyGreens(), new Legumes(), new Poultry(), new RedMeat(), new RootVegetables(), new Dairy(), new PlantBasedDairy(), new Fish(), new Pharmaceuticals(), new VitaminB12(), new LabGrownMeat(),
+            new Furniture(), new Clothing(), new Toys(),
+        );
+        this.storeAmount = 10;
+        this.stampFootprint[1][1] = this.stampFootprint[1][2] = this.stampFootprint[2][1] = this.stampFootprint[2][2] = FootprintType.LOGISTICS;
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 400 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 15 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+    }
+}
+
+export class FreeStuffTable extends Building { //TODO: Might be another good event: free stuff "stolen"! Lose a portion of input resources depending on how bad your police coverage is (up to 25% for no citywide coverage + up to 75% for no local coverage).
+    constructor() {
+        super(
+            "freestuff", "Free Stuff Table", "A location dedicated to proving to your citizens that you have a heart... or at least a mildly sympathetic appendage. If you provide the resources, your city workers hand out free stuff here. Everybody loves free stuff! Actually, it might just be the thrill of unexpected urban generosity that tickles their fancy. Consumes some resources of your chosen type to directly increase happiness, but the effect weakens as population grows.",
+            BuildingCategory.GOVERNMENT,
+            1, 1, 0,
+            0.1,
+        );
+        this.inputResourceOptions = [new Toys(0, 0, 0.25), new Pharmaceuticals(0, 0, 0.25), new Clothing(0, 0, 0.5), new Furniture(0, 0, 0.5), new Batteries(0, 0, 0.75), new Paper(0, 0, 1.5)];
+        this.outputResources = [new Happiness(0, 0.01, 0, 0)];
+        this.checkFootprint[0][0] = FootprintType.LOGISTICS;
+        this.maxVariant = 1;
+    }
+
+    override placed(city: City): void {
+        this.variant = Math.floor(Math.random() * (this.maxVariant + 1)); //Random variant images, just two for now.
+        //Pick a random input resource if it doesn't already have one.
+        if (!this.inputResources.length) this.inputResources.push(this.inputResourceOptions[Math.floor(Math.random() * this.inputResourceOptions.length)].clone());
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 50 }, { type: "wood", amount: 3 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2; }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 1.25 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+    }
+
+    override onLongTick(city: City): void {
+        super.onLongTick(city);
+        this.outputResources[0].productionRate = 1 / Math.max(100, Math.sqrt(city.peakPopulation)); //1% until 10k population, decreasing to 0.5% at 40,000, 0.25% at 160k, 0.2% at 250k
+    }
+}
+
 export class DepartmentOfEnergy extends Building { //Unlocked by a tech. Increases city-wide power efficiency.
     constructor() {
         super(
@@ -617,6 +684,58 @@ export class EnvironmentalLab extends Building { //Unlocked by a tech. Decreases
     override onLongTick(city: City): void {
         super.onLongTick(city);
         city.resources.get(new EnvironmentalLabBonus().type)!.amount += this.lastEfficiency;
+    }
+}
+
+export class MinigameMinilab extends Building { //Could make it cost paper or toys in order to run, too...
+    constructor() {
+        super(
+            "minigameminilab", "Minigame Minilab", "Not happy with the kinds of rewards minigames give? Build this lab and keep it running! As you play minigames, the lab will research new options--the better you play, the faster the options unlock. The lab also generates extra minigame tokens at random. You may only build one.",
+            BuildingCategory.GOVERNMENT,
+            2, 1, 0,
+            0.2,
+        );
+    }
+
+    override isBuyable(city: City, bySpawner: boolean = false): boolean {
+        //Can only have one
+        return super.isBuyable(city, bySpawner) && (bySpawner || !city.presentBuildingCount.get(this.type));
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 950 }]; }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return 12; }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return []; }
+
+    override placed(city: City): void {
+        city.unlockedMinigameOptions.add("mb-r1"); //Monobrynth reward set 1. 0 is unlocked automatically when you open Monobrynth.
+    }
+
+    public getCurrentResearch(city: City): { id: string, game: string, name: string } | undefined {
+        if (!city.unlockedMinigameOptions.has("nn-r1")) return { id: "nn-r1", game: "Nepotism Networking", name: "Power Pals" };
+        if (!city.unlockedMinigameOptions.has("sb-r1")) return { id: "sb-r1", game: "Starbox", name: "Star Fuel" };
+        if (!city.unlockedMinigameOptions.has("mm-r1")) return { id: "mm-r1", game: "Memory Mixology", name: "Napkin Notes" };
+        if (!city.unlockedMinigameOptions.has("sb-r2")) return { id: "sb-r2", game: "Starbox", name: "Fermi Paradox" };
+        if (!city.unlockedMinigameOptions.has("nn-r2")) return { id: "nn-r2", game: "Nepotism Networking", name: "Industrial Invitees" };
+        if (!city.unlockedMinigameOptions.has("mb-r2")) return { id: "mb-r2", game: "Monobrynth", name: "Fuel Replicator" };
+    }
+
+    override onLongTick(city: City): void {
+        this.outputResources.splice(0, this.outputResources.length); //Clear the output resources so it doesn't try to produce them the normal way.
+        super.onLongTick(city);
+
+        //Pick a random minigame resource and add 0.1 times lastEfficiency--it's gotta keep running to keep generating plays. The plays it generates easily make up for its city service/power costs.
+        const unlockedMinigames = [new BarPlays()];
+        if (city.flags.has(CityFlags.UnlockedSlots)) unlockedMinigames.push(new SlotsPlays());
+        if (city.flags.has(CityFlags.UnlockedStarbox)) unlockedMinigames.push(new StarboxPlays());
+        if (city.flags.has(CityFlags.UnlockedMonobrynth)) unlockedMinigames.push(new MonobrynthPlays());
+        if (city.flags.has(CityFlags.UnlockedTourism)) unlockedMinigames.push(new NepotismNetworkingPlays());
+        const resource = unlockedMinigames[Math.floor(Math.random() * unlockedMinigames.length)];
+        city.resources.get(resource.type)!.produce(0.1 * this.lastEfficiency); //2.5 days for one extra token.
+
+        //Set outputResource[0] to the last type of token it generated, for display purposes.
+        this.outputResources.push(resource.clone({productionRate: 0.1, capacity: 0, amount: 0}));
     }
 }
 
@@ -863,7 +982,7 @@ export class WindTurbine extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const costReductionTech = city.techManager.getAdoption('windlattice');
-        return [{ type: "flunds", amount: (4 - costReductionTech) * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: (4 - costReductionTech) * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 20; }
@@ -887,7 +1006,7 @@ export class SolarFarm extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const costReductionTech = city.techManager.getAdoption('perovskitesolar');
-        return [{ type: "flunds", amount: (28 - 4 * costReductionTech) * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: (28 - 4 * costReductionTech) * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number {
@@ -913,7 +1032,7 @@ export class GeothermalPowerPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 16 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 16 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250; }
@@ -940,7 +1059,7 @@ export class OilPowerPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 7 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 7 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number {
@@ -965,7 +1084,7 @@ export class OilTruck extends Building {
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 80 }, { type: "steel", amount: 5 }]; }
 
-    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1.5 }]; }
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1.5 * (atEfficiency || city.resources.get(getResourceType(PowerCosts))!.amount) }]; }
 
     override placed(city: City) {
         this.onLongTick(city);
@@ -1017,7 +1136,7 @@ export class CoalPowerPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 10 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 10 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number {
@@ -1043,7 +1162,7 @@ export class CoalTruck extends Building {
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 70 }, { type: "steel", amount: 3 }]; }
 
-    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1.5 }]; }
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1.5 * (atEfficiency || city.resources.get(getResourceType(PowerCosts))!.amount) }]; }
 
     override placed(city: City) {
         this.onLongTick(city);
@@ -1091,7 +1210,7 @@ export class NuclearPowerPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 15 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 15 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number {
@@ -1116,7 +1235,7 @@ export class NuclearFuelTruck extends Building {
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 180 }, { type: "concrete", amount: 5 }, { type: "steel", amount: 5 }]; }
 
-    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 2.5 }]; }
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 2.5 * (atEfficiency || city.resources.get(getResourceType(PowerCosts))!.amount) }]; }
 
     override placed(city: City) {
         this.onLongTick(city);
@@ -1160,7 +1279,7 @@ export class FusionPowerPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 30 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 30 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number {
@@ -1186,7 +1305,7 @@ export class FusionFuelTruck extends Building {
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 150 }, { type: "steel", amount: 5 }]; }
 
-    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 2 }]; }
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 2 * (atEfficiency || city.resources.get(getResourceType(PowerCosts))!.amount) }]; }
 
     override placed(city: City) {
         this.onLongTick(city);
@@ -1241,6 +1360,7 @@ export class TreeFarm extends Building {
 
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 1 + 0.35 * city.techManager.getAdoption("gmcrops");
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 }
@@ -1279,6 +1399,7 @@ export class Farm extends Building {
         if (coldSnap && ["apples", "berries", "legumes"].includes(this.outputResources[0].type)) this.upkeepEfficiency *= 0.5;
 
         this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("gmcrops");
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 
@@ -1356,6 +1477,7 @@ export class AlgaeFarm extends Building {
 
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("gmcrops");
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 }
@@ -1449,6 +1571,7 @@ export class VerticalFarm extends Building {
         if (coldSnap && ["berries", "legumes"].includes(this.outputResources[0].type)) this.upkeepEfficiency *= 0.6;
 
         this.outputResources[0].productionRate = 5 + 1.67 * city.techManager.getAdoption("gmcrops");
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 
@@ -2885,6 +3008,30 @@ export class UrbanCampDome extends Building {
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 240 }, { type: "glass", amount: 30 }, { type: "plastics", amount: 5 }]; }
 }
 
+export class FlippinFun extends Building {
+    constructor() {
+        super(
+            "flippinfun", "Flippin' Fun", "A small pinball arcade, enclosed in glass to produce as many arcade addicts as possible. Not lucrative enough to qualify as a business, but a popular attraction for all (okay, most) ages nonetheless. High scores are recorded with 3-letter names to minimize opportunity for teenagers' favorite kind of words.",
+            BuildingCategory.LUXURY,
+            2, 1, 0,
+            0.2,
+        );
+        this.needsRoad = false; //DOES need power, unlike most luxury buildings.
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 7;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.15)]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 250 }, { type: "glass", amount: 10 }, { type: "electronics", amount: 5 }]; }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
+
+    override onLongTick(city: City): void {
+        this.upkeepEfficiency = city.events.find(p => p.type === "drought") ? 0 : 1;
+        super.onLongTick(city);
+    }
+}
+
 export class H2Whoa extends Building { //Light-up water jets, just a local luxury
     constructor() {
         super(
@@ -3730,11 +3877,11 @@ export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Industrial*/ MountainIronMine, Quarry, CementMill, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks, SiliconRefinery, CrystalMine, AssemblyHouse, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory, ToyManufacturer, Furnifactory, LithiumMine, MohoMine, Nanogigafactory, PharmaceuticalsLab, SpaceLaunchSite,
     /*Power*/ StarterSolarPanel, WindTurbine, SolarFarm, OilPowerPlant, OilTruck, GeothermalPowerPlant, CoalPowerPlant, CoalTruck, NuclearPowerPlant, NuclearFuelTruck, FusionPowerPlant, FusionFuelTruck,
     /*Agriculture*/ TreeFarm, Farm, Ranch, FishFarm, AlgaeFarm, PlantMilkPlant, VerticalFarm, Carnicultivator,
-    /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, TeleportationPod, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, DataCenter, NuclearStorage,
-    /*Government*/ CityHall, InformationCenter, PostOffice, DepartmentOfEnergy, EnvironmentalLab,
+    /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, TeleportationPod, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, LogisticsCenter, FreeStuffTable, DataCenter, NuclearStorage,
+    /*Government*/ CityHall, InformationCenter, PostOffice, DepartmentOfEnergy, EnvironmentalLab, MinigameMinilab,
     /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, Library, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, Observatory, QuantumComputingLab, WeatherControlMachine,
     /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse,
-    /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, Playground, UrbanCampDome, H2Whoa, SesharTower, MuseumOfFutureArts, SandsOfTime,
+    /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, Playground, UrbanCampDome, FlippinFun, H2Whoa, SesharTower, MuseumOfFutureArts, SandsOfTime,
     ].map(p => new p()).map(p => [p.type, p]));
 export function get(type: string): Building {
     return BUILDING_TYPES.get(type)!;
@@ -3748,4 +3895,4 @@ export const TUTORIAL_COMPLETION_BUILDING_UNLOCKS: Set<string> = new Set([
     ToyManufacturer, Furnifactory, LithiumMine,
     IceCreamTruck, PlantMilkPlant,
     SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, PalmNomNom, GregsGrogBarr, Casino, CartersCars, BlankCheckBank,
-    SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, H2Whoa].map(getBuildingType));
+    SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, FlippinFun, H2Whoa].map(getBuildingType));

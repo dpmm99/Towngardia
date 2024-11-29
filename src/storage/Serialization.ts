@@ -57,6 +57,8 @@ export class CitySerializer {
             gc: o.residenceSpawner?.globalSpawnChance ?? undefined,
             hb: [...o.happinessBreakdown],
             hx: [...o.happinessMaxima],
+            mo: [...o.minigameOptions],
+            uo: [...o.unlockedMinigameOptions],
             tp: o.trafficPrecalculation,
             ru: o.roadUpkeepPrecalculation,
         };
@@ -280,6 +282,8 @@ export class CityDeserializer {
         if (o.as) r.assists = this.assists(o.as, r);
         if (o.gc) r.residenceSpawner.globalSpawnChance = o.gc;
         if (o.hb) r.happinessBreakdown = new Map(o.hb);
+        if (o.mo) r.minigameOptions = new Map(o.mo);
+        if (o.uo) r.unlockedMinigameOptions = new Set(o.uo);
         if (r.happinessBreakdown.has("Food satisfaction")) r.happinessBreakdown.delete("Food satisfaction"); //I renamed it to "Food gratification" to match the citizen diet screen later
         if (o.hx) r.happinessMaxima = new Map(o.hx);
         return r;

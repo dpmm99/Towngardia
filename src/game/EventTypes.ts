@@ -7,7 +7,7 @@ import { CityFlags } from "./CityFlags.js";
 import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICK_TIME } from "./FundamentalConstants.js";
 import { EffectType } from "./GridType.js";
 import { inPlaceShuffle } from "./MiscFunctions.js";
-import { GreenhouseGases } from "./ResourceTypes.js";
+import { GreenhouseGases, PowerCosts, ProductionEfficiency, getResourceType } from "./ResourceTypes.js";
 
 export class Hauntymonth extends CityEvent {
     constructor() {
@@ -72,10 +72,29 @@ export class ProductionReward extends CityEvent { //Applies to physical resource
     }
 
     override onLongTick(city: City): boolean {
-        const productionResource = city.resources.get("prodeff");
+        const productionResource = city.resources.get(getResourceType(ProductionEfficiency));
 
         if (!this.variables.length) this.variables.push(0.05); //Default 5% bonus
         if (productionResource?.capacity) productionResource.amount *= 1 + this.variables[0]; //Bonus stays constant
+
+        return super.onLongTick(city);
+    }
+
+    //No shouldStart because it should never start on its own
+}
+
+export class PowerReward extends CityEvent {
+    constructor(initialDuration = 12, discountFraction = 0) {
+        super("powerreward", "Power Reward", initialDuration, "", "", undefined, EventTickTiming.Early);
+        if (discountFraction) this.variables.push(discountFraction);
+        this.duration = initialDuration;
+    }
+
+    override onLongTick(city: City): boolean {
+        const powerResource = city.resources.get(getResourceType(PowerCosts));
+
+        if (!this.variables.length) this.variables.push(0.05); //Default 5% discount
+        if (powerResource?.capacity) powerResource.amount *= 1 - this.variables[0]; //Discount stays constant
 
         return super.onLongTick(city);
     }
@@ -553,7 +572,7 @@ export class Spoilage extends CityEvent {
 
 export const EVENT_TYPES = <CityEvent[]>([
     /*Fixed seasonal events*/ Hauntymonth,
-    /*Minigame-triggered events*/ TourismReward, ProductionReward,
+    /*Minigame-triggered events*/ TourismReward, ProductionReward, PowerReward, //TODO: Others could be a temporary construction cost reduction and a temporary market buy price reduction
     /*Random negative events*/ Drought, Heatwave, ColdSnap, PowerOutage, Burglary, Heist, Epidemic, Fire, Earthquake, Riot, Spoilage,
     //...but Earthquake has positive effects, too: spawns a cheap geothermal power source sometimes, and spawns a hot spring the first time.
     /*Random positive events*/ EconomicBoom,

@@ -3,13 +3,14 @@ import { BuildingCategory } from "../game/BuildingCategory.js";
 import { BLOCKER_TYPES, BUILDING_TYPES } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { FootprintType } from "../game/FootprintType.js";
-import { TECH_TYPES } from "../game/TechTypes.js";
 
 const TILE_WIDTH : number = 64;
 const TILE_HEIGHT: number = 32;
 const DEVICE_PIXEL_RATIO: number = ((globalThis.devicePixelRatio || 1) + 1) / 2;
 const INVERSE_DEVICE_PIXEL_RATIO: number = 1 / DEVICE_PIXEL_RATIO;
-const BIGGER_MOBILE_RATIO: number = (globalThis.devicePixelRatio === 1 ? 1 : 2);
+const BIGGER_MOBILE_RATIO: number = (globalThis.devicePixelRatio === 1 ? 1 :
+    (/iPad|iPhone|iPod/.test(globalThis.navigator?.platform ?? "") || (globalThis.navigator?.platform === 'MacIntel' && globalThis.navigator.maxTouchPoints > 1)) ? 1.45 //iPhones with their nonstandard jank make the text way too big. Friend still has an iPhone 11.
+        : 1.8);
 const INVERSE_BIGGER_MOBILE_RATIO: number = 1 / BIGGER_MOBILE_RATIO;
 export { TILE_WIDTH, TILE_HEIGHT, DEVICE_PIXEL_RATIO, INVERSE_DEVICE_PIXEL_RATIO, BIGGER_MOBILE_RATIO, INVERSE_BIGGER_MOBILE_RATIO };
 
@@ -83,7 +84,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
         /*ContextMenu*/ 'info', 'move', 'remove', 'demolish', 'demolishnobg', 'buildcopy', 'switch', 'switchnobg', 'fastforward', 'fastforwardnobg',
         /*BudgetMenu*/ 'incometax', 'propertytax', 'salestax', 'budgetok', "fireprotection", "policeprotection", "healthcare", "education", "environment", "infrastructure", //Services might be resources, dunno
         /*TechTreeMenu*/ 'completeresearch', 'progressresearch', 'cannotresearch', 'adoptionrate',
-        /*NotificationsMenu*/ 'unread', 'notice', 'advisor',
+        /*NotificationsMenu*/ 'unread', 'notice', 'advisor', 'logistics', 'minigames',
         /*Events (could be automatic/generic)*/ 'coldsnap', 'blackout',
         /*Views bar*/ 'residentialdesirability', 'landvalue', 'luxury', 'businesspresence', 'pettycrime', 'organizedcrime', 'noise', 'particulatepollution', 'greenhousegases', 'placementgrid', 'efficiencyview', 'hidebuildings', 'fadebuildings', //Others Copilot spat out, some of which I likely do want: 'firehazard', 'healthhazard', 'unemployment', 'traffic', 'infrastructure', 'happiness', 'population'
         /*errors and view-specific icons on any building*/ 'noroad', 'nopower', 'outage', 'fire', 'provision', 'cannotprovision', 'reopen', 'errorbackdrop', 'warningbackdrop', 'collectionbackdrop', 'resourceborder', 'willupgrade', 'publictransport',
@@ -116,6 +117,8 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     delete urls["resource/doebonus"];
     delete urls["resource/elbonus"];
     delete urls["resource/timeslips"];
+    delete urls["resource/powercosts"];
+    delete urls["resource/miniresearch"];
 
     //TODO: Any other UI elements would also need to be here. Could actually just grab the Drawables, but...a bit heavyweight
     return urls;

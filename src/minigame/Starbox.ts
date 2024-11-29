@@ -1,17 +1,21 @@
 import { City } from "../game/City.js";
 import { GameState } from "../game/GameState.js";
 import { Resource } from "../game/Resource.js";
-import { Copper, Flunds, Iron, Research, Silicon, StarboxPlays, Stone, Tritium, Uranium } from "../game/ResourceTypes.js";
+import { Coal, Copper, Electronics, Flunds, Grain, Iron, LeafyGreens, Oil, Research, Silicon, StarboxPlays, Stone, Tritium, Uranium, Wood } from "../game/ResourceTypes.js";
 import { Drawable } from "../ui/Drawable.js";
 import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { IOnResizeEvent } from "../ui/IOnResizeEvent.js";
+import { drawMinigameOptions } from "../ui/MinigameOptions.js";
+import { StandardScroller } from "../ui/StandardScroller.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { UIManager } from "../ui/UIManager.js";
 import { addResourceCosts } from "../ui/UIUtil.js";
+import { filterConvertAwardWinnings, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
 export class Starbox implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
     private shown: boolean = false;
+    private scroller = new StandardScroller(false, true);
     private howToPlayShown: boolean = false;
     private gameStarted: boolean = false;
     private winnings: Resource[] = [];
@@ -39,6 +43,20 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) {
         this.initializeGame();
+    }
+
+    public onKeyDown(event: KeyboardEvent): void {
+        if (this.shown && this.gameStarted && !this.userInputLocked) {
+            switch (event.key) { //I just configured it for both Dvorak and Qwerty. Probably will never try to support arbitrary setups.
+                case "a": case "ArrowLeft": this.moveLeft(); break;
+                case "d": case "e": case "ArrowRight": this.moveRight(); break;
+                case "w": case ",": case "ArrowUp": this.rotateClockwise(); break;
+                case "s": case "o": case "ArrowDown": this.rotateCounterclockwise(); break;
+                case " ": this.dropPiece(); break;
+                case "b": case "x": case "q": this.useBlackHole(); break;
+            }
+            this.uiManager.frameRequested = true;
+        }
     }
 
     private initializeGame(): void {
@@ -105,33 +123,43 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             clearTimeout(this.timerTimeout);
         }
         this.winnings = [];
-        const rewardFlunds = new Flunds();
-        if (this.totalStarsDestroyed > 40) this.winnings.push(new Silicon(Math.min(4, Math.floor((this.totalStarsDestroyed - 30) / 10))));
-        if (this.totalStarsDestroyed > 60) this.winnings.push(new Stone(Math.min(4, Math.floor((this.totalStarsDestroyed - 50) / 10))));
-        if (this.totalStarsDestroyed > 80) this.winnings.push(new Iron(Math.min(4, Math.floor((this.totalStarsDestroyed - 70) / 10))));
-        if (this.totalStarsDestroyed > 100) this.winnings.push(new Copper(Math.min(4, Math.floor((this.totalStarsDestroyed - 90) / 10))));
-        if (this.totalStarsDestroyed > 120) this.winnings.push(new Research(Math.min(2, (this.totalStarsDestroyed - 120) / 30))); //A smoother increase but lower limit--research points were way too easy to earn
-        if (this.totalStarsDestroyed > 140) {
-            if (this.city.resources.get(new Uranium().type)?.capacity) this.winnings.push(new Uranium(Math.min(4, Math.floor((this.totalStarsDestroyed - 115) / 4))));
-            else rewardFlunds.amount += Math.min(10, Math.floor(this.totalStarsDestroyed - 118));
-        }
-        if (this.totalStarsDestroyed > 160) {
-            if (this.city.resources.get(new Tritium().type)?.capacity) this.winnings.push(new Tritium(Math.min(4, Math.floor((this.totalStarsDestroyed - 125) / 3))));
-            else rewardFlunds.amount += Math.min(20, Math.floor((this.totalStarsDestroyed - 128) * 1.2));
-        }
-        if (this.totalStarsDestroyed > 180) rewardFlunds.amount += 20;
-        if (this.totalStarsDestroyed > 200) rewardFlunds.amount += 20;
-        if (this.totalStarsDestroyed > 220) rewardFlunds.amount += 20;
-        if (rewardFlunds.amount > 0) this.winnings.push(rewardFlunds);
-        this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
+        let extraFlunds = 0;
 
+        //Note: My score tends to be about 260-280, and I like to think I'm pretty good, so rewards should cap around 220-240.
+        //This minigame has a higher skill cap than most of them, so the rewards are much more meaningful than the others.
+        if (this.city.minigameOptions.get("sb-r") === "1") {
+            //"Star Fuel" reward set--higher minimum, just nuclear fuel, lower total flunds value
+            this.winnings.push(new Uranium(rangeMapLinear(this.totalStarsDestroyed, 0.5, 6, 70, 220, 0.1))); //6*9=54
+            this.winnings.push(new Tritium(rangeMapLinear(this.totalStarsDestroyed, 0.5, 6, 110, 240, 0.1))); //6*12=72. Sum of all: 126 flunds
+        } else if (this.city.minigameOptions.get("sb-r") === "2") {
+            //"Fermi Paradox" reward set: silicon, a few plants, coal, oil, electronics, research points
+            this.winnings.push(new Silicon(rangeMapLinear(this.totalStarsDestroyed, 0.1, 5, 30, 100, 0.1))); //5*7=35
+            this.winnings.push(new Grain(rangeMapLinear(this.totalStarsDestroyed, 0.1, 16, 40, 180, 0.1))); //16*1=16
+            this.winnings.push(new Wood(rangeMapLinear(this.totalStarsDestroyed, 0.1, 20, 80, 260, 0.1))); //20*1=20
+            this.winnings.push(new Coal(rangeMapLinear(this.totalStarsDestroyed, 0.1, 6, 100, 220, 0.1))); //4*6=24
+            this.winnings.push(new Oil(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 120, 240, 0.1))); //4*5=20
+            this.winnings.push(new Electronics(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 140, 280, 0.1))); //4*8.5=34. Sum of all: 149 flunds
+            this.winnings.push(new Research(rangeMapLinear(this.totalStarsDestroyed, 0.1, 2, 160, 280, 0.1))); //A lower limit--research points were way too easy to earn
+        } else {
+            //"Elements" reward set
+            this.winnings.push(new Silicon(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 30, 80, 0.1))); //4*7=28
+            this.winnings.push(new Stone(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 40, 110, 0.1))); //4*3=12
+            this.winnings.push(new Iron(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 60, 140, 0.1))); //4*2=8
+            this.winnings.push(new Copper(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 100, 160, 0.1))); //4*3=12
+            this.winnings.push(new Research(rangeMapLinear(this.totalStarsDestroyed, 0.1, 2, 120, 280, 0.1))); //A lower limit--research points were way too easy to earn
+            this.winnings.push(new Uranium(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 150, 220, 0.1))); //4*9=36
+            this.winnings.push(new Tritium(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 170, 240, 0.1))); //4*12=48. Sum of all: 144 flunds
+        }
+
+        this.winnings = filterConvertAwardWinnings(this.city, this.winnings, extraFlunds);
+        progressMinigameOptionResearch(this.city, rangeMapLinear(this.totalStarsDestroyed, 0.01, 0.07, 100, 300, 0.001));
         this.game.fullSave();
         this.userInputLocked = true;
         setTimeout(() => { this.gameStarted = false; }, 1000); //Will wait for the user to tap to continue.
     }
 
     onResize(): void {
-        // Handle resize if needed
+        this.scroller.onResize();
     }
 
     asDrawable(): Drawable {
@@ -622,8 +650,16 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         }
     }
 
+    private toggleRules(): void {
+        this.howToPlayShown = !this.howToPlayShown;
+        if (this.howToPlayShown) {
+            this.scroller.resetScroll();
+        }
+    }
+
     private drawStartOverlay(parent: Drawable): void {
         const overlay = parent.addChild(new Drawable({
+            y: -this.scroller.getScroll(),
             anchors: ["centerX"],
             centerOnOwnX: true,
             width: "min(100%, 600px)",
@@ -633,7 +669,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         }));
 
         if (this.howToPlayShown) {
-            overlay.onClick = () => this.howToPlayShown = false;
+            overlay.onClick = () => this.toggleRules();
             let parent = overlay;
             parent.addChild(new Drawable({
                 anchors: ['centerX'],
@@ -819,48 +855,54 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
                 text: "That's all there is to it! Go fuse some stars and earn some metal!",
                 wordWrap: true,
             }));
+
+            this.scroller.setChildrenSize(1100);
             return;
         }
 
         //Title
+        let nextY = 10;
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 10,
+            y: nextY,
             width: "100%",
             height: "48px",
             text: "Starbox",
         }));
+        nextY += 70;
 
         //Slot
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 80,
+            y: nextY,
             width: "128px",
             height: "128px",
             image: new TextureInfo(128, 128, "minigame/starcoinslot"),
             id: "coinSlot",
             onClick: () => this.startGame(),
         }));
+        nextY += 140;
 
         //Arrow pointing to slot
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 210,
+            y: nextY,
             width: "64px",
             height: "64px",
             image: new TextureInfo(64, 64, "minigame/stararrowup"),
             id: "arrowUp",
             onClick: () => this.startGame(),
         }));
+        nextY += 70;
 
         //Start button
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 280,
+            y: nextY,
             width: "220px",
             height: "48px",
             fallbackColor: '#444444',
@@ -881,16 +923,17 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         //Play cost (one starbox token)
         this.costs[0].reddize = !this.city.hasResources(this.costs, false);
         addResourceCosts(overlay.children[overlay.children.length - 1], this.costs, 86, 58, false, false, false, 48, 10, 32);
+        nextY += 170;
 
         //How to play button
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 450,
+            y: nextY,
             width: "220px",
             height: "48px",
             fallbackColor: '#444444',
-            onClick: () => { this.howToPlayShown = true; },
+            onClick: () => this.toggleRules(),
             children: [
                 new Drawable({
                     anchors: ["centerX"],
@@ -902,13 +945,14 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
                 })
             ]
         }));
+        nextY += 60;
 
         if (this.winnings.length) {
             //Draw the winnings from the last playthrough
             const winningsArea = overlay.addChild(new Drawable({
                 anchors: ['centerX'],
                 centerOnOwnX: true,
-                y: 510,
+                y: nextY,
                 width: "min(100%, 500px)",
                 height: "500px",
                 fallbackColor: '#444444',
@@ -944,7 +988,15 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
                 scaleYOnMobile: true
             }));
             addResourceCosts(winningsArea.children[winningsArea.children.length - 1], this.winnings, 0, 0, false, false, false, 64, 10, 32, 4);
+            nextY += 510;
         }
+
+        nextY = drawMinigameOptions(this.city, overlay, nextY, [
+            { group: "sb-r", id: "0", text: "Elements (+elements, research)", icon: "resource/silicon" },
+            { group: "sb-r", id: "1", text: "Star Fuel (+uranium, tritium)", icon: "resource/tritium" },
+            { group: "sb-r", id: "2", text: "Fermi Paradox (+organics, electronics, research)", icon: "resource/oil" }]);
+
+        this.scroller.setChildrenSize(nextY);
     }
 
     getLastDrawable(): Drawable | null {

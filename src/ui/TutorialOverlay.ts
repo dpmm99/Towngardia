@@ -747,6 +747,17 @@ export class TutorialOverlay implements IHasDrawable {
             });
         }
 
+        //Not a perfectly accurate solution, but "on PC", let's replace "[Ll]ong-tap" and then "[Tt]ap" with "[Rr]ight-click" and "[Cc]lick".
+        if (navigator.maxTouchPoints === 0) {
+            steps.filter(p => p.content.text).forEach(p => {
+                p.content.text = p.content.text!
+                    .replace(/\blong-tapping\b/g, "right-clicking").replace(/\bLong-tapping\b/g, "Right-clicking")
+                    .replace(/\blong-tap\b/g, "right-click").replace(/\bLong-tap\b/g, "Right-click")
+                    .replace(/\btapping\b/g, "clicking").replace(/\bTapping\b/g, "Clicking")
+                    .replace(/\btap\b/g, "click").replace(/\bTap\b/g, "Click");
+            });
+        }
+
         return steps;
     }
 

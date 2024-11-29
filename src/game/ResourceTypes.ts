@@ -45,6 +45,16 @@ export class ProductionEfficiency extends Resource {
     }
 }
 
+export class PowerCosts extends Resource {
+    constructor(initialCount: number = 1) {
+        super(
+            "powercosts", "Power Costs",
+            initialCount, 0, Number.MAX_SAFE_INTEGER, 0,
+            true
+        );
+    }
+}
+
 export class DeptOfEnergyBonus extends Resource {
     constructor(initialCount: number = 0) {
         super(
@@ -140,6 +150,16 @@ export class NepotismNetworkingPlays extends Resource {
         super(
             "neponetplays", "Nepotism Networking Plays",
             initialCount, productionRate, capacity, consumptionRate,
+            true
+        );
+    }
+}
+
+export class MinigameOptionResearch extends Resource {
+    constructor(initialCount: number = 0) {
+        super(
+            "miniresearch", "Minigame Option Research",
+            initialCount, 0, 1, 0,
             true
         );
     }
@@ -678,8 +698,8 @@ export const RESOURCE_TYPES = <Resource[]>([
     /*Building materials*/ Concrete, Glass, Iron, Bricks, Clay, Lumber, Steel, Stone, Wood,
     /*Fuel and ingredients*/ Coal, Copper, Gemstones, Lithium, Oil, Plastics, Rubber, Sand, Silicon, Textiles, Tritium, Uranium,
     /*Manufactured goods*/ Apps, Batteries, Clothing, Electronics, Furniture, Paper, Pharmaceuticals, Toys,
-    /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays,
-    /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, DeptOfEnergyBonus, EnvironmentalLabBonus,
+    /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays, MinigameOptionResearch,
+    /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, PowerCosts, DeptOfEnergyBonus, EnvironmentalLabBonus,
     /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Timeslips, Water].map(p => new p()));
 
 //For easy checking if something is a food.

@@ -321,15 +321,7 @@ export class GMCrops extends Tech {
         );
     }
 
-    override applyEffects(city: City) {
-        //Affects placed, unplaced, AND template buildings directly. Production rate is handled in the buildings' onLongTick.
-        const isFarm = (p: Building): boolean => p instanceof Farm || p instanceof VerticalFarm || p instanceof TreeFarm || p instanceof AlgaeFarm;
-        for (const building of city.buildings.filter(isFarm).concat(city.unplacedBuildings.filter(isFarm)).concat(city.buildingTypes.filter(isFarm))) {
-            for (const resource of building.outputResources.concat(building.outputResourceOptions)) {
-                resource.capacity *= 1.3334;
-            }
-        }
-    }
+    //Production rate and capacity changes are handled in the buildings' onLongTick.
 }
 
 export class RetainingSoil extends Tech { //TODO: the water usage part

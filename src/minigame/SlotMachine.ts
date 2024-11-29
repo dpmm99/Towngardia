@@ -8,6 +8,7 @@ import { StandardScroller } from "../ui/StandardScroller.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { UIManager } from "../ui/UIManager.js";
 import { addResourceCosts } from "../ui/UIUtil.js";
+import { progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
 enum Face {
     FatCat,
@@ -366,11 +367,16 @@ export class SlotMachine implements IHasDrawable, IOnResizeEvent {
         const uniqueFaces = new Set(result);
 
         if (uniqueFaces.size === 1) { //3 matching faces
-            this.winnings = this.currentBet * this.scoringRules.find(p => p.face === result[0])!.multiplier;
+            const multiplier = this.scoringRules.find(p => p.face === result[0])!.multiplier;
+            this.winnings = this.currentBet * multiplier;
+            //Progress the other minigames' options research: 5x win yields 5.0%-11.4%. 17x win yields 18.9%-43.4%. 69x win yields 29.9%-68.9%. Absolute max win is 99.2%.
+            progressMinigameOptionResearch(this.city, rangeMapLinear(Math.log10(multiplier - 3) * Math.log(this.currentBet), 0, 1, 0, 14, 0.001));
         } else if (uniqueFaces.size === 2) { //Any pair
             this.winnings = this.currentBet;
+            progressMinigameOptionResearch(this.city, 0.005); //+0.5% if you come out even
         } else { //No match
             this.winnings = 0;
+            progressMinigameOptionResearch(this.city, 0.001); //+0.1% if you lose
         }
 
         this.city.resources.get('flunds')!.amount += this.winnings;

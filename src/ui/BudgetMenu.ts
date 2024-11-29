@@ -201,9 +201,9 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
             this.taxSliders[arr[0]].setValue((arr[1] * 100) + "%");
         });
         Object.entries(this.budget.serviceAllocations).forEach(arr => {
-            if (arr[0] === "power") this.serviceSliders[arr[0]].setValue((this.budget.powerImportLimit * 100) + "%");
-            else this.serviceSliders[arr[0]].setValue((arr[1] * 100) + "%");
+            this.serviceSliders[arr[0]].setValue((arr[1] * 100) + "%");
         });
+        this.serviceSliders["power"].setValue((this.budget.powerImportLimit * 100) + "%");
 
         this.scroller.resetScroll();
         this.shown = true;

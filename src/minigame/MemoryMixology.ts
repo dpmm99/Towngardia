@@ -10,10 +10,12 @@ import { BarPlays, Flunds } from "../game/ResourceTypes.js";
 import { Drawable } from "../ui/Drawable.js";
 import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { IOnResizeEvent } from "../ui/IOnResizeEvent.js";
+import { drawMinigameOptions } from "../ui/MinigameOptions.js";
 import { StandardScroller } from "../ui/StandardScroller.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { UIManager } from "../ui/UIManager.js";
-import { addResourceCosts } from "../ui/UIUtil.js";
+import { addResourceCosts, longTicksToDaysAndHours } from "../ui/UIUtil.js";
+import { progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
 interface Recipe {
     name: string;
@@ -215,14 +217,18 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
 
         this.wonTourismTicks = this.wonProductionTicks = 0;
-        if (this.city.flags.has(CityFlags.UnlockedTourism) && this.score >= 10) {
-            this.wonTourismTicks = Math.ceil(LONG_TICKS_PER_DAY * this.score / 25); //Up to 2 days worth of a tourism boost
-            this.city.events.push(new TourismReward(this.wonTourismTicks));
-            this.city.checkAndAwardTitle(TitleTypes.SmartCityShowcase.id);
-        } else if (this.score >= 10) { //May make this into a switchable reward later if I implement the Minigame Research Lab idea.
-            this.wonProductionTicks = Math.ceil(LONG_TICKS_PER_DAY * this.score / 25);
-            this.city.events.push(new ProductionReward(this.wonProductionTicks));
+        if (this.city.minigameOptions.get("mm-r") === "1" || !this.city.flags.has(CityFlags.UnlockedTourism)) { //Default reward before tourism is unlocked, but also selectable later on
+            this.wonProductionTicks = rangeMapLinear(this.score, 1, LONG_TICKS_PER_DAY * 2, 5, 50, 1);
+            if (this.wonProductionTicks) this.city.events.push(new ProductionReward(this.wonProductionTicks, 0.05));
+        } else {
+            this.wonTourismTicks = rangeMapLinear(this.score, 1, LONG_TICKS_PER_DAY * 2, 5, 50, 1); //Up to 2 days worth of a tourism boost
+            if (this.wonTourismTicks) {
+                this.city.events.push(new TourismReward(this.wonTourismTicks, 0.05));
+                this.city.checkAndAwardTitle(TitleTypes.SmartCityShowcase.id);
+            }
         }
+
+        progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.05, 25, 50, 0.001));
         this.game.fullSave();
     }
 
@@ -424,12 +430,15 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
 
     private drawStartOverlay(parent: Drawable): void {
         const overlay = parent.addChild(new Drawable({
+            y: -this.scroller.getScroll(),
             anchors: ["centerX"],
             centerOnOwnX: true,
             width: "min(100%, 600px)",
             height: "100%",
             fallbackColor: '#000000CC',
             id: "startOverlay",
+            onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, overlay.screenArea); },
+            onDragEnd: () => { this.scroller.resetDrag(); },
         }));
 
         if (this.howToPlayShown) {
@@ -437,19 +446,21 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             return;
         }
 
+        let nextY = 10;
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 10,
+            y: nextY,
             width: "100%",
             height: "48px",
             text: "Memory Mixology",
         }));
+        nextY += 70;
 
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 80,
+            y: nextY,
             width: "220px",
             height: "48px",
             fallbackColor: '#444444',
@@ -469,34 +480,37 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
 
         this.costs[0].reddize = !this.city.hasResources(this.costs, false);
         addResourceCosts(overlay.children[overlay.children.length - 1], this.costs, 86, 58, false, false, false, 48, 10, 32);
+        nextY += 160;
 
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 240,
+            y: nextY,
             width: "64px",
             height: "64px",
             image: new TextureInfo(64, 64, "minigame/bararrowdown"),
             id: "arrowDown",
             onClick: () => this.startGame(),
         }));
+        nextY += 80;
 
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 320,
+            y: nextY,
             width: "128px",
             height: "128px",
             image: new TextureInfo(128, 128, "minigame/bartipjar"),
             id: "tipJar",
             onClick: () => this.startGame(),
         }));
+        nextY += 140;
 
         //How to play button
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 460,
+            y: nextY,
             width: "220px",
             height: "48px",
             fallbackColor: '#444444',
@@ -512,15 +526,16 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
                 })
             ]
         }));
+        nextY += 60;
 
         if (this.winnings.length) {
             //Draw the winnings from the last playthrough
             const winningsArea = overlay.addChild(new Drawable({
                 anchors: ['centerX'],
                 centerOnOwnX: true,
-                y: 520,
+                y: nextY,
                 width: "min(100%, 500px)",
-                height: "500px",
+                height: "320px",
                 fallbackColor: '#444444',
                 id: "winningsArea"
             }));
@@ -528,8 +543,6 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             winningsArea.addChild(new Drawable({
                 anchors: ['centerX'],
                 centerOnOwnX: true,
-                biggerOnMobile: true,
-                scaleYOnMobile: true,
                 y: 10,
                 width: "250px",
                 height: "32px",
@@ -539,8 +552,6 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             winningsArea.addChild(new Drawable({
                 anchors: ['centerX'],
                 centerOnOwnX: true,
-                biggerOnMobile: true,
-                scaleYOnMobile: true,
                 y: 58,
                 width: "250px",
                 height: "32px",
@@ -551,50 +562,71 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
                 y: 100,
                 width: "100%",
                 fallbackColor: '#00000000',
-                scaleYOnMobile: true
             }));
             addResourceCosts(winningsArea.children[winningsArea.children.length - 1], this.winnings, 0, 0, false, false, false, 64, 10, 32, 4);
 
-            let nextY = 220;
+            let nextWY = 220;
             if (this.wonTourismTicks) {
                 //Only show the tourism reward if they won one
                 winningsArea.addChild(new Drawable({
                     x: 20,
-                    y: nextY,
+                    y: nextWY,
                     width: "48px",
                     height: "48px",
                     image: new TextureInfo(64, 64, "resource/tourists"),
-                    scaleYOnMobile: true,
                 }));
                 winningsArea.addChild(new Drawable({
                     x: 80,
-                    y: nextY + 10,
+                    y: nextWY + 10,
                     width: "390px",
                     height: "36px",
-                    text: `${this.wonTourismTicks * (24 / LONG_TICKS_PER_DAY)} hours of slightly boosted tourism`,
-                    scaleYOnMobile: true,
+                    text: `+5% tourism`,
                 }));
-                nextY += 58;
+                nextWY += 58;
+                winningsArea.addChild(new Drawable({
+                    anchors: ['centerX'],
+                    centerOnOwnX: true,
+                    y: nextWY,
+                    width: "calc(100% - 40px)",
+                    height: "32px",
+                    text: `Decreases evenly over ${longTicksToDaysAndHours(this.wonTourismTicks)}`,
+                }));
+                nextWY += 42;
             }
             if (this.wonProductionTicks) {
                 winningsArea.addChild(new Drawable({
                     x: 20,
-                    y: nextY,
+                    y: nextWY,
                     width: "48px",
                     height: "48px",
                     image: new TextureInfo(64, 64, "ui/resources"),
-                    scaleYOnMobile: true,
                 }));
                 winningsArea.addChild(new Drawable({
                     x: 80,
-                    y: nextY + 10,
+                    y: nextWY + 10,
                     width: "390px",
                     height: "36px",
-                    text: `${this.wonProductionTicks * (24 / LONG_TICKS_PER_DAY)} hours of slightly boosted production`,
-                    scaleYOnMobile: true,
+                    text: "+5% factory output",
                 }));
+                nextWY += 58;
+                winningsArea.addChild(new Drawable({
+                    anchors: ['centerX'],
+                    centerOnOwnX: true,
+                    y: nextWY,
+                    width: "calc(100% - 40px)",
+                    height: "32px",
+                    text: `Decreases evenly over ${longTicksToDaysAndHours(this.wonProductionTicks)}`,
+                }));
+                nextWY += 42;
             }
+            nextY += 350;
         }
+
+        nextY = drawMinigameOptions(this.city, overlay, nextY, [
+            { group: "mm-r", id: "0", text: "Pressuring Patrons (+tourism)", icon: "resource/tourists" },
+            { group: "mm-r", id: "1", text: "Napkin Notes (+production)", icon: "ui/resources" }]);
+
+        this.scroller.setChildrenSize(nextY);
     }
 
     private toggleRules(): void {
@@ -609,19 +641,17 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         parent.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 10 - this.scroller.getScroll(),
+            y: 10,
             width: "100%",
             height: "48px",
             text: "Memory Mixology Rules",
         }));
 
         root.onClick = () => this.toggleRules();
-        root.onDrag = (x: number, y: number) => { this.scroller.handleDrag(y, root.screenArea); };
-        root.onDragEnd = () => { this.scroller.resetDrag(); };
 
         parent = parent.addChild(new Drawable({
             x: 20,
-            y: 80 - this.scroller.getScroll(),
+            y: 80,
             width: "calc(100% - 40px)",
             height: "40px",
             wordWrap: true,

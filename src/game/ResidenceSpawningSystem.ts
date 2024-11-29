@@ -152,7 +152,7 @@ export class ResidenceSpawningSystem {
         }
 
         for (const home of suckyHomes) {
-            this.city.removeBuilding(home.building);
+            this.city.removeBuilding(home.building, true);
         }
     }
 

@@ -29,7 +29,7 @@ export class Region {
             } else if (building.removedInVersion && cityRegionVersion < building.removedInVersion) { //Remove if it exists
                 [...city.getBuildingsInArea(building.x, building.y, 1, 1, 0, 0)]
                     .filter(p => p instanceof building.buildingType && p.x === building.x && p.y === building.y)
-                    .forEach(b => city.removeBuilding(b));
+                    .forEach(b => city.removeBuilding(b, true));
             }
         });
 

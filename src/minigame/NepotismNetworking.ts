@@ -9,10 +9,12 @@ import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { IOnResizeEvent } from "../ui/IOnResizeEvent.js";
 import { StandardScroller } from "../ui/StandardScroller.js";
 import { inPlaceShuffle } from "../game/MiscFunctions.js";
-import { TourismReward } from "../game/EventTypes.js";
+import { PowerReward, ProductionReward, TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
 import { Assist } from "../game/Assist.js";
 import { GameState } from "../game/GameState.js";
+import { drawMinigameOptions } from "../ui/MinigameOptions.js";
+import { progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
 // Constants
 const GRID_WIDTH = 4;
@@ -62,7 +64,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
     private scroller = new StandardScroller(false, true);
     private howToPlayShown: boolean = false;
     private gameStarted: boolean = false;
-    private winnings: TourismReward | null = null;
+    private winnings: TourismReward | ProductionReward | PowerReward | null = null;
     private score: number = 0; //Should be something like 10 per consecutive completed row plus 1 per connected tile below the last completed row
     private timer: number = GAME_DURATION;
     private timerTimeout: NodeJS.Timeout | null = null;
@@ -461,13 +463,22 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         const quantity = 0.01 + 0.05 * (1 - Math.exp(-this.score / 240)); //Base 1%, theoretical max 5%, 2% at 5 rows, 3% at 10 rows 4% at 18 rows
         const durationBonus = this.gridState.lockedInBonuses.filter(b => b === 'duration').length; //1 tick each, max 4 ticks total
         const quantityBonus = this.gridState.lockedInBonuses.filter(b => b === 'quantity').length * 0.01; //1% each, max 5% total
-        const event = new TourismReward(ticks + durationBonus, quantity + quantityBonus);
+
+        let event: TourismReward | ProductionReward | PowerReward;
+        if (this.city.minigameOptions.get("nn-r") === "1") {
+            event = new PowerReward(ticks + durationBonus, quantity + quantityBonus);
+        } else if (this.city.minigameOptions.get("nn-r") === "2") {
+            event = new ProductionReward(ticks + durationBonus, quantity + quantityBonus);
+        } else {
+            event = new TourismReward(ticks + durationBonus, quantity + quantityBonus);
+        }
         this.sendAssist(event);
         this.city.events.push(event);
         this.winnings = event;
+        progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.1, 100, 1000, 0.001));
     }
 
-    private sendAssist(event: TourismReward) {
+    private sendAssist(event: TourismReward | ProductionReward | PowerReward) {
         try {
             this.uiManager.game.sendAssist(new Assist(this.friendCity.id, event, Date.now(), this.friendCity.player.id.toString()));
         } catch {
@@ -594,12 +605,15 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
 
     private drawStartOverlay(parent: Drawable): void {
         const overlay = parent.addChild(new Drawable({
+            y: -this.scroller.getScroll(),
             anchors: ["centerX"],
             centerOnOwnX: true,
             width: "min(100%, 600px)",
             height: "100%",
             fallbackColor: '#000000CC',
             id: "startOverlay",
+            onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, overlay.screenArea); },
+            onDragEnd: () => { this.scroller.resetDrag(); },
         }));
 
         if (this.howToPlayShown) {
@@ -607,19 +621,21 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
             return;
         }
 
+        let nextY = 10;
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 10,
+            y: nextY,
             width: "100%",
             height: "48px",
             text: "Nepotism Networking",
         }));
+        nextY += 134;
 
         const startButton = overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 144,
+            y: nextY,
             width: "220px",
             height: "48px",
             fallbackColor: '#444444',
@@ -638,12 +654,13 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
 
         const unaffordable = !this.city.hasResources(this.costs, false);
         addResourceCosts(startButton, this.costs, 82, 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
+        nextY += 176;
 
         //How to play button
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 320,
+            y: nextY,
             width: "220px",
             height: "48px",
             fallbackColor: '#444444',
@@ -659,15 +676,16 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
                 })
             ]
         }));
+        nextY += 60;
 
         if (this.winnings) {
             //Draw the winnings from the last playthrough
             const winningsArea = overlay.addChild(new Drawable({
                 anchors: ['centerX'],
                 centerOnOwnX: true,
-                y: 380,
+                y: nextY,
                 width: "min(100%, 500px)",
-                height: "500px",
+                height: "250px",
                 fallbackColor: '#444444',
                 id: "winningsArea"
             }));
@@ -700,23 +718,38 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
             }));
 
             winningsArea.addChild(new Drawable({
-                anchors: ['centerX'],
-                centerOnOwnX: true,
+                x: 20,
                 y: 142,
-                width: "calc(100% - 40px)",
-                height: "32px",
-                text: `+${humanizeFloor(this.winnings.variables[0] * 100)}% tourism`,
+                width: "48px",
+                height: "48px",
+                image: new TextureInfo(64, 64, (this.winnings instanceof TourismReward) ? "resource/tourists" : (this.winnings instanceof ProductionReward) ? "ui/logistics" : "resource/power"),
+            }));
+            winningsArea.addChild(new Drawable({
+                x: 80,
+                y: 152,
+                width: "calc(100% - 100px)",
+                height: "36px",
+                text: `+${humanizeFloor(this.winnings.variables[0] * 100)}% ${(this.winnings instanceof TourismReward) ? "tourism" : (this.winnings instanceof ProductionReward) ? "factory output" : "power discount"}`,
             }));
 
             winningsArea.addChild(new Drawable({
                 anchors: ['centerX'],
                 centerOnOwnX: true,
-                y: 184,
+                y: 200,
                 width: "calc(100% - 40px)",
                 height: "32px",
                 text: `Decreases evenly over ${longTicksToDaysAndHours(this.winnings.duration)}`,
             }));
+
+            nextY += 260;
         }
+
+        nextY = drawMinigameOptions(this.city, overlay, nextY, [
+            { group: "nn-r", id: "0", text: "Business Buds (+tourism)", icon: "resource/tourists" },
+            { group: "nn-r", id: "1", text: "Power Pals (-power cost)", icon: "resource/power" },
+            { group: "nn-r", id: "2", text: "Industrial Invitees (+production)", icon: "ui/logistics" }]);
+
+        this.scroller.setChildrenSize(nextY);
     }
 
     private toggleRules(): void {
@@ -731,19 +764,17 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         parent.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 10 - this.scroller.getScroll(),
+            y: 10,
             width: "100%",
             height: "48px",
             text: "Nepotism Networking Rules",
         }));
 
         root.onClick = () => this.toggleRules();
-        root.onDrag = (x: number, y: number) => { this.scroller.handleDrag(y, root.screenArea); };
-        root.onDragEnd = () => { this.scroller.resetDrag(); };
 
         parent = parent.addChild(new Drawable({
             x: 20,
-            y: 80 - this.scroller.getScroll(),
+            y: 80,
             width: "calc(100% - 40px)",
             height: "40px",
             wordWrap: true,

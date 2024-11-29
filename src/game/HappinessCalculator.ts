@@ -4,7 +4,7 @@ import { CityFlags } from "./CityFlags.js";
 import { EffectType } from "./GridType.js";
 import { FoodSatisfaction } from "./ResourceTypes.js";
 import { Notification } from "./Notification.js";
-import { AssemblyHouse, DataCenter, ECarRental, GameDevStudio, MohoMine, Nanogigafactory, NuclearFuelTruck, NuclearPowerPlant, NuclearStorage, Observatory, PharmaceuticalsLab, SauceCode, SpaceLaunchSite, getBuildingType } from "./BuildingTypes.js";
+import { AssemblyHouse, DataCenter, ECarRental, FreeStuffTable, GameDevStudio, MohoMine, Nanogigafactory, NuclearFuelTruck, NuclearPowerPlant, NuclearStorage, Observatory, PharmaceuticalsLab, SauceCode, SpaceLaunchSite, getBuildingType } from "./BuildingTypes.js";
 
 export const HIGH_TECH_UNLOCK_EDU = 0.9;
 
@@ -132,7 +132,11 @@ export class HappinessCalculator {
         this.setDisplayStats("Sales tax", salesTax, 0);
         const propertyTax = (this.city.budget.taxRates["property"] - 0.09) * -1; //0, 0.01, 0.02
         this.setDisplayStats("Property tax", propertyTax, 0);
-        return businessPresence + landValue + incomeTax + salesTax + propertyTax;
+
+        const freeStuff = this.city.buildings.filter(p => p instanceof FreeStuffTable).reduce((a, b) => a + b.lastEfficiency * b.outputResources[0].productionRate, 0); //No cap, but only <=1% each.
+        this.setDisplayStats("Free stuff", freeStuff);
+
+        return businessPresence + landValue + incomeTax + salesTax + propertyTax + freeStuff;
     }
 
     private calculateQualityOfLifeHappiness(): number {

@@ -240,7 +240,7 @@ export class UIManager {
 
         const contextMenuBuildingWas = this.contextMenu.building; //because the very next line closes that menu and resets its building
         if (this.contextMenu.isShown() && !wasSingleTap) this.contextMenu.update(this.city, -1, -1);
-        if (this.buildingInfoMenu.building && !wasSingleTap) this.buildingInfoMenu.building = undefined;
+        if (this.buildingInfoMenu.isShown() && !wasSingleTap) this.buildingInfoMenu.show(undefined);
         this.requestRedraw();
 
         // Delegate click handling to appropriate component--we may want to do some UIManager-level actions based on what was clicked, too
@@ -273,7 +273,7 @@ export class UIManager {
                 //Don't remove the building right away, but keep it in a "moving" state until the player clicks again to place it as if they had built it
                 this.buildTypeBar.selectedBuilding = contextMenuBuildingWas;
                 this.enterConstructionMode();
-            } else if (this.contextMenu.demolishing || this.contextMenu.switchingOutputs || this.contextMenu.collecting) this.contextMenu.building = contextMenuBuildingWas; //Put it back. :)
+            } else if (this.contextMenu.demolishing || this.contextMenu.switchingRecipe || this.contextMenu.collecting) this.contextMenu.building = contextMenuBuildingWas; //Put it back. :)
             return true;
         }
 
@@ -447,7 +447,7 @@ export class UIManager {
 
     showBuildingInfo(building: Building): void {
         console.log(building);
-        this.buildingInfoMenu.building = building;
+        this.buildingInfoMenu.show(building);
     }
 
     showReopenBusinessDialog(building: Building) {
@@ -712,7 +712,6 @@ export class UIManager {
         if (!this.buildTypeBar.selectedBuilding) return;
 
         //Get one from inventory or make a new copy, and subtract building costs at the same time
-        //TODO: I think 'moving' is sometimes true but this.buildTypeBar.selectedBuilding is null, because buildings remove themselves from the map in rare cases.
         if (this.contextMenu.moving) this.city.removeBuilding(this.buildTypeBar.selectedBuilding!, false, true); //If we're moving a building, put it in the inventory and then immediately take it back out
 
         const copies = this.constructMenu.getCopies();
@@ -775,6 +774,7 @@ export class UIManager {
         });
         addEventListener("resize", this.adjustDragDueToResize.bind(this));
         addEventListener("resize", this.requestRedraw.bind(this));
+        addEventListener("keydown", (event) => { this.starbox.onKeyDown(event); }); //Can't use bind because Starbox gets reinstantiated when you switch cities
     }
     
     private requestRedraw() {

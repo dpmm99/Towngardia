@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, ElementarySchool, FireBay, FireStation, GregsGrogBarr, HighSchool, Hospital, InformationCenter, Library, MediumPark, Mountain, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, ElementarySchool, FireBay, FireStation, FreeStuffTable, GregsGrogBarr, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -57,6 +57,8 @@ export class City {
     public assists: Assist[] = [];
     public happinessBreakdown: Map<string, number> = new Map();
     public happinessMaxima: Map<string, number> = new Map();
+    public minigameOptions: Map<string, string> = new Map(); //Group -> option ID
+    public unlockedMinigameOptions: Set<string> = new Set(); //Group + option ID
 
     public lastImportedPowerCost: number = 0;
     public recentConstructionResourcesSold: number = 0;
@@ -713,7 +715,7 @@ export class City {
         }
     }
 
-    transferResourcesFrom(resources: { type: string, amount: number }[], reason: "produce" | "earn"): void {
+    transferResourcesFrom(resources: { type: string, amount: number }[], reason: "produce" | "earn" | "cancel"): void {
         //Take from each of the given resources until the city is at max capacity for that resource type.
         resources.forEach(resource => {
             let cityResource = this.resources.get(resource.type)!;
@@ -722,7 +724,7 @@ export class City {
             const amountToKeep = Math.min(Math.floor(cityResource.autoSellAbove * cityResource.capacity) - cityResource.amount, resource.amount);
             cityResource.amount += amountToKeep;
             resource.amount -= amountToKeep;
-            this.resourceEvents.push({ type: resource.type, event: reason, amount: resource.amount });
+            if (reason !== "cancel") this.resourceEvents.push({ type: resource.type, event: reason, amount: resource.amount });
 
             //Sell the rest
             if (resource.amount) {
@@ -1130,7 +1132,8 @@ export class City {
             resource.buyableAmount = Math.min(resource.buyCapacity, resource.buyableAmount + resource.buyCapacity * 0.2 / LONG_TICKS_PER_DAY);
         });
 
-        this.resources.get("prodeff")!.amount = 1;
+        this.resources.get(ResourceTypes.getResourceType(ResourceTypes.ProductionEfficiency))!.amount = 1;
+        this.resources.get(ResourceTypes.getResourceType(ResourceTypes.PowerCosts))!.amount = 1;
         this.runEvents(EventTickTiming.Early); //Some events might need to happen at this point, such as production efficiency boosts.
 
         this.updatePopulation();
@@ -1314,7 +1317,7 @@ export class City {
         if (this.events.some(e => e instanceof PowerOutage)) rate *= 1.2; //If a nearby city can't readily provide for you because they have their own problems
         else if (this.events.some(e => e instanceof EmergencyPowerAid)) rate *= 0.4; //This would be an event if the player is in a position to receive aid--brings it just under the upkeep cost of wind power
 
-        return rate;
+        return rate * this.resources.get(ResourceTypes.getResourceType(ResourceTypes.PowerCosts))!.amount;
     }
 
     updateMinigamePlays() {
@@ -1620,10 +1623,21 @@ export class City {
             this.unlock(getBuildingType(AlgaeFarm));
             this.flags.add(CityFlags.B12Matters);
         }
+        if (this.peakPopulation >= 1500 && !this.flags.has(CityFlags.UnlockedLogisticsCenter)) {
+            this.notify(new Notification("Logistics Center", "You've reached a population of 1500! You can now build a logistics center. Placing this building unlocks the ability to collect all resources across the city with one click. But even more interestingly, you can build a few 'free stuff' tables on the empty part of its lot and hand out your extra manufactured goods for a small happiness bonus.", "logistics")); //TODO: icon
+            this.unlock(getBuildingType(LogisticsCenter));
+            this.unlock(getBuildingType(FreeStuffTable));
+            this.flags.add(CityFlags.UnlockedLogisticsCenter);
+        }
         if (this.peakPopulation >= 1800 && !this.flags.has(CityFlags.CitizenDietFullSwing)) {
             this.notify(new Notification("Dietary Diversity", "You've reached a population of 1800, and they're hungrier than ever. Until now, they've been happy with just six types of food...but now they want them all. Reminder: you can view Tutorials in the main menu for more info about food and diet.", "diet"));
             this.flags.add(CityFlags.CitizenDietFullSwing);
             this.uiManager?.updateTutorialSteps();
+        }
+        if (this.peakPopulation >= 2100 && !this.flags.has(CityFlags.UnlockedMinigameLab)) {
+            this.notify(new Notification("Minigame Minilab", "You've reached a population of 2100! You can now build a Minigame Minilab to unlock different reward sets in most of the minigames. It also produces extra tokens for the minigames at random, so it pays for itself pretty quickly--unless you're terrible at the minigames!", "minigames"));
+            this.unlock(getBuildingType(MinigameMinilab));
+            this.flags.add(CityFlags.UnlockedMinigameLab);
         }
         if (this.peakPopulation >= GREENHOUSE_GASES_MIN_POPULATION && !this.flags.has(CityFlags.GreenhouseGasesMatter)) {
             this.notify(new Notification("Disastrous Change", "As our population rises, so does the concern that unchecked pollution will harm our environment and lead to more frequent severe weather. We should choose the cleaner, greener option when we have a choice, and for when we don't, we should look into technologies that can undo our damage. See Tutorials in the main menu for more info.", "greenhousegases"));

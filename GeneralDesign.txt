@@ -47,7 +47,7 @@ December pseudo-minigame event: each day, a present spawns in a friend's city an
 
 Coolest open ideas:
 Sort businesses by patron value (or maybe do a fixed sort order for all building types, but need an indicator to show which ones are newly unlocked)
-For the "collect all resources" button, I could make it unlockable via a "logistics center" or even move it to that building's info and give both a collect-all button and collect-all-of-type buttons and numbers for everything on the map.
+Advisor button that suggests what your city needs the most--businesses, factories, services, decorations, time, space, spread, research, friends, minigame skill, less road, special unlocks
 new techs:
 	grid balancer: turns down efficiency of the most expensive power producers when you're producing excess
 	waste heat recovery: improves output of thermal power plants (could mention a thermal metamaterial or something to make it sound fancy)
@@ -71,8 +71,7 @@ new buildings:
 	space tours (business), orbital habitat, orbital collector (for tritium) that would all have to be placed on top of the space launch site (maybe like 1-3 slots per launch site) - I listed these in the buildings file, too, but I like these ideas enough to merit making them before just about any other building in that file
 	Healthcare Research Center - does its own research, very slowly growing a permanent healthcare bonus even if you remove it
 	Community Center - swappable bonuses (fitness classes, workshops, social events, whatever)
-	Distribution Center - a building that can convert some of the unused resources directly into bonuses (happiness, healthcare, education, research, traffic reduction, luxury, etc.)
-	Minigame Research Lab - allows you to adjust the rewards from minigames a bit, like "more tritium, less flunds"; a minigame reward could even be a power cost reduction by "getting the citizens to go outside" for a day or a temporary traffic reduction
+	Free Stuff Table/Distribution Center could have more options - instead of just happiness, could be healthcare, education, research, traffic reduction, luxury, etc.
 	Social Sciences Center - happiness research
 	Bamboo garden - produces more wood using less space (maybe unlocked with GM crops or as another tech after it)
 	Advanced Recycling Center - converts waste to basic resources - could just produce some random resources based on the nearby building count

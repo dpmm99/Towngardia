@@ -11,7 +11,7 @@ import { FootprintType } from "./FootprintType.js";
 import { SHORT_TICKS_PER_LONG_TICK, SHORT_TICK_TIME } from "./FundamentalConstants.js";
 import { EffectType } from "./GridType.js";
 import { Resource } from "./Resource.js";
-import { CAPACITY_MULTIPLIER } from "./ResourceTypes.js";
+import { CAPACITY_MULTIPLIER, ProductionEfficiency, getResourceType } from "./ResourceTypes.js";
 
 export class Building implements IHasDrawable {
     poweredTimeDuringLongTick: number = 0;
@@ -58,12 +58,13 @@ export class Building implements IHasDrawable {
     variant: number = 0; //Alternative appearances for buildings
     maxVariant: number = 0; //Total number of variants other than the default image--not serialized, just used for preloading images
     outputResourceOptions: Resource[] = []; //For buildings that can produce multiple types of resources
+    inputResourceOptions: Resource[] = [];
 
     builtOn: Set<Building> = new Set(); //For buildings with footprints of the "NEEDS_MINE" or "NEEDS_WATER" type. They can only be built on top of certain other buildings.
-    effects: BuildingEffects | null = null; //For buildings that spread effects
+    effects: BuildingEffects | null = null; //For buildings that spread effects; not cloned since it has no modifiable state
 
     //For storage facilities
-    public readonly stores: Resource[] = [];
+    public readonly stores: Resource[] = []; //Not cloned since it doesn't change
     public storeAmount: number = 0;
 
     constructor(
@@ -96,6 +97,7 @@ export class Building implements IHasDrawable {
         newBuilding.checkFootprint = this.checkFootprint.map(row => row.slice());
         newBuilding.stampFootprint = this.stampFootprint.map(row => row.slice());
         newBuilding.outputResourceOptions = this.outputResourceOptions.map(p => p.clone());
+        newBuilding.inputResourceOptions = this.inputResourceOptions.map(p => p.clone());
         newBuilding.builtOn = new Set();
         newBuilding.x = newBuilding.y = -1;
         if (this.businessPatronCap > 0) newBuilding.patronageEfficiency = 0; //Reset if it's a business so it doesn't start off at max output when you build it.
@@ -233,7 +235,7 @@ export class Building implements IHasDrawable {
     //By default, it's affected by the Culinary Capital title for restaurants and the Production Efficiency resource for any non-business that produces resources.
     getEfficiencyEffectMultiplier(city: City): number {
         return (this.isRestaurant && city.titles.get(TitleTypes.CulinaryCapital.id)?.attained ? 1.1 : 1) *
-            (this.outputResources.length && !this.businessPatronCap ? city.resources.get("prodeff")!.amount : 1);
+            (this.outputResources.length && !this.businessPatronCap ? city.resources.get(getResourceType(ProductionEfficiency))!.amount : 1);
     }
 
     //Calculate the given type of effect for each cell the building covers and return the highest one.
