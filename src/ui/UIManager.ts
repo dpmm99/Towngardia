@@ -712,7 +712,12 @@ export class UIManager {
         if (!this.buildTypeBar.selectedBuilding) return;
 
         //Get one from inventory or make a new copy, and subtract building costs at the same time
-        if (this.contextMenu.moving) this.city.removeBuilding(this.buildTypeBar.selectedBuilding!, false, true); //If we're moving a building, put it in the inventory and then immediately take it back out
+        //Record the offsets of the ridingAlong buildings relative to the main building before we remove them for-move
+        const ridingAlongOffsets = this.contextMenu.moving ? this.contextMenu.ridingAlong.map(p => ({ x: p.x - this.buildTypeBar.selectedBuilding!.x, y: p.y - this.buildTypeBar.selectedBuilding!.y })) : [];
+        if (this.contextMenu.moving) { //If we're moving a building, put it in the inventory and then immediately take it back out
+            this.contextMenu.ridingAlong.forEach(p => this.city.removeBuilding(p, false, true)); //Do the same for the buildings that were on top of it
+            this.city.removeBuilding(this.buildTypeBar.selectedBuilding, false, true);
+        }
 
         const copies = this.constructMenu.getCopies();
         if (!this.contextMenu.moving && !this.city.canAffordBuildings(this.buildTypeBar.selectedBuilding, copies.length)) { //Double-check the cost because things can change by the time the user clicks, e.g., they wanted to place 2+ copies in a row
@@ -720,11 +725,18 @@ export class UIManager {
             return;
         }
 
-        this.contextMenu.moving = false;
         copies.forEach(segment => {
-            const roadBuilding = this.city.subtractBuildingCosts(this.buildTypeBar.selectedBuilding!);
-            this.city.addBuilding(roadBuilding, segment.x, segment.y);
+            const building = this.city.subtractBuildingCosts(this.buildTypeBar.selectedBuilding!);
+            this.city.addBuilding(building, segment.x, segment.y);
         });
+        if (this.contextMenu.moving) {
+            //Put the built-on-top buildings on top of the moved main building again at the correct relative locations
+            for (let x = 0; x < this.contextMenu.ridingAlong.length; x++) {
+                const building = this.city.subtractBuildingCosts(this.contextMenu.ridingAlong[x]);
+                this.city.addBuilding(building, this.buildTypeBar.selectedBuilding.x + ridingAlongOffsets[x].x, this.buildTypeBar.selectedBuilding.y + ridingAlongOffsets[x].y);
+            }
+            this.contextMenu.moving = false;
+        }
 
         this.exitConstructionMode();
         this.game.fullSave();

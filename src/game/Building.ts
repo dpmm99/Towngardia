@@ -206,13 +206,14 @@ export class Building implements IHasDrawable {
 
     hasStorage() { return this.stores.length > 0; }
 
-    canStow(city: City): boolean { return this.owned && this.canStowInInventory && !this.isUnderOtherBuilding(city); }
+    canStow(city: City): boolean { return this.owned && this.canStowInInventory; }
 
-    canMove(city: City): boolean { return ((this.owned && !this.isResidence) || city.canBuildResources) && this.movable && !this.isUnderOtherBuilding(city); }
+    canMove(city: City): boolean { return ((this.owned && !this.isResidence) || city.canBuildResources) && this.movable; }
 
-    //Buildings can't be moved, stowed, or demolished (I'm not checking that, though) while they have something else built on top of them. In theory, I could make them movable/stowable together, but...
-    isUnderOtherBuilding(city: City): boolean {
-        return [...city.getBuildingsInArea(this.x, this.y, this.width, this.height, 0, 0)].some(b => b !== this);
+    //Buildings can be moved, stowed, or demolished (I'm not checking that, though) while they have something else built on top of them as long as you stow the on-top ones first.
+    getBuildingsOnTop(city: City) {
+        return [...city.getBuildingsInArea(this.x, this.y, this.width, this.height, 0, 0)].filter(b => b !== this); //Note: most logic allows A->B->C stacking. This does not, but you could expand it by recursively including the builtOn buildings.
+        //Note: this logic also doesn't allow irregular footprints, but it would if you just filtered where builtOn includes 'this'. That wouldn't be directly compatible with the A->B->C stacking expansion.
     }
 
     canDemolish(city: City): boolean { return this.demolishAllowed; } //No longer requires it to be owned (in the player's city but not really the player's property)--because if it's not owned, then I wouldn't set demolishAllowed.

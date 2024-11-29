@@ -968,6 +968,8 @@ export class City {
                 }
             }
             return FootprintType.EMPTY;
+        } else if (this.grid[y][x]?.builtOn.has(building)) { //If you're moving a building, things that are built atop of it are going along for the ride, so consider their slots empty, too.
+            return FootprintType.EMPTY; //Note: doesn't support A->B->C stacking and doesn't support cases where a building on top would have to be built on both the building beneath and non-ground tiles.
         } else return this.getCellType(x, y);
     }
 

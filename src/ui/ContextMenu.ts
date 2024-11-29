@@ -18,6 +18,7 @@ export class ContextMenu implements IHasDrawable {
     private lastDrawable: Drawable | null = null;
     public copying: boolean = false;
     public moving: boolean = false;
+    public ridingAlong: Building[] = []; //Buildings that are being moved along with the main building
     public demolishing: boolean = false;
     public reopening: boolean = false;
     public repairing: boolean = false;
@@ -92,7 +93,10 @@ export class ContextMenu implements IHasDrawable {
             menu.addChild(new Drawable({
                 image: new TextureInfo(childWidth, childHeight, "ui/move"),
                 id: menu.id + ".move",
-                onClick: () => { this.moving = true; }
+                onClick: () => {
+                    this.moving = true;
+                    this.ridingAlong = building.getBuildingsOnTop(this.city!); //Doesn't get reset when moving = false because it's harmless and UIManager "cancels" the context menu on every click--even clicks to move things around.
+                }
             }));
         }
         if (building.canStow(this.city!) && this.uiManager.isMyCity) {
@@ -100,6 +104,8 @@ export class ContextMenu implements IHasDrawable {
                 image: new TextureInfo(childWidth, childHeight, "ui/remove"),
                 id: menu.id + ".remove",
                 onClick: () => {
+                    const mustStowFirst = building.getBuildingsOnTop(this.city!); //Must stow the on-top buildings first
+                    mustStowFirst.forEach(b => this.city!.removeBuilding(b));
                     this.city?.removeBuilding(building);
                     this.game.fullSave();
                 }
