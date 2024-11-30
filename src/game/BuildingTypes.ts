@@ -2230,7 +2230,7 @@ export class SpaceLaunchSite extends Building {
 export class MiracleWorkshop extends Building {
     constructor() {
         super(
-            "miracleworkshop", "Miracle Workshop", "Produces special gifts that you can give to a friend, using only hopes, dreams, wintry magic, and a few megawatts as ingredients. Brain Brews increase research point gains by 10%. Glee Grenades directly add 1% to happiness. Turbo Tonics increase factory output by 5%. Each effect lasts for 5 days.",
+            "miracleworkshop", "Miracle Workshop", "Produces special gifts that you can give to a friend, using only hopes, dreams, wintry magic, and a few megawatts as ingredients. Brain Brews increase research point gains by 10%. Glee Grenades directly add 1% to happiness. Turbo Tonics increase factory output by 5%. Each effect lasts for 5 days. Use them via the gift button in the right bar when visiting a friend's city.",
             BuildingCategory.INDUSTRIAL,
             2, 2, 0,
             0.2,

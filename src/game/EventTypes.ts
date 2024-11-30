@@ -49,7 +49,7 @@ export class Hauntymonth extends CityEvent {
 export class Merrymonth extends CityEvent {
     constructor() {
         super("merrymonth", "Merrymonth", 31 * LONG_TICKS_PER_DAY,
-            "The city is all decked out for the countless winter holidays! It's Merrymonth, and temporary decorations of varying qualities are available now in the Luxury construction category.",
+            "The city is all decked out for the countless winter holidays! It's Merrymonth, and temporary decorations of varying qualities are available now in the Luxury construction category. You can also gift bonuses to friends' cities if you build the Miracle Workshop, available in the Industrial category.",
             "The decorations have been taken down--keeping them up into January is illegal throughout the Towngardian nation--but the holiday spirit remains. You'll get your decorations back next year.");
     }
 
