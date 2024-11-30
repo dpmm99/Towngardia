@@ -272,6 +272,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             nextY += 24 + 5;
             for (const effectDef of building.effects.effects) {
                 const effect = new Effect(effectDef.type, effectDef.magnitude, building, effectDef.dynamicCalculation);
+                const effectDisplayName = EffectType[effect.type].replace(/([A-Z])/g, ' $1').trim(); //Effect type enum is almost a display name; we just add the spaces here.
                 const mag = Math.round(effect.getEffect(this.city, null, building.x, building.y) * 1000) / 1000;
                 infoDrawable.addChild(new Drawable({
                     x: padding,
@@ -286,7 +287,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                     y: nextY + 8,
                     width: (barWidth - padding * 2 - iconSize - 5) + "px",
                     height: iconSize + "px",
-                    text: EffectType[effect.type].replace(/([A-Z])/g, ' $1').trim() + " " + (mag >= 0 ? "+" + mag : mag), //Effect type enum is almost a display name; we just add the spaces here.
+                    text: effect.type === EffectType.BusinessValue
+                        ? (effectDisplayName + " " + (mag >= 0 ? "+" + mag * 100 : mag * 100) + "%")
+                        : (effectDisplayName + " " + (mag >= 0 ? "+" + mag : mag)),
                 }));
                 nextY += iconSize + padding + 5;
             }
