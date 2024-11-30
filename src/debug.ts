@@ -52,7 +52,7 @@ function resourceCheat() {
 function buildingsCheat() {
     console.log('Pay tribute!');
     for (const type of globalThis.game.city!.buildingTypes.values()) {
-        type.locked = false;
+        type.isHidden = type.locked = false;
     }
     globalThis.game.city!.enableResourceConstruction();
 }

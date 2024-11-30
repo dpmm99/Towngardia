@@ -598,7 +598,7 @@ export class FreeStuffTable extends Building { //TODO: Might be another good eve
         this.inputResourceOptions = [new Toys(0, 0, 0.25), new Pharmaceuticals(0, 0, 0.25), new Clothing(0, 0, 0.5), new Furniture(0, 0, 0.5), new Batteries(0, 0, 0.75), new Paper(0, 0, 1.5)];
         this.outputResources = [new Happiness(0, 0.01, 0, 0)];
         this.checkFootprint[0][0] = FootprintType.LOGISTICS;
-        this.maxVariant = 1;
+        this.maxVariant = 2;
     }
 
     override placed(city: City): void {
