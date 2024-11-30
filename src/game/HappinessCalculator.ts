@@ -5,6 +5,7 @@ import { EffectType } from "./GridType.js";
 import { FoodSatisfaction } from "./ResourceTypes.js";
 import { Notification } from "./Notification.js";
 import { AssemblyHouse, DataCenter, ECarRental, FreeStuffTable, GameDevStudio, MohoMine, Nanogigafactory, NuclearFuelTruck, NuclearPowerPlant, NuclearStorage, Observatory, PharmaceuticalsLab, SauceCode, SpaceLaunchSite, getBuildingType } from "./BuildingTypes.js";
+import { HappinessReward } from "./EventTypes.js";
 
 export const HIGH_TECH_UNLOCK_EDU = 0.9;
 
@@ -28,6 +29,9 @@ export class HappinessCalculator {
         happiness += this.calculateEconomyHappiness();
         happiness += this.calculateQualityOfLifeHappiness();
         happiness += this.calculateResidentialPenalties(); //A couple of big effects (power outages and residential damage)--the sum caps at 1.5
+        const eventBonus = this.city.events.filter(p => p instanceof HappinessReward).reduce((a, b) => a + (b as HappinessReward).getBonus(), 0); //Add happiness from events
+        this.setDisplayStats("Events", eventBonus);
+        happiness += eventBonus;
 
         this.setDisplayStats("Other", happiness - [...this.city.happinessBreakdown].filter(p => p[0] != "Other").reduce((a, b) => a + b[1], 0));
 

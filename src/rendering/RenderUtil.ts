@@ -76,7 +76,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     urls["titles/generic"] = "assets/titles/generic.png";
     urls["resource/power"] = "assets/resource/power.png";
     const otherSprites = [
-        /*right bar*/ 'friends', 'addfriend', 'newcity', 'research', 'notifications', 'notificationson', 'titles', 'achievements', 'views', 'budget', 'provisionview', 'memorymixology', 'slots', 'starbox', 'monobrynth', 'neponet',
+        /*right bar*/ 'friends', 'addfriend', 'newcity', 'research', 'notifications', 'notificationson', 'titles', 'achievements', 'views', 'budget', 'provisionview', 'memorymixology', 'slots', 'starbox', 'monobrynth', 'neponet', 'gift',
         /*AchievementsMenu*/ 'title1', 'title2', 'title3', //TODO: Rename if you actually use them; must match achievement/title names
         /*top bar*/ 'resources', 'menu', 'progressbg', 'progressfg', 'diet', 'foodsufficiency', 'foodsatisfaction', 'foodhealth',
         /*resource bar*/ 'tradesettingson', 'tradesettingsoff', 'autobuyhandle', 'autosellhandle', 'arrowleft', 'arrowright',

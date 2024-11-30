@@ -10,7 +10,7 @@ import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
 import { Effect } from "./Effect.js";
-import { EVENT_TYPES, EmergencyPowerAid, PowerOutage } from "./EventTypes.js";
+import { EVENT_TYPES, EmergencyPowerAid, PowerOutage, ResearchReward } from "./EventTypes.js";
 import { FootprintType } from "./FootprintType.js";
 import { LONG_TICKS_PER_DAY, SHORT_TICKS_PER_LONG_TICK } from "./FundamentalConstants.js";
 import { GameState } from "./GameState.js";
@@ -24,6 +24,7 @@ import { REGIONS } from "./Region.js";
 import { ResidenceSpawningSystem } from "./ResidenceSpawningSystem.js";
 import { Resource } from "./Resource.js";
 import * as ResourceTypes from "./ResourceTypes.js";
+import { GIFT_TYPES } from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
 import { SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
 
@@ -715,10 +716,18 @@ export class City {
         }
     }
 
+    applyReceiptBonus(resource: { type: string, amount: number }): void { //Currently just for applying ResearchReward to received research amounts.
+        if (resource.type === ResourceTypes.getResourceType(ResourceTypes.Research)) {
+            const eventBonus = this.events.filter(p => p instanceof ResearchReward).reduce((a, b) => a + (b as ResearchReward).getBonus(), 1); //Add bonus from events
+            resource.amount *= eventBonus;
+        }
+    }
+
     transferResourcesFrom(resources: { type: string, amount: number }[], reason: "produce" | "earn" | "cancel"): void {
         //Take from each of the given resources until the city is at max capacity for that resource type.
         resources.forEach(resource => {
             let cityResource = this.resources.get(resource.type)!;
+            this.applyReceiptBonus(resource);
 
             //Check the auto-sell limits. If the city WILL HAVE more than the limit, sell the excess.
             const amountToKeep = Math.min(Math.floor(cityResource.autoSellAbove * cityResource.capacity) - cityResource.amount, resource.amount);
@@ -1070,6 +1079,7 @@ export class City {
     }
 
     getBuyCapacity(type: Resource) { //Amount of each resource that you're allowed to buy in a 5-day period (rolling)
+        if (type.buyPrice === 0) return 0; //No buying allowed
         let buyCapacity = 20;
         const increments = [1000, 3000, 6000, 10000, 15000, 21000, 28000, 36000, 45000, 55000, 66000, 78000, 91000];
         const incrementValue = 5;
@@ -1116,6 +1126,7 @@ export class City {
 
     produce(resourceType: string, amount: number) { //Mainly for buildings to call when they output an autoCollect resource. Generally, stick to transferResourcesFrom.
         const resource = this.resources.get(resourceType)!;
+        this.applyReceiptBonus(resource);
         resource.produce(amount);
         this.resourceEvents.push({ type: resourceType, event: "produce", amount: amount });
 
@@ -1123,10 +1134,15 @@ export class City {
         this.checkAndAwardAchievement(AchievementTypes.ResourceTycoon.id);
     } //Note: I'd need a "produced" function if I really wanted to track the production of resources that aren't auto-collected.
 
-    earn(resourceType: string, amount: number) { //Mainly for minigames to call when the player completes something. Other than the resource event type, same as produce().
+    earn(resourceType: string, amount: number) { //Mainly for minigames to call when the player completes something, but I ended up using transferResourcesFrom for that. Other than the resource event type, same as produce().
         const resource = this.resources.get(resourceType)!;
+        this.applyReceiptBonus(resource);
         resource.produce(amount);
         this.resourceEvents.push({ type: resourceType, event: "earn", amount: amount });
+    }
+
+    hasGifts() {
+        return [...GIFT_TYPES].some(type => this.resources.get(type)!.amount >= 1);
     }
 
     onLongTick(): void {
@@ -1217,7 +1233,8 @@ export class City {
         //Gain about 1 research point a day, or a max of around 5.4 a day for a city of 250k.
         const research = this.resources.get("research")!;
         const innovatorBonus = this.titles.get(TitleTypes.CityOfInnovators.id)?.attained ? 1.1 : 1;
-        research.produce(Math.max(1, Math.min(research.productionRate, Math.log10(this.resources.get("population")!.amount) * this.getCityAverageEducation())) * innovatorBonus / LONG_TICKS_PER_DAY);
+        const eventBonus = this.events.filter(p => p instanceof ResearchReward).reduce((a, b) => a + (b as ResearchReward).getBonus(), 1); //Add bonus from events
+        research.produce(Math.max(1, Math.min(research.productionRate, Math.log10(this.resources.get("population")!.amount) * this.getCityAverageEducation())) * innovatorBonus * eventBonus / LONG_TICKS_PER_DAY);
 
         //Cap the auto-buy amounts
         this.resources.forEach(resource => resource.buyableAmount = Math.min(resource.buyableAmount, resource.buyCapacity));

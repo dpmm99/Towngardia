@@ -3,6 +3,7 @@ import { BuildingCategory } from "../game/BuildingCategory.js";
 import { City } from "../game/City.js";
 import { GameState } from "../game/GameState.js";
 import { Player } from "../game/Player.js";
+import { getResourceType, Research } from "../game/ResourceTypes.js";
 import { Tech } from "../game/Tech.js";
 import { TechManager } from "../game/TechManager.js";
 import { MemoryMixology } from "../minigame/MemoryMixology.js";
@@ -22,6 +23,7 @@ import { BusinessPresenceView, CityView, EducationView, EfficiencyView, FireProt
 import { ConstructMenu } from "./ConstructMenu.js";
 import { ContextMenu } from "./ContextMenu.js";
 import { Drawable } from "./Drawable.js";
+import { FriendGiftWindow } from "./FriendGiftWindow.js";
 import { FriendVisitWindow } from "./FriendVisitWindow.js";
 import { FriendsMenu } from "./FriendsMenu.js";
 import { HappinessFactorsWindow } from "./HappinessFactorsWindow.js";
@@ -58,6 +60,7 @@ export class UIManager {
     private happinessFactorsWindow!: HappinessFactorsWindow;
     private friendsMenu!: FriendsMenu;
     private friendVisitWindow!: FriendVisitWindow;
+    private friendGiftWindow!: FriendGiftWindow;
     private tutorialOverlay!: TutorialOverlay;
     private cityView!: CityView; //Set in switchRenderer, called by the constructor, but TypeScript compiler doesn't know that
     private worldCoordinateDrawables: IHasDrawable[] = [];
@@ -160,6 +163,7 @@ export class UIManager {
             this.buildingInfoMenu = new BuildingInfoMenu(newCity, this),
             this.friendsMenu = new FriendsMenu(this.game.player!, this),
             this.friendVisitWindow = new FriendVisitWindow(),
+            this.friendGiftWindow = new FriendGiftWindow(this.game.city!, newCity, this, this.game), //Affects BOTH your city and the other player's
         ];
         this.worldCoordinateDrawables = [
             this.constructMenu = new ConstructMenu(),
@@ -184,10 +188,11 @@ export class UIManager {
 
         //If visiting a friend, possibly grant research points and show the friend visit window
         if (!this.isMyCity) {
-            const grantPoints = 2; //TODO: How do we want to determine number of points?
-            const [tech, bonusClaimed] = TechManager.grantFreePoints(this.game.city!, this.game.visitingCity!, grantPoints, Date.now());
+            const resource = { type: getResourceType(Research), amount: 2 }; //TODO: How do we want to determine number of points?
+            this.game.city!.applyReceiptBonus(resource); //May increase the amount of research points' worth of progress to grant
+            const [tech, bonusClaimed] = TechManager.grantFreePoints(this.game.city!, this.game.visitingCity!, resource.amount, Date.now());
             if (tech) await this.techMenu.preloadImages();
-            this.showFriendVisitWindow(tech, grantPoints, bonusClaimed); //TODO: also let the player choose to buy specific resources from this city (if this city has sold them recently)
+            this.showFriendVisitWindow(tech, resource.amount, bonusClaimed); //TODO: also let the player choose to buy specific resources from this city (if this city has sold them recently)
             if (bonusClaimed) this.game.fullSave();
             this.frameRequested = true;
         }
@@ -231,6 +236,8 @@ export class UIManager {
         if (this.notificationsMenu.isShown()) return this.checkClickComponent(this.notificationsMenu, x, y);
 
         if (this.friendVisitWindow.isShown() && this.checkClickComponent(this.friendVisitWindow, x, y)) return true;
+        if (this.friendGiftWindow.isShown() && this.checkClickComponent(this.friendGiftWindow, x, y)) return true;
+        this.friendGiftWindow.hide(); //Hide it if it's open and they didn't click it, unless it rejects the hide attempt because it's actively sending the assist data to the server
         if (this.happinessFactorsWindow.isShown() && this.checkClickComponent(this.happinessFactorsWindow, x, y)) return true;
 
         //CityViews
@@ -472,6 +479,10 @@ export class UIManager {
 
     showFriendVisitWindow(tech: Tech | null, techPoints: number, bonusClaimed: boolean) {
         this.friendVisitWindow.show(tech, techPoints, bonusClaimed);
+    }
+
+    showFriendGiftWindow() {
+        this.friendGiftWindow.show();
     }
 
     showAddFriendDialog() {

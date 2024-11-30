@@ -144,18 +144,19 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
                         y: nextY + 12,
                         width: "calc(100% - " + padding * 3 + ")",
                         height: "32px",
-                        text: "Buy: " + humanizeCeil(resource.buyPrice * resource.buyPriceMultiplier) + "; sell: " + humanizeFloor(resource.sellPrice * resource.sellPriceMultiplier),
+                        text: "Buy: " + (resource.buyPrice ? humanizeCeil(resource.buyPrice * resource.buyPriceMultiplier) : "N/A") + "; sell: " + humanizeFloor(resource.sellPrice * resource.sellPriceMultiplier),
                         id: barDrawable.id + "." + resource.type + ".buyprice",
                         biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
                     }));
                 } else if (this.page === 2) {
                     //Show market quantities and limits
+                    const buyCapacity = this.city.getBuyCapacity(resource);
                     expandedBar.addChild(new Drawable({
                         x: padding,
                         y: nextY + 12,
                         width: "calc(100% - " + padding * 3 + ")",
                         height: "32px",
-                        text: "For sale: " + humanizeFloor(resource.buyableAmount) + "/" + humanizeFloor(this.city.getBuyCapacity(resource)),
+                        text: buyCapacity ? ("For sale: " + humanizeFloor(resource.buyableAmount) + "/" + humanizeFloor(buyCapacity)) : "Cannot import",
                         id: barDrawable.id + "." + resource.type + ".buyable",
                         biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
                     }));

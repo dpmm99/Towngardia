@@ -5,7 +5,7 @@ import { Business } from "./Business.js";
 import { City } from "./City.js";
 import { FootprintType } from "./FootprintType.js";
 import { EffectType } from "./GridType.js";
-import { Apples, Apps, BarPlays, Batteries, Berries, Bricks, CAPACITY_MULTIPLIER, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Electronics, EnvironmentalLabBonus, Fish, Flunds, Furniture, Gemstones, Glass, Grain, Happiness, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, MinigameOptionResearch, MonobrynthPlays, NepotismNetworkingPlays, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, PowerCosts, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, SlotsPlays, StarboxPlays, Steel, Stone, Textiles, Tourists, Toys, Tritium, Uranium, VitaminB12, Wood, getResourceType } from "./ResourceTypes.js";
+import { Apples, Apps, BarPlays, Batteries, Berries, BrainBrews, Bricks, CAPACITY_MULTIPLIER, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Electronics, EnvironmentalLabBonus, Fish, Flunds, Furniture, Gemstones, Glass, GleeGrenades, Grain, Happiness, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, MinigameOptionResearch, MonobrynthPlays, NepotismNetworkingPlays, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, PowerCosts, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, SlotsPlays, StarboxPlays, Steel, Stone, Textiles, Tourists, Toys, Tritium, TurboTonics, Uranium, VitaminB12, Wood, getResourceType } from "./ResourceTypes.js";
 import { Geothermal } from "./TechTypes.js";
 import { Notification } from "./Notification.js";
 import { LONG_TICKS_PER_DAY } from "./FundamentalConstants.js";
@@ -2226,6 +2226,41 @@ export class SpaceLaunchSite extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 }
 
+//Seasonal industries
+export class MiracleWorkshop extends Building {
+    constructor() {
+        super(
+            "miracleworkshop", "Miracle Workshop", "Produces special gifts that you can give to a friend, using only hopes, dreams, wintry magic, and a few megawatts as ingredients. Brain Brews increase research point gains by 10%. Glee Grenades directly add 1% to happiness. Turbo Tonics increase factory output by 5%. Each effect lasts for 5 days.",
+            BuildingCategory.INDUSTRIAL,
+            2, 2, 0,
+            0.2,
+            true,
+        );
+        this.needsPower = false;
+        this.outputResourceOptions = [new BrainBrews(0, 0.25), new GleeGrenades(0, 0.25), new TurboTonics(0, 0.25)];
+        this.stores.push(...this.outputResourceOptions);
+        this.storeAmount = 5;
+    }
+
+    override place(city: City, x: number, y: number): void { //Pick a random output resource if none is set
+        super.place(city, x, y);
+        if (this.outputResources.length === 0) {
+            const foodType = this.outputResourceOptions[Math.floor(Math.random() * this.outputResourceOptions.length)];
+            this.outputResources.push(foodType.clone());
+        }
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        //Costs rise for each copy you've already bought.
+        return [{ type: "flunds", amount: 120 + 1200 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "wood", amount: 20 }, { type: "iron", amount: 10 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
+
+    //No upkeep cost because it's already kind of a negative for the player that owns it.
+}
+//End of seasonal industries
+
 //# Commercial
 export class CornerStore extends Building {
     constructor() {
@@ -3978,6 +4013,7 @@ export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Residential*/ SmallHouse, Quadplex, SmallApartment, Highrise, Skyscraper, Dorm, ShowHome,
     /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, MaidTwoTeas, SauceCode, Casino, CartersCars, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter,
     /*Industrial*/ MountainIronMine, Quarry, CementMill, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks, SiliconRefinery, CrystalMine, AssemblyHouse, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory, ToyManufacturer, Furnifactory, LithiumMine, MohoMine, Nanogigafactory, PharmaceuticalsLab, SpaceLaunchSite,
+    /*Seasonal (also industrial)*/ MiracleWorkshop,
     /*Power*/ StarterSolarPanel, WindTurbine, SolarFarm, OilPowerPlant, OilTruck, GeothermalPowerPlant, CoalPowerPlant, CoalTruck, NuclearPowerPlant, NuclearFuelTruck, FusionPowerPlant, FusionFuelTruck,
     /*Agriculture*/ TreeFarm, Farm, Ranch, FishFarm, AlgaeFarm, PlantMilkPlant, VerticalFarm, Carnicultivator,
     /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, TeleportationPod, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, LogisticsCenter, FreeStuffTable, DataCenter, NuclearStorage,

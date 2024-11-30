@@ -72,9 +72,12 @@ export class RightBar implements IHasDrawable, IOnResizeEvent {
                 buttons.push({ id: 'monobrynth', onClick: () => this.uiManager.showMonobrynthMinigame(), resourceType: new MonobrynthPlays().type });
             }
             //TODO: Do I want a 'minigames' button instead? I made an icon. But then I'd need a tray for the minigames to pop into.
-        } else { //Not my city--show shared reward minigames
+        } else { //Not my city--show shared reward minigames and the Send Gift button
             if (this.uiManager.game.city!.flags.has(CityFlags.UnlockedTourism)) {
                 buttons.push({ id: 'neponet', onClick: () => this.uiManager.showNeponetMinigame(), resourceType: new NepotismNetworkingPlays().type });
+            }
+            if (this.uiManager.game.city!.hasGifts()) {
+                buttons.push({ id: 'gift', onClick: () => this.uiManager.showFriendGiftWindow() });
             }
         }
         let nextY = padding - this.scroller.getScroll();

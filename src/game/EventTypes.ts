@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { CocoaCupCo, ColdStorage, FireBay, FireStation, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HotSpring, HotSpringInn, PeppermintPillar, ReindeerRetreat, WrappedWonder, getBuildingType } from "./BuildingTypes.js";
+import { CocoaCupCo, ColdStorage, FireBay, FireStation, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HotSpring, HotSpringInn, MiracleWorkshop, PeppermintPillar, ReindeerRetreat, WrappedWonder, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -70,7 +70,7 @@ export class Merrymonth extends CityEvent {
     }
 
     lockUnlockBuildings(city: City, locked: boolean): void {
-        const buildingTypeIDs = [getBuildingType(PeppermintPillar), getBuildingType(CocoaCupCo), getBuildingType(ReindeerRetreat), getBuildingType(WrappedWonder)];
+        const buildingTypeIDs = [getBuildingType(PeppermintPillar), getBuildingType(CocoaCupCo), getBuildingType(ReindeerRetreat), getBuildingType(WrappedWonder), getBuildingType(MiracleWorkshop)];
         for (const type of buildingTypeIDs) {
             const buildingTemplate = city.buildingTypes.find(p => p.type === type);
             if (buildingTemplate) buildingTemplate.isHidden = buildingTemplate.locked = locked;
@@ -115,6 +115,26 @@ export class ProductionReward extends CityEvent { //Applies to physical resource
     }
 
     //No shouldStart because it should never start on its own
+}
+
+export class HappinessReward extends CityEvent {
+    constructor(initialDuration = 12, bonusAmount = 0) {
+        super("happinessreward", "Happiness Reward", initialDuration, "", "");
+        if (bonusAmount) this.variables.push(bonusAmount);
+        this.duration = initialDuration;
+    }
+
+    public getBonus(): number { return this.variables[0]; } //Constant bonus
+}
+
+export class ResearchReward extends CityEvent {
+    constructor(initialDuration = 12, bonusAmount = 0) {
+        super("researchreward", "Research Reward", initialDuration, "", "");
+        if (bonusAmount) this.variables.push(bonusAmount);
+        this.duration = initialDuration;
+    }
+
+    public getBonus(): number { return this.variables[0]; } //Constant bonus
 }
 
 export class PowerReward extends CityEvent {
@@ -615,7 +635,7 @@ export class Spoilage extends CityEvent {
 
 export const EVENT_TYPES = <CityEvent[]>([
     /*Fixed seasonal events*/ Hauntymonth, Merrymonth,
-    /*Minigame-triggered events*/ TourismReward, ProductionReward, PowerReward, //TODO: Others could be a temporary construction cost reduction and a temporary market buy price reduction
+    /*Minigame-triggered events*/ TourismReward, ProductionReward, PowerReward, HappinessReward, ResearchReward, //TODO: Others could be a temporary construction cost reduction and a temporary market buy price reduction
     /*Random negative events*/ Drought, Heatwave, ColdSnap, PowerOutage, Burglary, Heist, Epidemic, Fire, Earthquake, Riot, Spoilage,
     //...but Earthquake has positive effects, too: spawns a cheap geothermal power source sometimes, and spawns a hot spring the first time.
     /*Random positive events*/ EconomicBoom,
