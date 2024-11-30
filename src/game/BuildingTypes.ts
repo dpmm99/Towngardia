@@ -2236,7 +2236,6 @@ export class MiracleWorkshop extends Building {
             0.2,
             true,
         );
-        this.needsPower = false;
         this.outputResourceOptions = [new BrainBrews(0, 0.25), new GleeGrenades(0, 0.25), new TurboTonics(0, 0.25)];
         this.stores.push(...this.outputResourceOptions);
         this.storeAmount = 5;
