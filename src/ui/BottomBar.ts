@@ -69,6 +69,23 @@ export class BottomBar implements IHasDrawable, IOnResizeEvent {
                 biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
             });
 
+            if (this.uiManager.isMyCity && this.uiManager.getSelectedBuildCategory() !== category && (
+                (category === BuildingCategory.AGRICULTURE && [10, 29].includes(this.city.tutorialStepIndex)) ||
+                (category === BuildingCategory.INDUSTRIAL && [15, 16, 24].includes(this.city.tutorialStepIndex)) ||
+                (category === BuildingCategory.INFRASTRUCTURE && [7].includes(this.city.tutorialStepIndex)) ||
+                (category === BuildingCategory.COMMERCIAL && [22].includes(this.city.tutorialStepIndex)) ||
+                (category === BuildingCategory.ENERGY && [25].includes(this.city.tutorialStepIndex))
+            )) {
+                categoryDrawable.addChild(new Drawable({
+                    x: -this.iconSize,
+                    y: -this.iconSize,
+                    width: this.iconSize * 3 + "px",
+                    height: this.iconSize * 3 + "px",
+                    biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                    image: new TextureInfo(96, 96, "ui/majorsalience"),
+                }));
+            }
+
             barDrawable.addChild(categoryDrawable);
         });
 

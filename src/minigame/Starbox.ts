@@ -153,6 +153,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
 
         this.winnings = filterConvertAwardWinnings(this.city, this.winnings, extraFlunds);
         progressMinigameOptionResearch(this.city, rangeMapLinear(this.totalStarsDestroyed, 0.01, 0.07, 100, 300, 0.001));
+        this.city.updateLastUserActionTime();
         this.game.fullSave();
         this.userInputLocked = true;
         setTimeout(() => { this.gameStarted = false; }, 1000); //Will wait for the user to tap to continue.
@@ -646,6 +647,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         if (this.city.checkAndSpendResources(this.costs)) {
             this.gameStarted = true;
             this.initializeGame();
+            this.city.updateLastUserActionTime();
             this.game.fullSave();
         }
     }

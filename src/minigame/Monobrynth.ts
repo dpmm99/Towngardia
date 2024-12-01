@@ -264,6 +264,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private endGame(): void {
         this.gameStarted = false;
         this.calculateWinnings();
+        this.city.updateLastUserActionTime();
         this.game.fullSave();
     }
 
@@ -311,6 +312,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     public startGame(): void {
         if (this.city.checkAndSpendResources(this.costs)) {
             this.initializeGame();
+            this.city.updateLastUserActionTime();
             this.game.fullSave();
         }
     }

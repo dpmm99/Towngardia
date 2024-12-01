@@ -411,6 +411,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
     public startGame(): void {
         if (this.city.checkAndSpendResources(this.costs)) {
             this.initializeGame();
+            this.city.updateLastUserActionTime();
             this.game.fullSave();
         }
     }
@@ -448,6 +449,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         }
 
         this.calculateWinnings();
+        this.city.updateLastUserActionTime();
         this.game.fullSave();
         // Freeze input and keep showing the grid for a couple seconds before returinng to the main screen.
         this.userInputLocked = true;

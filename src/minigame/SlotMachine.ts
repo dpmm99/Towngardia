@@ -380,6 +380,7 @@ export class SlotMachine implements IHasDrawable, IOnResizeEvent {
         }
 
         this.city.resources.get('flunds')!.amount += this.winnings;
+        this.city.updateLastUserActionTime();
         this.game.fullSave();
     }
 
@@ -395,6 +396,7 @@ export class SlotMachine implements IHasDrawable, IOnResizeEvent {
             this.spinningFrames[1] = this.spinningFrames[2] - 5 - Math.floor(Math.random() * 30);
             this.spinningFrames[0] = this.spinningFrames[1] - 5 - Math.floor(Math.random() * 30);
             this.initializeReels();
+            this.city.updateLastUserActionTime();
             this.game.fullSave();
         }
     }

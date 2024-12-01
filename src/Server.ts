@@ -177,7 +177,7 @@ app.post(urlRootPath + '/api/add-friend', isAuthenticated, asyncHandler(async (r
         await db.addFriend(req.playerId, friendId);
         res.json({ success: true });
     } catch (error) {
-        console.error('Error adding friend:', error);
+        console.error(new Date().toISOString(), 'Error adding friend:', error);
         res.status(500).json({ error: 'Failed to add friend' });
     }
 }));
@@ -195,7 +195,7 @@ app.post(urlRootPath + '/api/assist-friend', isAuthenticated, asyncHandler(async
         await db.assistFriend(req.playerId, friendId, assists);
         res.json({ success: true });
     } catch (error) {
-        console.error('Error assisting friend:', error);
+        console.error(new Date().toISOString(), 'Error assisting friend:', error);
         res.status(500).json({ error: 'Failed to assist friend' });
     }
 }));
@@ -216,12 +216,12 @@ if (process.env.OS === "Windows_NT") { //ONLY for local development
     };
 
     https.createServer(options, app).listen(port + 1, () => {
-        console.log(`HTTPS Server running at https://localhost:${port + 1}`);
+        console.log(new Date().toISOString(), `HTTPS Server running at https://localhost:${port + 1}`);
     });
 }
 
 app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+    console.log(new Date().toISOString(), `Server running at http://localhost:${port}`);
     if (!DISCORD_CLIENT_ID) throw new Error("No Discord client ID.");
     if (!DISCORD_CLIENT_SECRET) throw new Error("No Discord client secret.");
 });
@@ -412,11 +412,11 @@ app.get(urlRootPath + '/auth/google/callback', asyncHandler(async (req: any, res
 }));
 
 process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
+    console.error(new Date().toISOString(), 'Uncaught Exception:', err);
     // Optionally, you can exit the process or perform other actions
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    console.error(new Date().toISOString(), 'Unhandled Rejection at:', promise, 'reason:', reason);
     // Optionally, you can exit the process or perform other actions
 });

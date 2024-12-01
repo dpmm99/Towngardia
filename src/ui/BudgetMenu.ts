@@ -193,6 +193,8 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
         // Apply the budget effects to the city
         this.budget.applyBudgetEffects(this.city);
         this.shown = false;
+        this.city.updateLastUserActionTime();
+        this.uiManager.game.fullSave();
     }
 
     public show() {

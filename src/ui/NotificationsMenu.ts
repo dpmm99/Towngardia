@@ -80,6 +80,7 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
                     }
                     if (!notification.seen) {
                         notification.seen = true;
+                        this.city.updateLastUserActionTime();
                         this.game.fullSave();
                     }
                 }

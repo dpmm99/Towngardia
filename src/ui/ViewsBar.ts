@@ -96,6 +96,17 @@ export class ViewsBar implements IHasDrawable, IOnResizeEvent {
                 biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
             });
 
+            if (button.id === "fadebuildings" && this.uiManager.isMyCity && this.city.tutorialStepIndex === 6) {
+                buttonDrawable.addChild(new Drawable({
+                    x: -this.buttonHeight,
+                    y: -this.buttonHeight,
+                    width: this.buttonHeight * 3 + "px",
+                    height: this.buttonHeight * 3 + "px",
+                    biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                    image: new TextureInfo(96, 96, "ui/majorsalience"),
+                }));
+            }
+
             barDrawable.addChild(buttonDrawable);
             nextX += this.buttonWidth + this.padding;
         });

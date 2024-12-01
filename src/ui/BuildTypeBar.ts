@@ -149,6 +149,17 @@ export class BuildTypeBar implements IHasDrawable, IOnResizeEvent {
                 }));
             }
 
+            if (this.city.tutorialStepIndex !== -1 && (countInStock > 0 || unlockedBuildingTypes.length === 1)) {
+                buildingIconDrawable.addChild(new Drawable({
+                    x: -this.buildingIconSize,
+                    y: -this.buildingIconSize,
+                    width: this.buildingIconSize * 3 + "px",
+                    height: this.buildingIconSize * 3 + "px",
+                    biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                    image: new TextureInfo(96, 96, "ui/majorsalience"),
+                }));
+            }
+
             // Add building name
             expandedDrawable.addChild(new Drawable({
                 x: x + this.buildingIconSize / 2, //Centered on the image
@@ -168,6 +179,33 @@ export class BuildTypeBar implements IHasDrawable, IOnResizeEvent {
             addResourceCosts(expandedDrawable, costs, costsX, this.buildingPadding + this.buildingIconSize + 24, true, true, true, 16, 2, 14, 4, grayscale, reddize, this.city);
             x += itemWidth;
         });
+
+        if (x === baseX) {
+            expandedDrawable.addChild(new Drawable({
+                x: 10,
+                y: 10,
+                width: "100%",
+                height: "32px",
+                text: "Category: " + BuildingCategory[this.expandedCategory!].toLowerCase().replace(/(_|^)([a-z])/g, (v) => " " + v.slice(-1).toUpperCase()).trim(), //Title-case like "NATURAL_BLOCKERS" -> "Natural Blockers"
+                biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+            }));
+            expandedDrawable.addChild(new Drawable({
+                x: 10,
+                y: 50,
+                width: "100%",
+                height: "24px",
+                text: "Nothing to see here yet!",
+                biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+            }));
+            expandedDrawable.addChild(new Drawable({
+                x: 10,
+                y: 80,
+                width: "100%",
+                height: "24px",
+                text: "You'll unlock buildings in this category later.",
+                biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+            }));
+        }
 
         this.scroller.setChildrenSize(x - baseX + this.extraTextWidth / 2);
 

@@ -4,7 +4,7 @@ import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { Player } from "../game/Player.js";
 import { Grain } from "../game/ResourceTypes.js";
-import { CementMill, CornerStore, Farm, MountainIronMine, ObstructingGrove, Quadplex, Quarry, Road, SmallHouse, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TreeFarm, WindTurbine, getBuildingType } from "../game/BuildingTypes.js";
+import { CementMill, CornerStore, Farm, MountainIronMine, ObstructingGrove, Quadplex, Quarry, Road, SmallHouse, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TreeFarm, WindTurbine, getBuildingType } from "../game/BuildingTypes.js";
 import { BIGGER_MOBILE_RATIO } from "../rendering/RenderUtil.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { StandardScroller } from "./StandardScroller.js";
@@ -67,7 +67,7 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 content: {
                     y: 150,
-                    text: "Welcome to your very own Towngardian village, aspiring city planner-mayor-despot! Ready to turn this patch of dirt into a thriving metropolis? No pressure, but the fate of thousands of virtual citizens rests in your hands. Tap anywhere to get started!",
+                    text: "Welcome to your very own Towngardian village, aspiring city planner-mayor-despot! Ready to turn this patch of dirt into a thriving metropolis? No pressure, but the fate of thousands of virtual citizens rests in your hands. Tap anywhere to get started! The tutorial is mandatory, by the way, because not everything is intuitive.",
                 },
                 nextButton: {
                     text: "Let's go!",
@@ -79,7 +79,7 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 onStop: () => { },
             },
-            {
+            { //Step 1, referenced by number in createContentDrawable
                 title: "Solar Panels: Your Shiny Friends",
                 charsPerPage: 1000,
                 backdropMods: {
@@ -87,24 +87,24 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 content: {
                     y: 150,
-                    text: "See those solar panels behind City Hall? They're not just for show! Houses are power-hungry beasts--and money-hungry if you're importing the juice. Keep them around and connected to the power network (roads and other buildings), or your wallet might start feeling lighter than a feather in a hurricane.",
+                    text: "See those solar panels behind City Hall? They're not just for show! Houses are power-hungry beasts--and money-hungry if you're importing the juice. Keep them around and connected to the power network (roads and other buildings), or your wallet might start feeling lighter than a feather in a hurricane. Just a light warning up-front! Tap anywhere to continue.",
                 },
                 nextButton: {
                     text: "Enlightening!",
                 },
                 type: "button",
                 advancementCriteria: () => true,
-                onStart: () => { },
+                onStart: () => { this.uiManager.centerOn(this.city.buildings.find(p => p.type === getBuildingType(StarterSolarPanel))!); },
                 onStop: () => { },
             },
-            {
+            { //Step 2, referenced by number
                 title: "Building Stalking 101",
                 charsPerPage: 600,
                 backdropMods: {
                     x: 10, y: 10, width: "min(70%, 600px)", height: "600px", biggerOnMobile: true,
                 },
                 content: {
-                    text: "Want to know a building's deepest secrets? Long-tap or right-click it! It's like social media stalking, but for infrastructure. Power producers will even spill the tea on the whole power network! Try it out on the solar panels, if you'd like.",
+                    text: "Want to know a building's deepest secrets? Long-tap it and hit the '?'! It's like social media stalking, but for infrastructure. Power producers will even spill the tea on the whole power network! Try it out on the solar panels, if you'd like.",
                 },
                 nextButton: {
                     text: "I'm nosy!",
@@ -114,24 +114,24 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => { },
                 onStop: () => { },
             },
-            {
+            { //Step 3, referenced by number (in the start() function)
                 title: "Show Me The Money!",
                 charsPerPage: 300,
                 backdropMods: {
                     x: 10, y: 10, width: "min(90%, 1000px)", height: "300px", biggerOnMobile: true,
                 },
                 content: {
-                    text: "See that flunds icon at City Hall? It looks like an 'f', but upside-down and backwards, and it represents Towngardian currency. It's not just pretty bling--tap it to collect your hard-earned cash!",
+                    text: "See that flunds icon at City Hall? It looks like an 'f', but upside-down and backwards, and it represents Towngardian currency. It's not just pretty bling--tap it now to collect your hard-earned cash!",
                 },
                 nextButton: {
                     text: "Yay flunds!",
                 },
                 type: "auto",
                 advancementCriteria: () => this.city.cityHall.flunds.amount < 1,
-                onStart: () => { this.city.frozenAdvanceLongTick(); },
+                onStart: () => { this.city.frozenAdvanceLongTick(); this.uiManager.centerOn(this.city.cityHall); },
                 onStop: () => { },
             },
-            {
+            { //Step 4, referenced by number
                 title: "For the Hoard",
                 charsPerPage: 350, //Narrow!
                 backdropMods: {
@@ -148,11 +148,11 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => { this.uiManager.showTopBar(); },
                 onStop: () => { this.uiManager.toggleResources(); },
             },
-            {
+            { //Step 5, referenced by number
                 title: "No Views Barred",
                 charsPerPage: 1000,
                 backdropMods: {
-                    x: 10, y: 70, width: "min(90%, 1000px)", height: "calc(100% - 80px)", scaleYOnMobile: true,
+                    x: 10, y: 70, width: "min(90%, 1000px)", height: "calc(100% - 80px)", scaleYOnMobile: true, biggerOnMobile: true,
                 },
                 content: {
                     text: "Now we want to build some roads, but it's hard to see where we want to put them, so let's clear the view first. Tap the magnifying glass in the top bar. Note: If your screen is narrow, you can drag that bar sideways to scroll through it.",
@@ -165,11 +165,11 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => { },
                 onStop: () => { },
             },
-            {
+            { //Step 6, referenced by number
                 title: "Sights to See",
                 charsPerPage: 490,
                 backdropMods: {
-                    x: 10, y: 170, width: "min(90%, 1000px)", height: "400px", scaleYOnMobile: true, biggerOnMobile: true,
+                    x: 10, y: 170, width: "min(90%, 1000px)", height: "450px", scaleYOnMobile: true, biggerOnMobile: true,
                 },
                 content: {
                     text: "Now tap the faded house icon at the left. That toggles a mode in which buildings fade out near the bottom of your screen. Drag the screen up and down a bit, and after you've checked out that fancy-schmancy visual, channel your inner lumberjack and bulldoze that pesky grove (long-tap it, then tap the bulldozer). Voila! From obstruction to resource!",
@@ -179,14 +179,17 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 type: "auto",
                 advancementCriteria: () => !this.city.buildings.find(p => p.type === getBuildingType(ObstructingGrove) && p.x === 0 && p.y === 4),
-                onStart: () => { },
+                onStart: () => {
+                    const grove = this.city.buildings.find(p => p.type === getBuildingType(ObstructingGrove) && p.x === 0 && p.y === 4);
+                    if (grove) this.uiManager.centerOn(grove);
+                },
                 onStop: () => { if (this.uiManager.viewsBarShown()) this.uiManager.toggleViews(); },
-            },
-            {
+            }, //TODO: Should split that step into "check out the view" + "demolish the grove"
+            { //Step 7, referenced by number
                 title: "Road Tip",
                 charsPerPage: 600,
                 backdropMods: {
-                    x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", height: "500px", scaleYOnMobile: true, biggerOnMobile: true,
+                    x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", height: "550px", scaleYOnMobile: true, biggerOnMobile: true,
                 },
                 content: {
                     text: "Now that we have some room, let's build a little bit more road. Long-tap the road tile by the house and tap the copy button. Alternatively, you can tap the bus stop (representing the Infrastructure category) in the bottom bar, then tap the Road icon that appears above that. You may have to drag the bottom bar sideways to see the category--it's the one after the barn.",
@@ -220,9 +223,9 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => { },
                 onStop: () => { },
             },
-            {
+            { //Step 9, referenced by number
                 title: "City Hall Shuffle",
-                charsPerPage: 500,
+                charsPerPage: 485,
                 backdropMods: {
                     x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", height: "min(680px, calc(100% - 240px))", scaleYOnMobile: true,
                 },
@@ -237,7 +240,7 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => { },
                 onStop: () => { },
             },
-            {
+            { //Step 10, referenced by number
                 title: "Producing Product Producers",
                 charsPerPage: 372,
                 backdropMods: {
@@ -274,7 +277,11 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 type: "auto",
                 advancementCriteria: () => (this.city.buildings.find(p => p.type === getBuildingType(Farm))?.outputResources[0].amount ?? 2) < 1,
-                onStart: () => { this.city.frozenAdvanceLongTick(); },
+                onStart: () => {
+                    this.city.frozenAdvanceLongTick();
+                    const farm = this.city.buildings.find(p => p.type === getBuildingType(Farm));
+                    if (farm) this.uiManager.centerOn(farm);
+                },
                 onStop: () => { },
             },
             {
@@ -285,7 +292,7 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 content: {
                     y: 150,
-                    text: "Citizens automatically consume food from your hoard like a bunch of apes. As your city grows, your produce will have a greater effect on their happiness and health, but for now, grains are a sufficient diet. You need about 1 unit of food a day per 100 citizens. Your businesses, especially restaurants, will also underperform if they have to import food because you're not producing enough for everyone.",
+                    text: "Citizens automatically consume food from your hoard like a bunch of apes. As your city grows, your produce will have a greater effect on their happiness and health, but for now, grains are a sufficient diet. You need about 1 unit of food a day per 100 citizens. Your businesses, especially restaurants, will also underperform if they have to import food because you're not producing enough for everyone. Tap anywhere to continue.",
                 },
                 nextButton: {
                     text: "Nom nom nom!",
@@ -331,7 +338,7 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => { },
                 onStop: () => { },
             },
-            {
+            { //Step 15, referenced by number
                 title: "Concrete, The Unsung Hero",
                 charsPerPage: 350,
                 backdropMods: {
@@ -348,14 +355,14 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => { this.grantCopy(CementMill); },
                 onStop: () => { },
             },
-            {
+            { //Step 16, referenced by number
                 title: "Rock On with Quarries",
                 charsPerPage: 445,
                 backdropMods: {
                     x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", height: "min(680px, calc(100% - 240px))", scaleYOnMobile: true,
                 },
                 content: {
-                    text: "Oops! Speaking of resources for your cement mill... Build a quarry and start mining that sweet, sweet stone. It's like buying stone at a perpetual discount--who doesn't love a good deal? After the first 50 stone, it's pure profit, baby! Make sure you connect it to a road, too. Only select buildings in the 'Luxury' category (the statue icon) or the 'Power' category don't require roads.",
+                    text: "Oops! Speaking of resources for your cement mill... Build a quarry and start mining that sweet, sweet stone. It's like buying stone at a perpetual discount--who doesn't love a good deal? After the first 50 stone, it's pure profit, baby! Make sure you connect it to a road, too. Only certain buildings in the 'Luxury' category (the statue icon) or the 'Power' category don't require roads.",
                 },
                 nextButton: {
                     text: "Let's rock and roll!",
@@ -381,7 +388,7 @@ export class TutorialOverlay implements IHasDrawable {
                 advancementCriteria: () => this.city.resources.get("stone")!.amount > 0 && this.uiManager.isProvisioning(), //I locked the auto-trade sliders during the tutorial so the player can't softlock here.
                 onStart: () => { this.city.flunds.amount += 10; }, //Give them just a bit of money so they can provision a few ticks' worth if they want.
                 onStop: () => { },
-            },
+            }, //TODO: could break that step up as well
             {
                 title: "Concrete Evidence of Progress",
                 charsPerPage: 300,
@@ -389,7 +396,7 @@ export class TutorialOverlay implements IHasDrawable {
                     x: 10, y: 370, width: "min(calc(100% - 20px), 1000px)", height: "calc(100% - 380px)", scaleYOnMobile: true, biggerOnMobile: true,
                 },
                 content: {
-                    text: "Finally, your cement mill can strut its stuff! Tap the arrow on it to feed it stone like it's a hungry hippo, and watch it churn out concrete. It's not exactly riveting TV, but hey, it's honest work. And remember, concrete is the backbone of your city--use it wisely!",
+                    text: "Finally, your cement mill can strut its stuff! Tap the arrow on it again to feed it stone like it's a hungry hippo, and watch it churn out concrete. It's not exactly riveting TV, but hey, it's honest work. And remember, concrete is the backbone of your city--use it wisely!",
                 },
                 nextButton: {
                     text: "Wait--not cement?",
@@ -421,7 +428,7 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => { },
                 onStop: () => { },
             },
-            {
+            { //Step 20, referenced by number
                 title: "Resource Juggling Act",
                 charsPerPage: 300,
                 backdropMods: {
@@ -445,7 +452,7 @@ export class TutorialOverlay implements IHasDrawable {
                     x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", height: "calc(100% - 160px)", scaleYOnMobile: true, biggerOnMobile: true,
                 },
                 content: {
-                    text: "Oops! Bought too much, and your flunds dipped below zero? Don't panic! It's not bankruptcy, it's... a financial adventure! Yeah! Wait for City Hall to print more money, or get creative: slash budgets, remove service buildings, sell resources, or knock down houses if they aren't worth the power import costs. Remember, unhappy citizens might leave, but hey, that's just fewer mouths to feed, right? It's not like they're your main source of income or anything! Collect revenue from City Hall to continue.",
+                    text: "Oops! Bought too much, and your flunds dipped below zero? Don't panic! It's not bankruptcy, it's... a financial adventure! Yeah! At such times, you can wait for City Hall to print more money, or get creative: slash budgets, remove service buildings, sell resources, or knock down houses if they aren't worth the power import costs. Remember, unhappy citizens might leave, but hey, that's just fewer mouths to feed, right? It's not like they're your main source of income or anything! Collect revenue from City Hall to continue.",
                 },
                 nextButton: {
                     text: "Suddenly, I'm a math lover!",
@@ -460,14 +467,15 @@ export class TutorialOverlay implements IHasDrawable {
                     this.city.cityHall.flunds.capacity = this.city.cityHall.flunds.amount;
                     this.city.flunds.amount = -10;
                     if (this.city.cityHall.flunds.amount < 15) this.city.cityHall.flunds.amount = 15;
+                    this.uiManager.centerOn(this.city.cityHall);
                 },
                 onStop: () => { },
             },
-            {
+            { //Step 22, referenced by number
                 title: "Business 101",
-                charsPerPage: 332,
+                charsPerPage: 450,
                 backdropMods: {
-                    x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", height: "min(590px, calc(100% - 240px))", scaleYOnMobile: true,
+                    x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", height: "min(800px, calc(100% - 240px))", scaleYOnMobile: true,
                 },
                 content: {
                     text: "Time to put on your business hat! Businesses are like catnip for apartments, and apartments are money machines. And businesses give citizens a place to fork over more flunds! But remember, Rome wasn't built in a day, and neither was this game. Let's start small: build a modest Corner Store. If you go overboard, you'll end up with derelict businesses that need big flund infusions to reopen. Residences can upgrade from house to apartment to highrise to skyscraper eventually if they are within range of enough businesses. The blue region that appears when placing/moving a business indicates the business's reach.",
@@ -497,7 +505,7 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => { },
                 onStop: () => { },
             },
-            {
+            { //Step 24, referenced by number
                 title: "Iron Is Mine!",
                 charsPerPage: 160,
                 backdropMods: {
@@ -517,7 +525,7 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 onStop: () => { this.city.frozenAdvanceLongTick(); },
             },
-            {
+            { //Step 25, referenced by number
                 title: "Gone with the Wind(mill)",
                 charsPerPage: 500,
                 backdropMods: {
@@ -540,11 +548,11 @@ export class TutorialOverlay implements IHasDrawable {
                     this.city.resources.get("iron")!.capacity = 10;
                 },
             },
-            {
+            { //Step 26, referenced by number
                 title: "The Heat is On... Pumps",
                 charsPerPage: 600,
                 backdropMods: {
-                    x: 10, y: 70, width: "min(calc(100% - 100px), 1000px)", height: "calc(100% - 160px)", scaleYOnMobile: true,
+                    x: 10, y: 70, width: "min(calc(100% - 100px), 1000px)", height: "calc(100% - 160px)", scaleYOnMobile: true, biggerOnMobile: true,
                 },
                 content: {
                     text: "Want to make your residents love you? Research Heat Pumps! Actually, forget the citizens--your wallet will thank you, since YOU'RE the one footing the electric bill for some reason. Check the deets in the research menu, which you can access via the head/magnifying glass icon in the right side bar.",
@@ -565,7 +573,7 @@ export class TutorialOverlay implements IHasDrawable {
                     x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", height: "340px", scaleYOnMobile: true,
                 },
                 content: {
-                    text: "Tap on a tech to view its details. If you can make some progress but not complete it with your current resources and research points, you'll see a 'drop in the bucket' button at the bottom right.",
+                    text: "Tap on any tech to view its details. If you can progress but not finish it with your current resources, you'll see a 'drop in the bucket' button at the bottom right.",
                 },
                 nextButton: {
                     y: 0,
@@ -584,7 +592,7 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 content: {
                     x: 10, y: 70, width: "min(calc(100% - 20px), 1000px)", scaleYOnMobile: true,
-                    text: "If you're a fan of both the environment and pioneering new technology, take note. If you research a second eco-friendly tech before hitting 1000 population, you'll earn a city title, which comes with a permanent bonus. But if you don't like bonuses, hey, nobody will make you! You can tap the paper scroll in the right bar at any time to see city titles that you have earned or can earn.",
+                    text: "If you're a fan of both the environment and pioneering new technology, take note. If you research a second eco-friendly tech before hitting 1000 population, you'll earn a city title, which comes with a permanent bonus. But if you don't like bonuses, hey, nobody will make you! You can tap the paper scroll in the right bar at any time to see city titles that you have earned or can earn. Tap anywhere to continue.",
                 },
                 nextButton: {
                     text: "I'll leaf that for later.",
@@ -594,7 +602,7 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => { if (this.uiManager.resourcesBarShown()) this.uiManager.toggleResources(); }, //make sure it's readable
                 onStop: () => { },
             },
-            {
+            { //Step 29, referenced by number
                 title: "Branching Out",
                 charsPerPage: 500,
                 backdropMods: {
@@ -783,6 +791,7 @@ export class TutorialOverlay implements IHasDrawable {
             //Unlock a lot of buildings
             this.city.buildingTypes.filter(p => TUTORIAL_COMPLETION_BUILDING_UNLOCKS.has(p.type)).forEach(p => p.locked = false);
             this.city.tutorialStepIndex = -1;
+            this.city.lastShortTick = this.city.lastLongTick = Date.now();
             this.player.finishedTutorial = true;
             this.uiManager.game.fullSave();
         }
@@ -815,6 +824,7 @@ export class TutorialOverlay implements IHasDrawable {
         if (timeSinceStart < 2000) return;
         if (!currentStep.advancementCriteria()) return;
 
+        this.city.updateLastUserActionTime();
         this.nextStep();
     }
 
@@ -1020,7 +1030,7 @@ export class TutorialOverlay implements IHasDrawable {
             }
         }
 
-        const minimizeTutorialButton = new Drawable({
+        if (this.city.tutorialStepIndex > 1) stepDrawable.addChild( new Drawable({
             anchors: ['centerX'],
             width: "160px",
             height: "64px",
@@ -1030,8 +1040,7 @@ export class TutorialOverlay implements IHasDrawable {
             text: (this.minimized ? "Show" : "Hide") + " tutorial",
             id: "minimizeButton",
             onClick: () => { this.minimized = !this.minimized; },
-        });
-        stepDrawable.addChild(minimizeTutorialButton);
+        }));
 
         return stepDrawable;
     }

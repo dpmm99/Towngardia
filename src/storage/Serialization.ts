@@ -61,6 +61,8 @@ export class CitySerializer {
             uo: [...o.unlockedMinigameOptions],
             tp: o.trafficPrecalculation,
             ru: o.roadUpkeepPrecalculation,
+            la: o.lastUserActionTimestamp,
+            ls: o.lastSavedUserActionTimestamp,
         };
 
         return r;
@@ -251,8 +253,8 @@ export class CityDeserializer {
         const grid = this.grid(o.gr, buildingsByID);
         const effectGrid = this.effectGrid(o.eg, buildingsByID);
 
-        if (buildings.some(p => grid[p.y][p.x] != p && !grid[p.y][p.x]?.builtOn.has(p))) {
-            console.log("Deserialization error: some buildings don't match their grid locations: " + buildings.filter(p => grid[p.y][p.x] != p).map(p => p.type + "(" + p.x + "," + p.y + ")").join(" "));
+        if (grid && buildings.some(p => grid[p.y]?.[p.x] != p && !grid[p.y]?.[p.x]?.builtOn.has(p))) {
+            console.error(new Date().toISOString(), player.id, "Deserialization: some buildings don't match their grid locations: " + buildings.filter(p => grid[p.y][p.x] != p).map(p => p.type + "(" + p.x + "," + p.y + ")").join(" "));
             //throw new Error("Deserialization error: some buildings don't match their grid locations: " + buildings.filter(p => grid[p.y][p.x] != p).map(p => p.type + "(" + p.x + "," + p.y + ")").join(" "));
         }
 
@@ -286,6 +288,8 @@ export class CityDeserializer {
         if (o.uo) r.unlockedMinigameOptions = new Set(o.uo);
         if (r.happinessBreakdown.has("Food satisfaction")) r.happinessBreakdown.delete("Food satisfaction"); //I renamed it to "Food gratification" to match the citizen diet screen later
         if (o.hx) r.happinessMaxima = new Map(o.hx);
+        if (o.la) r.lastUserActionTimestamp = o.la;
+        if (o.ls) r.lastSavedUserActionTimestamp = o.ls;
         return r;
     }
 
@@ -397,7 +401,7 @@ export class CityDeserializer {
     building(o: any, isTemplate: boolean): Building | undefined {
         const r = (this.buildingTypes.get(o.ty) ?? this.blockerTypes.get(o.ty))?.clone();
         if (!r) {
-            console.error("Building type does not exist. Type: " + o.ty + "; building type list: " + [...this.buildingTypes.keys()].join(","));
+            console.error(new Date().toISOString(), "Building type does not exist. Type: " + o.ty + "; building type list: " + [...this.buildingTypes.keys()].join(","));
             return; //Can't deserialize if the type doesn't exist anymore.
         }
 
@@ -461,6 +465,8 @@ export class PlayerSerializer {
             no: this.notifications(o.notifications),
             ac: this.achievements(o.achievements),
             ft: o.finishedTutorial === true ? undefined : o.finishedTutorial,
+            la: o.lastUserActionTimestamp,
+            ls: o.lastSavedUserActionTimestamp,
         };
         if (!forDB) {
             player.id = o.id;
@@ -502,6 +508,8 @@ export class PlayerDeserializer {
         r.cities = <City[]>(o.ci || []).map((p: any) => ({ id: p.id + "", name: p.na }));
         r.finishedTutorial = o.ft === undefined; //Undefined = true, present = false
         r.avatar = o.av || "";
+        if (o.la) r.lastUserActionTimestamp = o.la;
+        if (o.ls) r.lastSavedUserActionTimestamp = o.ls;
         return r;
     }
 

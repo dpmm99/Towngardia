@@ -67,7 +67,9 @@ export class Database implements IStorage {
 
     private async getAndApplyCityAssists(player: Player, cityData: City) {
         const assists = await this.getAssistsForPlayer(player.id);
-        cityData.assists.push(...assists.filter(p => p.cityId == cityData.id).sort((a, b) => a.startAt - b.startAt)); //Oldest to newest so they apply in order, though I don't expect order to ever matter.
+        const assistsToAdd = [...assists.filter(p => p.cityId == cityData.id).sort((a, b) => a.startAt - b.startAt)];
+        if (assistsToAdd.length === 0) return;
+        cityData.assists.push(...assistsToAdd); //Oldest to newest so they apply in order, though I don't expect order to ever matter.
         await this.saveCity(player.id, cityData); //At this point, playerId is the assisting player, not the one being assisted (i.e., it's not this player whose city is being loaded)
 
         //Now that the assists have been applied, we can clear them.
@@ -108,8 +110,15 @@ export class Database implements IStorage {
      */
     protected async updateCity(playerID: string, city: City): Promise<void> {
         if (playerID != city.player.id) throw new Error("Wrong player ID submitted for city" + city.id + ". City has: " + city.player.id + "; given player ID was: " + playerID);
+
+        //Check that the city hasn't been updated on another client since it was loaded on that client
+        const lastActionTimestamp = await this.query("SELECT last_action FROM towngardia_cities WHERE id = ?", [city.id]); //lastUserActionTimestamp is a Date; last_action is a TIMESTAMP(3). Both are UTC.
+        if (lastActionTimestamp[0].length === 0) throw new Error("City with ID " + city.id + " not found.");
+        if (city.lastSavedUserActionTimestamp < lastActionTimestamp[0][0].last_action) throw new Error("Tried to save outdated version of city data.");
+        city.lastSavedUserActionTimestamp = city.lastUserActionTimestamp; //Update the last saved timestamp, or else it'll load incorrectly next time
+
         const s = new CitySerializer();
-        await this.query("UPDATE towngardia_cities SET city = ?, name = ? WHERE player = ? AND id = ?", [JSON.stringify(s.city(city)), city.name, playerID, city.id]);
+        await this.query("UPDATE towngardia_cities SET city = ?, name = ?, last_action = ? WHERE player = ? AND id = ?", [JSON.stringify(s.city(city)), city.name, city.lastUserActionTimestamp, playerID, city.id]);
     }
 
     /**
@@ -236,8 +245,14 @@ export class Database implements IStorage {
 
     //For saving the player JSON data
     async updatePlayer(player: Player): Promise<void> {
+        //Check that the player hasn't been updated on another client since it was loaded on that client
+        const lastActionTimestamp = await this.query("SELECT last_action FROM towngardia_players WHERE id = ?", [player.id]);
+        if (lastActionTimestamp[0].length === 0) throw new Error("Player with ID " + player.id + " not found.");
+        if (player.lastSavedUserActionTimestamp < lastActionTimestamp[0][0].last_action) throw new Error("Tried to save outdated version of player data.");
+        player.lastSavedUserActionTimestamp = player.lastUserActionTimestamp; //Update the last saved timestamp, or else it'll load incorrectly next time
+
         const s = new PlayerSerializer();
-        await this.query("UPDATE towngardia_players SET other_public = ? WHERE id = ?", [JSON.stringify(s.player(player, true)), player.id]);
+        await this.query("UPDATE towngardia_players SET other_public = ?, last_action = ? WHERE id = ?", [JSON.stringify(s.player(player, true)), player.lastUserActionTimestamp, player.id]);
     }
 
     /**

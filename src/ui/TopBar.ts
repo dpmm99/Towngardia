@@ -48,7 +48,7 @@ export class TopBar implements IHasDrawable, IOnResizeEvent {
         const baseX = nextX;
 
         // Add resource menu button
-        barDrawable.addChild(new Drawable({
+        const resourceMenuButton = barDrawable.addChild(new Drawable({
             x: nextX,
             y: padding,
             width: iconSize + "px",
@@ -58,10 +58,20 @@ export class TopBar implements IHasDrawable, IOnResizeEvent {
             onClick: () => this.uiManager.toggleResources(),
             biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
         }));
+        if (this.uiManager.isMyCity && (this.city.tutorialStepIndex === 4 || this.city.tutorialStepIndex === 20) && !this.uiManager.resourcesBarShown()) {
+            resourceMenuButton.addChild(new Drawable({
+                x: -iconSize,
+                y: -iconSize,
+                width: iconSize * 3 + "px",
+                height: iconSize * 3 + "px",
+                biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                image: new TextureInfo(96, 96, "ui/majorsalience"),
+            }));
+        }
         nextX += iconSize + padding;
 
         // Add 'views' bar button
-        barDrawable.addChild(new Drawable({
+        const viewsMenuButton = barDrawable.addChild(new Drawable({
             x: nextX,
             y: padding,
             width: iconSize + "px",
@@ -71,6 +81,16 @@ export class TopBar implements IHasDrawable, IOnResizeEvent {
             onClick: () => this.uiManager.toggleViews(),
             biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
         }));
+        if (this.uiManager.isMyCity && (this.city.tutorialStepIndex === 5)) {
+            viewsMenuButton.addChild(new Drawable({
+                x: -iconSize,
+                y: -iconSize,
+                width: iconSize * 3 + "px",
+                height: iconSize * 3 + "px",
+                biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                image: new TextureInfo(96, 96, "ui/majorsalience"),
+            }));
+        }
         nextX += iconSize + padding;
 
         // Add happiness meter

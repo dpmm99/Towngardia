@@ -395,6 +395,7 @@ export class Building implements IHasDrawable {
                 onClick: () => {
                     city.uiManager?.collectedResources(this);
                     city.transferResourcesFrom(this.outputResources, "produce");
+                    city.updateLastUserActionTime();
                 },
                 children: [
                     new Drawable({
@@ -482,6 +483,7 @@ export class Building implements IHasDrawable {
                 //TODO: Show popup briefly--including if you can't afford the resources--to say how much is on the market and how much it has now.
 
                 this.immediatePowerOn(city);
+                city.updateLastUserActionTime();
             } : () => {
                 //The view isn't supposed to show provisioning, but since we are anyway (decided it's necessary so the player doesn't forget), enter provisioning mode *instead* of providing resources to the building.
                 view.uiManager.toggleProvisioning();

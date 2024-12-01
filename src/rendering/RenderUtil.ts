@@ -92,6 +92,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     for (const sprite of otherSprites) {
         urls["ui/" + sprite] = `assets/ui/${sprite}.png`;
     }
+    if (city.tutorialStepIndex !== -1 && !city.player?.finishedTutorial) urls["ui/majorsalience"] = `assets/ui/majorsalience.png`;
 
     //Techs are loaded when opening the tech tree menu, other than this one (it takes a moment to load and redraw upon opening the window the first time).
     urls["tech/generic"] = "assets/tech/generic.png";

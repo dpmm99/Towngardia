@@ -67,6 +67,8 @@ export class City {
 
     public timeFreeze: boolean = false;
     public tutorialStepIndex: number = -1;
+    public lastSavedUserActionTimestamp: number = 1725117593000; //The one that gets checked when saving--was the user's last action timestamp when the city was last saved successfully.
+    public lastUserActionTimestamp: number = 1725117593000; //Kept around until we set lastSavedUserActionTimestamp to it after a successful save; timestamp of the last action the user took.
 
     public resourceEvents: { type: string, event: "buy" | "sell" | "earn" | "produce" | "consume", amount: number }[] = []; //Gets cleared at the end of every long tick. Used for achievements. Will need to serialize if saves occur outside long ticks (which is totally necessary).
 
@@ -149,6 +151,11 @@ export class City {
         //Cached calculated values that normally get calculated on long tick
         this.calculatePowerUsageMultiplier();
         this.calculateParticulatePollutionMultiplier();
+    }
+
+    public updateLastUserActionTime() {
+        this.lastUserActionTimestamp = Date.now();
+        this.player.updateLastUserActionTime();
     }
 
     private ensureNewerUnlocks() {

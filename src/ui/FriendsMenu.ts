@@ -205,7 +205,7 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
         playerContainer.addChild(new Drawable({
             x: this.friendIconSize + 20,
             y: 8,
-            text: isCurrentPlayer ? "Your Cities" : `${player.name}'s Cities`,
+            text: isCurrentPlayer ? "Your Cities" : !player.finishedTutorial ? `${player.name} (Still in tutorial)` : `${player.name}'s Cities`,
             width: `calc(100% - ${this.cityIconSize + 30}px)`,
             height: "32px"
         }));
@@ -214,43 +214,45 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
         yOffset += this.friendIconSize + this.itemPadding;
 
         // Player's cities
-        player.cities.forEach(city => {
-            const isCurrentCity = this.uiManager.game.city === city && this.uiManager.game.visitingCity === null && player === this.player;
-            const cityContainer = new Drawable({
-                x: 20,
-                y: yOffset,
-                width: "100%",
-                height: `${this.cityIconSize}px`,
-                fallbackColor: '#444444',
-                onClick: () => {
-                    if (isCurrentCity) {
-                        //You're in this city already. Clicking renames it instead.
-                        const newCityName = prompt("Re-entitle thy existing concrete jungle:", city.name);
-                        if (newCityName) city.name = newCityName;
+        if (player.finishedTutorial)
+            player.cities.forEach(city => {
+                const isCurrentCity = this.uiManager.game.city === city && this.uiManager.game.visitingCity === null && player === this.player;
+                const isLastCity = this.uiManager.game.city === city && this.uiManager.game.visitingCity !== null && player === this.player;
+                const cityContainer = new Drawable({
+                    x: 20,
+                    y: yOffset,
+                    width: "100%",
+                    height: `${this.cityIconSize}px`,
+                    fallbackColor: (isCurrentCity || this.uiManager.game.visitingCity?.id === city.id) ? '#445555' : isLastCity ? '#555555' : '#444444',
+                    onClick: () => {
+                        if (isCurrentCity) {
+                            //You're in this city already. Clicking renames it instead.
+                            const newCityName = prompt("Re-entitle thy existing concrete jungle:", city.name);
+                            if (newCityName) city.name = newCityName;
+                        }
+                        else this.uiManager.switchCity(city instanceof City ? city : (<any>city).id, player);
                     }
-                    else this.uiManager.switchCity(city instanceof City ? city : (<any>city).id, player);
-                }
+                });
+
+                cityContainer.addChild(new Drawable({
+                    x: 10,
+                    width: `${this.cityIconSize}px`,
+                    height: `${this.cityIconSize}px`,
+                    image: new TextureInfo(this.cityIconSize, this.cityIconSize, `cities/${city.id}`), //TODO: an occasional city snapshot? Seems a bit tough!
+                    fallbackColor: '#00000000',
+                }));
+
+                cityContainer.addChild(new Drawable({
+                    x: this.cityIconSize + 20,
+                    y: 6,
+                    text: city.name + (isCurrentCity ? " (Tap to rename)" : isLastCity ? " (Playing as)" : ""),
+                    width: `calc(100% - ${this.cityIconSize + 30}px)`,
+                    height: "20px"
+                }));
+
+                menuDrawable.addChild(cityContainer);
+                yOffset += this.cityIconSize + this.itemPadding;
             });
-
-            cityContainer.addChild(new Drawable({
-                x: 10,
-                width: `${this.cityIconSize}px`,
-                height: `${this.cityIconSize}px`,
-                image: new TextureInfo(this.cityIconSize, this.cityIconSize, `cities/${city.id}`), //TODO: an occasional city snapshot? Seems a bit tough!
-                fallbackColor: '#00000000',
-            }));
-
-            cityContainer.addChild(new Drawable({
-                x: this.cityIconSize + 20,
-                y: 6,
-                text: city.name + (isCurrentCity ? " (Tap to rename)" : ""),
-                width: `calc(100% - ${this.cityIconSize + 30}px)`,
-                height: "20px"
-            }));
-
-            menuDrawable.addChild(cityContainer);
-            yOffset += this.cityIconSize + this.itemPadding;
-        });
 
         return yOffset + this.itemPadding;
     }

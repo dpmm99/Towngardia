@@ -83,7 +83,7 @@ export class RightBar implements IHasDrawable, IOnResizeEvent {
         let nextY = padding - this.scroller.getScroll();
         const baseY = nextY;
         buttons.forEach((button, index) => {
-            barDrawable.addChild(new Drawable({
+            const buttonDrawable = barDrawable.addChild(new Drawable({
                 x: padding,
                 y: nextY,
                 width: iconSize + "px",
@@ -93,6 +93,17 @@ export class RightBar implements IHasDrawable, IOnResizeEvent {
                 onClick: button.onClick,
                 biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
             }));
+
+            if (button.id === "research" && this.uiManager.isMyCity && this.city?.tutorialStepIndex === 26) {
+                buttonDrawable.addChild(new Drawable({
+                    x: -iconSize,
+                    y: -iconSize,
+                    width: iconSize * 3 + "px",
+                    height: iconSize * 3 + "px",
+                    biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                    image: new TextureInfo(96, 96, "ui/majorsalience"),
+                }));
+            }
 
             //Draw zero to nine boxes on top of the resource icon (3x3 covering it up) based on city.resources.get(type).amount divided by resourceAmount and floored.
             if (button.resourceType) {

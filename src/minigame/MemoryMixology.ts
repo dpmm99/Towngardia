@@ -229,6 +229,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         }
 
         progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.05, 25, 50, 0.001));
+        this.city.updateLastUserActionTime();
         this.game.fullSave();
     }
 
@@ -424,6 +425,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         if (this.city.checkAndSpendResources(this.costs)) {
             this.gameStarted = true;
             this.initializeGame();
+            this.city.updateLastUserActionTime();
             this.game.fullSave();
         }
     }

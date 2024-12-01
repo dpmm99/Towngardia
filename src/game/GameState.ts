@@ -27,6 +27,7 @@ export class GameState {
     private buildingTypes: Building[] = [...BUILDING_TYPES.values()];
     saveWhenHiding: boolean = true;
     loading: boolean = false;
+    saving: boolean = false;
 
     constructor(
         public storage: IStorage,
@@ -247,16 +248,33 @@ export class GameState {
     public async fullSave() {
         if (!this.city) throw new Error("City not yet loaded.");
         if (this.loading) throw new Error("City load is still in progress or failed.");
+        if (this.saving) { //Still saving from the previous time--we don't want data inconsistencies between the player and city, so delay the save a bit.
+            setTimeout(() => this.fullSave(), 1000);
+            return;
+        }
+        this.saving = true;
         try {
             console.trace("Saving; see stack.");
+            const playerActionTimeWhenSaveStarted = this.player!.lastUserActionTimestamp; //because it's async; user could keep doing stuff
             await this.storage.updatePlayer(this.player!);
+            this.player!.lastSavedUserActionTimestamp = playerActionTimeWhenSaveStarted;
+            const cityActionTimeWhenSaveStarted = this.city.lastUserActionTimestamp;
             await this.storage.saveCity(this.player!.id, this.city);
+            this.city.lastSavedUserActionTimestamp = cityActionTimeWhenSaveStarted;
         } catch (err) { //TODO: Break up the error into at least 3 parts: 1. session expired, 2. mandatory client version update, 3. unexpected server error
-            if (err?.toString().includes("SyntaxError")) {
+            if (err?.toString().includes("Tried to save outdated version")) {
+                //this.uiManager?.showWarning("Reloaded your city because it was older than what was on the server. Tap this message to hide it.");
+                //Refresh the whole page instead of switching to the same city because the PLAYER data would also be outdated (due to non-city-specific things, namely achievements).
+                //Plus the server may have been updated, too.
+                this.loading = true; //Make sure it doesn't try to resave while refreshing
+                window.location.reload();
+                return;
+            }
+            else if (err?.toString().includes("SyntaxError")) {
                 if (confirm("Your session expired or the server is down. Open the login page in another tab?")) window.open("index.html"); //Need to log back in
             }
             this.uiManager?.showWarning("Save failed. Open a new tab to log in again, then save via the menu. Tap this message to hide it.");
-        }
+        } finally { this.saving = false; }
     }
 
     private shortTick(untilTime: number) {

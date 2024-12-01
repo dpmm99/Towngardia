@@ -90,7 +90,7 @@ export class ContextMenu implements IHasDrawable {
         const childWidth = 48;
         const childHeight = 48;
         if (building.canMove(this.city!) && this.uiManager.isMyCity) {
-            menu.addChild(new Drawable({
+            const moveButton = menu.addChild(new Drawable({
                 image: new TextureInfo(childWidth, childHeight, "ui/move"),
                 id: menu.id + ".move",
                 onClick: () => {
@@ -98,6 +98,15 @@ export class ContextMenu implements IHasDrawable {
                     this.ridingAlong = building.getBuildingsOnTop(this.city!); //Doesn't get reset when moving = false because it's harmless and UIManager "cancels" the context menu on every click--even clicks to move things around.
                 }
             }));
+            if (this.uiManager.isMyCity && this.city!.tutorialStepIndex === 9) {
+                moveButton.addChild(new Drawable({
+                    x: -childHeight,
+                    y: -childHeight,
+                    width: childHeight * 3 + "px",
+                    height: childHeight * 3 + "px",
+                    image: new TextureInfo(96, 96, "ui/majorsalience"),
+                }));
+            }
         }
         if (building.canStow(this.city!) && this.uiManager.isMyCity) {
             menu.addChild(new Drawable({
@@ -107,23 +116,43 @@ export class ContextMenu implements IHasDrawable {
                     const mustStowFirst = building.getBuildingsOnTop(this.city!); //Must stow the on-top buildings first
                     mustStowFirst.forEach(b => this.city!.removeBuilding(b));
                     this.city?.removeBuilding(building);
+                    this.city!.updateLastUserActionTime();
                     this.game.fullSave();
                 }
             }));
         }
         if (building.canDemolish(this.city!) && this.uiManager.isMyCity) {
-            menu.addChild(new Drawable({
+            const demolishButton = menu.addChild(new Drawable({
                 image: new TextureInfo(childWidth, childHeight, "ui/demolish"),
                 id: menu.id + ".demo",
                 onClick: () => { this.demolishing = true; }
             }));
+            if (this.uiManager.isMyCity && this.city!.tutorialStepIndex === 6) {
+                demolishButton.addChild(new Drawable({
+                    x: -childHeight,
+                    y: -childHeight,
+                    width: childHeight * 3 + "px",
+                    height: childHeight * 3 + "px",
+                    image: new TextureInfo(96, 96, "ui/majorsalience"),
+                }));
+            }
         }
 
-        menu.addChild(new Drawable({
+        const infoButton = menu.addChild(new Drawable({
             image: new TextureInfo(childWidth, childHeight, "ui/info"),
             id: menu.id + ".info",
             onClick: () => this.uiManager.showBuildingInfo(building),
         }));
+        if (this.uiManager.isMyCity && this.city!.tutorialStepIndex === 2) {
+            infoButton.addChild(new Drawable({
+                x: -childHeight,
+                y: -childHeight,
+                width: childHeight * 3 + "px",
+                height: childHeight * 3 + "px",
+                image: new TextureInfo(96, 96, "ui/majorsalience"),
+            }));
+        }
+
         if (((building.owned && !building.isResidence) || this.city!.canBuildResources) && this.uiManager.isMyCity && building.isBuyable(this.city!)) {
             menu.addChild(new Drawable({
                 image: new TextureInfo(childWidth, childHeight, "ui/buildcopy"),
@@ -214,6 +243,7 @@ export class ContextMenu implements IHasDrawable {
             onClick: () => {
                 if (this.city?.checkAndSpendResources(building.getDemolitionCosts(this.city!))) {
                     this.city?.removeBuilding(building, true);
+                    this.city!.updateLastUserActionTime();
                     this.game.fullSave();
                 }
                 this.building = null;
@@ -339,6 +369,7 @@ export class ContextMenu implements IHasDrawable {
             onClick: () => {
                 if (this.city?.hasResources(cost)) {
                     building.reopenBusiness(this.city!);
+                    this.city!.updateLastUserActionTime();
                     this.game.fullSave();
                 }
                 this.building = null;
@@ -418,6 +449,7 @@ export class ContextMenu implements IHasDrawable {
             onClick: () => {
                 if (this.city?.checkAndSpendResources(costs)) {
                     building.repair(this.city);
+                    this.city!.updateLastUserActionTime();
                     this.game.fullSave();
                 }
                 this.building = null;
@@ -521,6 +553,7 @@ export class ContextMenu implements IHasDrawable {
                         this.city?.transferResourcesFrom(building.inputResources, "cancel"); //Currently the only way you can take resources back out of a building's input slots.
                         building.inputResources = [resource.clone()];
                     }
+                    this.city!.updateLastUserActionTime();
                     this.game.fullSave();
                     this.building = null;
                     this.switchingRecipe = false;
@@ -566,6 +599,7 @@ export class ContextMenu implements IHasDrawable {
                 fallbackColor: '#444444',
                 onClick: () => {
                     this.city?.buildings.filter(b => b.outputResources.some(p => p.amount > 0 && (!p.isSpecial || p instanceof CityHall))).forEach(b => this.city?.transferResourcesFrom(b.outputResources, "produce"));
+                    this.city!.updateLastUserActionTime();
                     this.game.fullSave();
                     this.building = null;
                     this.collecting = false;

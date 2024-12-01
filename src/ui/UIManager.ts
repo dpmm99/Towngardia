@@ -161,9 +161,9 @@ export class UIManager {
             this.achievementsMenu = new AchievementsMenu(owner, newCity, this),
             this.notificationsMenu = new NotificationsMenu(this.game.player!, this.game.city!, this.game), //NEVER changes cities/players
             this.buildingInfoMenu = new BuildingInfoMenu(newCity, this),
-            this.friendsMenu = new FriendsMenu(this.game.player!, this),
             this.friendVisitWindow = new FriendVisitWindow(),
             this.friendGiftWindow = new FriendGiftWindow(this.game.city!, newCity, this, this.game), //Affects BOTH your city and the other player's
+            this.friendsMenu = new FriendsMenu(this.game.player!, this),
         ];
         this.worldCoordinateDrawables = [
             this.constructMenu = new ConstructMenu(),
@@ -193,6 +193,7 @@ export class UIManager {
             const [tech, bonusClaimed] = TechManager.grantFreePoints(this.game.city!, this.game.visitingCity!, resource.amount, Date.now());
             if (tech) await this.techMenu.preloadImages();
             this.showFriendVisitWindow(tech, resource.amount, bonusClaimed); //TODO: also let the player choose to buy specific resources from this city (if this city has sold them recently)
+            this.game.city!.updateLastUserActionTime();
             if (bonusClaimed) this.game.fullSave();
             this.frameRequested = true;
         }
@@ -202,7 +203,11 @@ export class UIManager {
         return this.game.visitingPlayer === null;
     }
 
-    centerOn(building: Building) : void {
+    centerOn(building: Building, retries: number = 0) : void {
+        if (!this.renderer) {
+            if (retries < 5) setTimeout(() => this.centerOn(building, retries + 1), 50);
+            return;
+        }
         const { x, y } = worldToScreenCoordinates(this.city, building.x, building.y, building.width, building.height, building.xDrawOffset, true);
         const canvas = this.renderer.getCanvas()!;
         this.offsetX = x - canvas.width / 2 / this.scale;
@@ -236,6 +241,7 @@ export class UIManager {
         if (this.notificationsMenu.isShown()) return this.checkClickComponent(this.notificationsMenu, x, y);
 
         if (this.friendVisitWindow.isShown() && this.checkClickComponent(this.friendVisitWindow, x, y)) return true;
+        this.friendVisitWindow.shown = false;
         if (this.friendGiftWindow.isShown() && this.checkClickComponent(this.friendGiftWindow, x, y)) return true;
         this.friendGiftWindow.hide(); //Hide it if it's open and they didn't click it, unless it rejects the hide attempt because it's actively sending the assist data to the server
         if (this.happinessFactorsWindow.isShown() && this.checkClickComponent(this.happinessFactorsWindow, x, y)) return true;
@@ -575,9 +581,12 @@ export class UIManager {
         }
     }
 
-    toggleResources() {
-        this.resourcesBar.shown = !this.resourcesBar.shown;
-        if (this.resourcesBar.shown && this.viewsBar.shown) this.toggleViews();
+    async toggleResources() { //Async because it may trigger a save
+        if (this.resourcesBar.isShown()) await this.resourcesBar.hide();
+        else {
+            this.resourcesBar.show();
+            if (this.viewsBar.shown) this.toggleViews(); //Don't need to await here because it's *not* going to trigger a save
+        }
     }
 
     showCitizenDietWindow() {
@@ -585,10 +594,10 @@ export class UIManager {
         if (this.cityView instanceof ProvisioningView) this.toggleProvisioning();
     }
 
-    toggleViews() {
+    async toggleViews() {
         this.cityView = new CityView(this.city, this); //Turn off the special view if there was one; also unhides the buildings.
         this.viewsBar.shown = !this.viewsBar.shown;
-        if (this.viewsBar.shown) this.resourcesBar.shown = false;
+        if (this.viewsBar.shown) await this.resourcesBar.hide();
         if (!this.isMyCity) this.cityView.showCollectibles = false;
     }
 
@@ -607,7 +616,7 @@ export class UIManager {
     showRightBar() {
         this.rightBar.shown = true;
     }
-    resourcesBarShown() { return this.resourcesBar.shown; }
+    resourcesBarShown() { return this.resourcesBar.isShown(); }
     viewsBarShown() { return this.viewsBar.shown; }
     techMenuShown() { return this.techMenu.isShown(); }
     isProvisioning() { return this.cityView instanceof ProvisioningView; }
@@ -698,6 +707,10 @@ export class UIManager {
         return { x: Math.floor(worldCoords.x), y: Math.floor(worldCoords.y) };
     }
 
+    public getSelectedBuildCategory(): BuildingCategory | null {
+        return this.buildTypeBar.expandedCategory;
+    }
+
     public selectBuildCategory(category: BuildingCategory | null, toggle: boolean = false): void {
         this.contextMenu.moving = false; //If you were moving a building, clicking to place another building would remove a building from the city and cause an error, so we need to reset moving=false.
         this.constructMenu.update(this.city, this.renderer, null, 0, 0, false); //Remove the construction overlay
@@ -749,6 +762,7 @@ export class UIManager {
             this.contextMenu.moving = false;
         }
 
+        this.city.updateLastUserActionTime();
         this.exitConstructionMode();
         this.game.fullSave();
     }

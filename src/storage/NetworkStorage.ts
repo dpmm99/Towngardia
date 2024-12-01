@@ -57,10 +57,10 @@ export class NetworkStorage implements IStorage {
             },
             body: gzip(JSON.stringify(data)),
         });
-        city.id = (await response.json()).id;
         if (!response.ok) {
-            throw new Error('Failed to save city');
+            throw new Error('Failed to save city: ' + ((await response?.text()) ?? "unspecified error"));
         }
+        city.id = (await response.json()).id;
     }
 
     async updatePlayer(player: Player): Promise<void> {
@@ -75,7 +75,7 @@ export class NetworkStorage implements IStorage {
             body: gzip(JSON.stringify(serializedPlayer)),
         });
         if (!response.ok) {
-            throw new Error('Failed to update player');
+            throw new Error('Failed to update player: ' + ((await response?.text()) ?? "unspecified error"));
         }
     }
 

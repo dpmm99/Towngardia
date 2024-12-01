@@ -261,7 +261,12 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
                 height: "64px",
                 image: new TextureInfo(64, 64, this.getResearchButtonIcon()),
                 biggerOnMobile: true,
-                onClick: () => { if (this.selectedTech) this.techManager.researchTech(this.city, this.selectedTech); },
+                onClick: () => {
+                    if (this.selectedTech && this.techManager.researchTech(this.city, this.selectedTech)) {
+                        this.city.updateLastUserActionTime();
+                        this.uiManager.game.fullSave();
+                    }
+                },
             })
             bar.addChild(researchButton);
 

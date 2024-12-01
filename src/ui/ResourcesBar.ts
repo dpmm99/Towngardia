@@ -11,10 +11,11 @@ import { humanizeCeil, humanizeFloor } from "./UIUtil.js";
 export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
     private scroller = new StandardScroller(true, true);
-    shown: boolean = false;
+    private shown: boolean = false;
     showSettings: boolean = false;
     private page: number = 0; //Tentative design for showing info in place of the buy/sell sliders
     private lastTouched: { resourceType: string, side: "buy" | "sell" } = { resourceType: "", side: "sell" };
+    private settingsWere: { type: string; autoSellAbove: number; autoBuyBelow: number; }[] = [];
 
     constructor(private city: City, private uiManager: UIManager) {
     }
@@ -24,6 +25,27 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
     getLastDrawable(): Drawable | null {
         return this.lastDrawable;
     }
+
+    public show() {
+        this.shown = true;
+        //Record the current auto-buy/sell values by resource type so we'll know if changes are made later
+        this.settingsWere = [...this.city.resources].map(p => p[1]).map(p => ({ type: p.type, autoSellAbove: p.autoSellAbove, autoBuyBelow: p.autoBuyBelow }));
+    }
+
+    public async hide() {
+        this.shown = false;
+        //If anything was changed, save the game
+        for (const oldValues of this.settingsWere) {
+            const newValues = this.city.resources.get(oldValues.type);
+            if (newValues && (newValues.autoSellAbove !== oldValues.autoSellAbove || newValues.autoBuyBelow !== oldValues.autoBuyBelow)) {
+                this.city.updateLastUserActionTime();
+                await this.uiManager.game.fullSave();
+                break;
+            }
+        }
+    }
+
+    public isShown(): boolean { return this.shown; }
 
     public asDrawable(): Drawable {
         if (!this.shown) return this.lastDrawable = new Drawable({ width: "0px" }); //Nothing
@@ -188,7 +210,7 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
                 onClick: () => this.uiManager.toggleProvisioning(),
                 biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
             }));
-            fixedTopPart.addChild(new Drawable({
+            const settingsToggle = fixedTopPart.addChild(new Drawable({
                 x: barWidth - buttonSize - padding,
                 y: padding,
                 width: buttonSize + "px",
@@ -199,6 +221,16 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
                 onClick: () => this.showSettings = !this.showSettings,
                 biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
             }));
+            if (this.uiManager.isMyCity && this.city.tutorialStepIndex === 20 && !this.showSettings) {
+                settingsToggle.addChild(new Drawable({
+                    x: -buttonSize,
+                    y: -buttonSize,
+                    width: buttonSize * 3 + "px",
+                    height: buttonSize * 3 + "px",
+                    biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                    image: new TextureInfo(96, 96, "ui/majorsalience"),
+                }));
+            }
 
             if (this.showSettings) {
                 barDrawable.addChild(expandedBar);
