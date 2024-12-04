@@ -45,6 +45,8 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         this.initializeGame();
     }
 
+    public isPlaying(): boolean { return this.shown && this.gameStarted; }
+
     public onKeyDown(event: KeyboardEvent): void {
         if (this.shown && this.gameStarted && !this.userInputLocked) {
             switch (event.key) { //I just configured it for both Dvorak and Qwerty. Probably will never try to support arbitrary setups.

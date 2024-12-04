@@ -333,6 +333,8 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         return this.shown;
     }
 
+    public isPlaying(): boolean { return this.shown && this.gameStarted; }
+
     public handleMove(x: number, y: number): void {
         if (!this.gameStarted || !this.isReachable(x, y) || this.userInputLocked || this.currentSequence.length) return;
 

@@ -344,6 +344,8 @@ export class SlotMachine implements IHasDrawable, IOnResizeEvent {
         this.scroller.setChildrenSize(nextY - baseY + 10);
     }
 
+    public isPlaying(): boolean { return this.shown && this.spinningFrames.every(p => p === 0); }
+
     private advanceAnimation(): void {
         for (let i = 0; i < 3; i++) {
             if (this.spinningFrames[i] === 0) continue;

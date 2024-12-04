@@ -701,6 +701,11 @@ export class UIManager {
         if (this.renderer) this.switchRenderer(this.renderer); //Reset rendering to draw all the bars and such
     }
 
+    isPlayingMinigame() {
+        //Detect if any of the minigames are actively being played--not just shown, but actually playing. In such a case, we don't want to auto-refresh.
+        return this.starbox.isPlaying() || this.neponet.isPlaying() || this.memoryMixology.isPlaying() || this.monobrynth.isPlaying() || this.slots.isPlaying();
+    }
+
     //Because screenToWorldCoordinates doesn't round/truncate
     private screenToGridCoordinates(x: number, y: number): { x: number, y: number } {
         const worldCoords = this.renderer.screenToWorldCoordinates(this.city, x - this.scale * TILE_WIDTH / 2, y + this.scale * TILE_HEIGHT); //TODO: Not sure why it was off by a little bit, but this correction is exact.

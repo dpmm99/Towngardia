@@ -186,7 +186,7 @@ export class HappinessCalculator {
 
         this.city.buildings.forEach(building => {
             if (building.isResidence) {
-                if (building.needsPower) {
+                if (building.needsPower && !building.isNew) { //Don't count "power outages" for newly placed buildings--they wouldn't be at 100% if not placed during the first short tick after a long tick, anyway.
                     totalPowerNeeded += 1;
                     totalPowerReceived += building.poweredTimeDuringLongTick;
                 }

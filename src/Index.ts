@@ -68,7 +68,7 @@ async function initGame() {
 
     //Save when the user looks away. Otherwise, it's currently only saving on long ticks. I WOULD like to only send the *changes* to the server at some point (see GameAction).
     document.addEventListener('visibilitychange', async () => {
-        if (document.hidden && game.city && game.saveWhenHiding) {
+        if (document.hidden && game.city && game.saveWhenHiding && !game.uiManager?.isPlayingMinigame()) {
             console.log("Saved due to visibilitychange");
             await game.fullSave();
             lastFocusLostTime = performance.now();

@@ -68,6 +68,8 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
 
+    public isPlaying(): boolean { return this.shown && this.gameStarted; }
+
     private initializeGame(): void {
         this.score = 0;
         this.flippedCards = [];

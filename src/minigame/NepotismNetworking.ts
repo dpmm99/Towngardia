@@ -432,6 +432,8 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         return this.shown;
     }
 
+    public isPlaying(): boolean { return this.shown && this.gameStarted; }
+
     private endGame(): void {
         if (this.timerTimeout) {
             clearTimeout(this.timerTimeout);

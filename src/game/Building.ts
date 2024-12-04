@@ -392,7 +392,7 @@ export class Building implements IHasDrawable {
                 height: "64px",
                 image: new TextureInfo(128, 128, 'ui/collectionbackdrop'),
                 fallbackColor: "#0055bbaa",
-                onClick: () => {
+                onClick: () => { //TODO: Consider making the collect/provision/repair functions accessible by just tapping on the building's base, too. I ended up not needing a single-tap function.
                     city.uiManager?.collectedResources(this);
                     city.transferResourcesFrom(this.outputResources, "produce");
                     city.updateLastUserActionTime();
