@@ -10,7 +10,7 @@ import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
 import { Effect } from "./Effect.js";
-import { EVENT_TYPES, EmergencyPowerAid, PowerOutage, ResearchReward } from "./EventTypes.js";
+import { EVENT_TYPES, EmergencyPowerAid, Epidemic, PowerOutage, ResearchReward } from "./EventTypes.js";
 import { FootprintType } from "./FootprintType.js";
 import { LONG_TICKS_PER_DAY, SHORT_TICKS_PER_LONG_TICK } from "./FundamentalConstants.js";
 import { GameState } from "./GameState.js";
@@ -28,7 +28,7 @@ import { GIFT_TYPES } from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
 import { SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
 
-const CITY_DATA_VERSION = 2; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
+const CITY_DATA_VERSION = 3; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
     //Not serialized
     public uiManager: UIManager | null = null;
@@ -206,6 +206,17 @@ export class City {
 
             //For v2, I had made some buildings' effect radii larger than intended, but I am no longer saving/loading building effects, so that data shim is no longer needed.
             this.dataVersion = 2;
+        }
+        if (this.dataVersion < 3) {
+            //Reduce tourist amount for Alien Monolith
+            const monolithTourism = this.buildings.find(p => p.type === "alienmonolith")?.outputResources[0];
+            if (monolithTourism) {
+                monolithTourism.amount *= 0.56; //280/500 because I reduced it from 500 to 280
+                monolithTourism.productionRate = 5; //These stats are stored in MysteriousRubble, by the way.
+                monolithTourism.capacity = 280;
+            }
+
+            this.dataVersion = 3;
         }
     }
 
@@ -1167,7 +1178,7 @@ export class City {
                 const upkeep = p.building.getUpkeep(this).find(q => q.type === "flunds")?.amount || 0.001; //Also only want to calculate this once
                 return { building: p.building, upkeep: upkeep, powerProduction: p.powerProduction, costEffectiveness: p.powerProduction / upkeep };
             })
-            .sort((a, b) => a.costEffectiveness - b.costEffectiveness); //In a perfect world, I wouldn't even sort. I'd just iterate through the array once and put them in buckets--most should be exactly equal, so there'd be maybe 5 buckets.
+            .sort((a, b) => a.costEffectiveness - b.costEffectiveness); //In a perfect world, I would bucket sort them, but 100 * log(100) is barely more than just 100, and you'll probably never have 100 power plants.
 
         while (surplus > 0 && powerPlants.length) {
             const powerPlant = powerPlants.shift()!; //Pick the most expensive power producer by upkeep per watts
@@ -1296,7 +1307,8 @@ export class City {
         //Affect the greenhouse gases pseudo-resource
         if (this.peakPopulation >= GREENHOUSE_GASES_MIN_POPULATION) {
             const greenhouseGases = this.resources.get(new ResourceTypes.GreenhouseGases().type)!;
-            greenhouseGases.amount = Math.max(0, greenhouseGases.amount + this.getCityAverageGreenhouseGases() * 0.01);
+            greenhouseGases.productionRate = this.getCityAverageGreenhouseGases() * 0.01;
+            greenhouseGases.amount = Math.max(0, greenhouseGases.amount + greenhouseGases.productionRate);
         }
 
         //Recalculate cached values
@@ -1554,7 +1566,7 @@ export class City {
         const happiness = this.resources.get("happiness")!.amount;
         const happinessMultiplier = 0.5 + (happiness / 2); // 0.5 to 1.0 based on happiness
 
-        const targetPopulation = maxPopulation * happinessMultiplier;
+        const targetPopulation = Math.min(this.events.some(p => p.type === new Epidemic().type) ? populationResource.amount : Number.MAX_SAFE_INTEGER, maxPopulation * happinessMultiplier);
 
         // Gradually adjust population towards target
         const populationChange = (targetPopulation - populationResource.amount) / Math.max(1, Math.min(5, populationResource.amount / 35)); //No floor or ceiling or round, because then the population can't change *at all* early in the game. Just round in the UI.

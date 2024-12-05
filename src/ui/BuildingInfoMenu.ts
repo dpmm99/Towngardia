@@ -254,7 +254,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 nextY += iconSize + 5;
             }
 
-            nextY += padding;
+            if (building.outputResources.length) nextY += padding;
             //A bit of a mess, but do similar for power if idealPowerProduction is nonzero.
             if (idealPowerProduction) nextY = this.addPowerProductionInfo(infoDrawable, padding, nextY, iconSize, building, barWidth, idealPowerProduction);
             if (building instanceof CityHall) nextY = this.addBudgetInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
@@ -293,6 +293,66 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 }));
                 nextY += iconSize + padding + 5;
             }
+
+            if (building.effects.effects.some(p => p.type === EffectType.GreenhouseGases) && this.city.flags.has(CityFlags.GreenhouseGasesMatter)) {
+                //Show citywide accumulated greenhouse gases and estimated effect on weather events
+                infoDrawable.addChild(new Drawable({
+                    x: padding,
+                    y: nextY,
+                    width: (barWidth - padding * 2) + "px",
+                    height: "24px",
+                    text: "About greenhouse gases:",
+                }));
+                nextY += 24 + 5;
+                const gas = this.city.resources.get("greenhousegases")!;
+                infoDrawable.addChild(new Drawable({
+                    x: padding,
+                    y: nextY,
+                    width: (barWidth - padding * 2) + "px",
+                    height: "24px",
+                    text: ` Citywide accumulation: ${humanizeCeil(gas.amount * 1000)} ppm`, //I could equate 0 to 350 ppm and 0.1 to 450 ppm, but it's easier to understand "0 = good". Instead, 0.1 = 100 ppm.
+                }));
+                nextY += 24 + 5;
+                infoDrawable.addChild(new Drawable({
+                    x: padding,
+                    y: nextY,
+                    width: (barWidth - padding * 2) + "px",
+                    height: "24px",
+                    text: ` ${(gas.productionRate > 0 ? "In" : "De")}creasing by ${Math.round(Math.abs(gas.productionRate) * LONG_TICKS_PER_DAY * 10000) / 10} ppm/day`,
+                }));
+                nextY += 24 + 5;
+
+                function expectedEventTimeFraction(chance: number, duration: number, ticksBetween: number) {
+                    return duration / (1 / chance + duration + ticksBetween);
+                }
+                function increasedEventTimeFraction(chance: number, duration: number, ticksBetween: number, greenhouseGases: number) {
+                    return expectedEventTimeFraction(Math.min(1, chance * (greenhouseGases + 0.1)), duration, Math.ceil(ticksBetween * Math.max(0, 1 - greenhouseGases)))
+                        / expectedEventTimeFraction(chance * 0.1, duration, ticksBetween)
+                        - 1;
+                }
+
+                //Show expected increase in time spent in weather events as caused by greenhouse gases.
+                //I labeled it "rate" for brevity, but it's actually "increase in the fraction of time that the city spends with this event active".
+                const droughtFraction = increasedEventTimeFraction(0.03, 40, 100, gas.amount); //Numbers copied from the event definitions
+                infoDrawable.addChild(new Drawable({
+                    x: padding,
+                    y: nextY,
+                    width: (barWidth - padding * 2) + "px",
+                    height: "24px",
+                    text: ` Drought rate +${Math.round(droughtFraction * 1000) / 10}%`,
+                }));
+                nextY += 24 + 5;
+                const heatwaveFraction = increasedEventTimeFraction(0.05, 20, 80, gas.amount);
+                const isHeatwave = new Date().getMonth() > 3 && new Date().getMonth() < 9;
+                infoDrawable.addChild(new Drawable({
+                    x: padding,
+                    y: nextY,
+                    width: (barWidth - padding * 2) + "px",
+                    height: "24px",
+                    text: ` ${isHeatwave ? "Heatwave" : "Cold snap"} rate +${Math.round(heatwaveFraction * 1000) / 10}%`,
+                }));
+                nextY += 24 + 5 + padding;
+            }
         }
 
         //Storage
@@ -323,6 +383,8 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
         //These apply to your own buildings excluding a few special cases
         if (building.x !== -1 && building.owned) {
+            if (building instanceof FreeStuffTable) nextY = this.addFreeStuffInfo(infoDrawable, padding, nextY, barWidth);
+
             //Efficiency
             if (!(building instanceof CityHall || building instanceof InformationCenter || building.isRoad)) { //Hide efficiency for City Hall and Information Center because it's meaningless
                 infoDrawable.addChild(new Drawable({
@@ -340,7 +402,6 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             else if (building instanceof DepartmentOfEnergy) nextY = this.addDepartmentOfEnergyInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
             else if (building instanceof EnvironmentalLab) nextY = this.addEnvironmentalLabInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
             else if (building instanceof SandsOfTime) nextY = this.addSandsOfTimeInfo(infoDrawable, padding, nextY, iconSize, barWidth);
-            else if (building instanceof FreeStuffTable) nextY = this.addFreeStuffInfo(infoDrawable, padding, nextY, barWidth);
             else if (building instanceof MinigameMinilab) nextY = this.addMinigameMinilabInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
 
             //Patronage
@@ -515,7 +576,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             text: humanizePowerFloor(actualPowerProduction) + (actualPowerProduction < idealPowerProduction ? ` (max ${humanizePowerFloor(idealPowerProduction)})` : ""),
             id: `${infoDrawable.id}.output.power.text`,
         }));
-        nextY += iconSize + 5;
+        nextY += iconSize + padding;
 
         const productionRate = this.city.resources.get('power')!.productionRate;
         const consumptionRate = this.city.resources.get('power')!.consumptionRate;
@@ -614,7 +675,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 nextY += iconSize + 5;
             }
         }
-        return nextY;
+        return nextY + padding;
     }
 
     private addBudgetInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: CityHall, barWidth: number): number {
@@ -657,7 +718,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             text: "Expenses: " + humanizeCeil(expenses) + "/day", //Breakdown is in the budget menu
             id: `${infoDrawable.id}.output.budget.expenses`,
         }));
-        nextY += 28;
+        nextY += 24 + padding;
         const surplus = incomeTax + salesTax + propertyTax - expenses;
         infoDrawable.addChild(new Drawable({
             x: padding,
@@ -668,7 +729,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             reddize: surplus < 0,
             id: `${infoDrawable.id}.output.budget.surplus`,
         }));
-        nextY += 28;
+        nextY += 24 + padding;
         //Show the user how many hours, minutes, and seconds there are until the next long tick occurs.
         const secondsToNextLongTick = (this.city.lastLongTick + LONG_TICK_TIME - new Date().getTime()) / 1000;
         const hours = Math.floor(secondsToNextLongTick / 3600);
@@ -685,7 +746,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         nextY += 28;
         if (this.timeout) clearTimeout(this.timeout);
         if (!this.city.timeFreeze) this.timeout = setTimeout(() => { this.uiManager.frameRequested = true; }, 1000); //Only redraw automatically for this one building.
-        return nextY;
+        return nextY + padding;
     }
 
     private addTourismInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, barWidth: number): number {
@@ -867,7 +928,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 text: "No more options to research.",
                 reddize: true,
             }));
-            nextY += iconSize + 5;
+            nextY += iconSize + padding;
         } else {
             infoDrawable.addChild(new Drawable({
                 x: padding + iconSize + 5,

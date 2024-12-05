@@ -23,6 +23,7 @@ async function initGame() {
     try {
         await game.initialize();
     } catch (error) {
+        console.error(error);
         if (error?.toString().includes("SyntaxError")) {
             window.location.href = "index.html"; //Need to log back in
         }

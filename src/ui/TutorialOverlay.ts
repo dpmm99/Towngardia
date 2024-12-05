@@ -750,7 +750,7 @@ export class TutorialOverlay implements IHasDrawable {
                 ...fieldsNotNeededForExtras,
                 title: "Greenhouse Gases",
                 content: {
-                    text: "Greenhouse gases are a type of pollution produced by Ranches and by burning fossil fuels, such as in power plants, Steel Mills, and Space Launch Sites. Unlike other pollution and crime, greenhouse gases build up slowly over a long time, so make sure you have plenty of plant life and perhaps even Carbon Capture Plants to counteract the buildup. As greenhouse gases accumulate in your city, harmful weather events such as Heatwaves, Droughts, and Cold Snaps become more frequent and longer-lasting.",
+                    text: "Greenhouse gases are a type of pollution produced by Ranches and by burning fossil fuels, such as in power plants, Steel Mills, and Space Launch Sites. Unlike other pollution and crime, greenhouse gases build up slowly over a long time, so make sure you have plenty of plant life and perhaps even Carbon Capture Plants to counteract the buildup. As greenhouse gases accumulate in your city, harmful weather events such as Heatwaves, Droughts, and Cold Snaps become more frequent and longer-lasting. You can view your city's total accumulated greenhouse gases and their effects on extreme weather events in the info bar for any building that produces or absorbs greenhouse gases.",
                 }
             });
         }

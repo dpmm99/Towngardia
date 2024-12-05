@@ -164,9 +164,10 @@ export class Drought extends CityEvent { //Implemented on Fire Station already
     }
 
     override shouldStart(city: City, date: Date): boolean {
-        //0.3% chance if the city has >2k people and >300 flunds and it hasn't happened in at least 25 days, with an increasing chance based on collected greenhouse gases (3% at 0.9 greenhouse gases)
-        return this.checkedStart(city.peakPopulation >= 2000 && this.skippedStarts > this.maxDuration + 25 * LONG_TICKS_PER_DAY && city.flunds.amount > 300
-            && Math.random() < 0.03 * (city.resources.get(new GreenhouseGases().type)!.amount + 0.1) && !city.events.some(p => p.type === this.type), city, date);
+        //0.3% chance if the city has >2k people and it hasn't happened in at least 25 days, with an increasing chance and decreasing min delay based on collected greenhouse gases (3% at 0.95 greenhouse gases)
+        return this.checkedStart(city.peakPopulation >= 2000
+            && this.skippedStarts > this.maxDuration + 25 * LONG_TICKS_PER_DAY * Math.max(0, 1 - city.resources.get(new GreenhouseGases().type)!.amount)
+            && Math.random() < 0.03 * (city.resources.get(new GreenhouseGases().type)!.amount ** 2 + 0.1) && !city.events.some(p => p.type === this.type), city, date);
     }
 }
 
@@ -178,9 +179,10 @@ export class Heatwave extends CityEvent {
     }
 
     override shouldStart(city: City, date: Date): boolean {
-        //0.5% chance if the city has >1.5k people and >300 flunds and it hasn't happened in at least 20 days, with an increasing chance based on collected greenhouse gases (5% at 0.9 greenhouse gases)
-        return this.checkedStart(date.getMonth() > 3 && date.getMonth() < 9 && city.peakPopulation >= 4000 && this.skippedStarts > this.maxDuration + 20 * LONG_TICKS_PER_DAY && city.flunds.amount > 300
-            && Math.random() < 0.05 * (city.resources.get(new GreenhouseGases().type)!.amount + 0.1) && !city.events.some(p => p.type === this.type), city, date);
+        //0.5% chance if the city has >1.5k people and it hasn't happened in at least 20 days, with an increasing chance and decreasing min delay based on collected greenhouse gases (5% at 0.95 greenhouse gases)
+        return this.checkedStart(date.getMonth() > 3 && date.getMonth() < 9 && city.peakPopulation >= 4000
+            && this.skippedStarts > this.maxDuration + 20 * LONG_TICKS_PER_DAY * Math.max(0, 1 - city.resources.get(new GreenhouseGases().type)!.amount)
+            && Math.random() < 0.05 * (city.resources.get(new GreenhouseGases().type)!.amount ** 2 + 0.1) && !city.events.some(p => p.type === this.type), city, date);
     }
 }
 
@@ -193,8 +195,9 @@ export class ColdSnap extends CityEvent {
 
     override shouldStart(city: City, date: Date): boolean {
         //Same frequency and such as heatwave, but only in the winter
-        return this.checkedStart((date.getMonth() <= 3 || date.getMonth() >= 9) && city.peakPopulation >= 1500 && this.skippedStarts > this.maxDuration + 20 * LONG_TICKS_PER_DAY && city.flunds.amount > 300
-            && Math.random() < 0.05 * (city.resources.get(new GreenhouseGases().type)!.amount + 0.1) && !city.events.some(p => p.type === this.type), city, date);
+        return this.checkedStart((date.getMonth() <= 3 || date.getMonth() >= 9) && city.peakPopulation >= 1500
+            && this.skippedStarts > this.maxDuration + 20 * LONG_TICKS_PER_DAY * Math.max(0, 1 - city.resources.get(new GreenhouseGases().type)!.amount)
+            && Math.random() < 0.05 * (city.resources.get(new GreenhouseGases().type)!.amount ** 2 + 0.1) && !city.events.some(p => p.type === this.type), city, date);
     }
 }
 

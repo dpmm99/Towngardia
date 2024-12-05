@@ -43,12 +43,31 @@ Regions (ancient ocean, delta, tundra, volcanic yard)
 aaand probably being able to buy things (particularly the resources that aren't in every region) more easily if your friends are selling them. I was thinking sales go into a list for 5 days, but then you have to load and affect the other players' city data...
 Otherwise, I'm pretty well down to just making buildings, events, techs (though I already have 31), and titles/achievements. 
 
+
+
 Coolest open ideas:
 Sort businesses by patron value (or maybe do a fixed sort order for all building types, but need an indicator to show which ones are newly unlocked)
-In medium to large cities (>~15% map coverage), I really need tourism to be more meaningful and taxes to have some diminishing returns--after playing for 1.5 months, I'm earning a surplus of 2k a day but have >1700 citizens with nowhere to shop, not to mention the completely untapped tourists. I probably need to at least double business customer counts (but less for Corner Store and Junkyard) and decrease their value scaling.
+In medium to large cities (>~15% map coverage), I really need tourism to be more meaningful and taxes to have some diminishing returns--after playing for 1.5 months, I'm earning a surplus of 2k a day but have >1700 citizens with nowhere to shop, not to mention the completely untapped tourists. Current ideas for fixing that:
+	double businesses' customer capacities
+	a "basements" tech to further increase businesses' customer capacities (and value, but not quite proportionally, maybe like 0.5x-0.8x as much)
+	lower business value (flunds per customer), mainly just tightening the range
+	make services more expensive for bigger residences (a skyscraper holds 78x as many people as a small house, so why not at least have, say, 30x the service costs?)
+	make education costs scale like other services (and maybe unlock it just a bit later so the increase isn't harmful to the early game)
+	apply a diminishing returns formula to income tax (maybe the first residents are all rich and the later immigrants get more and more poor and there's a standard deduction ;))
+	give tourism a second effect, like increasing patronage caps a bit or allowing a fraction of tourism to exceed the patronage caps
+	make better buildings more expensive, especially the businesses--I have a surplus of 2k a day in my city, so costs in the thousands for mid-tier buildings should be fine
+	make research also cost a lot of flunds, like 100x the research points for early techs and 1000x for later techs
+	more negative events, such as implementing the mechanical failures idea I listed below
+	could also make some techs decrease the spawn chance/limit and increase costs (at least those that aren't specifically meant to do the opposite):
+		Vacuum Insulated Windows, Smart Home Systems, Rooftop Solar Panels, Hydroponic Gardens could slightly reduce move-in rates (with the excuse that it's more expensive or people don't want to deal with those things)
+		Hydroponic Gardens would increase residential power usage
+		Advanced Robotics would increase factory upkeep and power usage
+		Food Service Robots would increase patron cap (and could also increase business presence) but increase value less than proportionally
+		AI Driven Logistics would increase warehouse power usage and upkeep
+		Telemedicine Infrastructure, VR Classrooms, Nanomedicine Research, Brain-Computer Interface could all increase service upkeep costs
 Advisor button that suggests what your city needs the most--businesses, factories, services, decorations, time, space, spread, research, friends, minigame skill, less road, special unlocks
 new techs:
-	no ideas at the moment
+	incubators - greatly increases all costs/effects of ranches, fish farms, and carnicultivators
 new events:
 	solar storm (increases solar power)
 	aurora (tourism)
@@ -99,6 +118,7 @@ business categories so people can be assigned to multiple types of business inst
 make certain buildings change the adjacent road tiles' variants to show trucks on them (or make them draw an overlay just like the collectible/provisioning overlays)
 space launch site or a tractor beam can be set to pull asteroids down to the ground, giving more resources but risking damaging nearby buildings
 timeline of city achievements/milestones preferably with screenshots
+make research points and random resources always useful by adding a few repeatable research items that each increase the market supply of a set of resources, e.g., +1 supply per 25 points + 10 surplus items
 (highly unlikely I would do this) underground city
 
 Underused/unused resources:

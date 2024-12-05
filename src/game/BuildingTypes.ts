@@ -37,6 +37,7 @@ export class Road extends Building {
         this.maxVariant = 2;
         this.serviceAllocationType = "infrastructure";
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.0002, "dynamicEffectByTrafficQuantity"),
+            new EffectDefinition(EffectType.GreenhouseGases, 0.0001, "dynamicEffectByTrafficQuantity", false, 0, 0),
             new EffectDefinition(EffectType.Noise, 0.0005, "dynamicEffectByTrafficQuantityAndBudget")]); //Reduced infrastructure budget = noisier roads.
     }
 
@@ -411,6 +412,7 @@ export class CityHall extends Building {
     override onLongTick(city: City): void {
         const population = city.resources.get("population")?.amount || 0;
         const tourists = city.resources.get("tourists")?.amount || 0;
+        //TODO: Actually want to start scaling back down per-capita income after 2k or so; diminishing returns because I don't want you to be earning 2.1k flunds a day with only 6500 citizens and only enough businesses for ~half of them.
         const baseRevenuePerCapita = city.budget.taxRates["income"] * (city.peakPopulation >= 1000 ? 35 : (15 + 0.02 * city.peakPopulation)); //Scale up slowly until you hit 1k population. Don't want to give way too many resources too early.
         city.budget.lastRevenue["income"] = Math.floor(10 + Math.pow(population, 0.6) * baseRevenuePerCapita); //Comes out to about 42 for 10 people, 60 for 46, 114 for 258, 357 for 2.5k, 1335 for 25k, 2553 for 75k, 3855 for 150k...
 
@@ -428,7 +430,7 @@ export class CityHall extends Building {
 
         //Update the city's flunds production rate, update city hall's capacity (but don't delete any money they've already earned), and produce the new revenue on city hall
         this.flunds.productionRate = city.flunds.productionRate = city.budget.lastRevenue["income"] + city.budget.lastRevenue["sales"] + city.budget.lastRevenue["property"];
-        const targetCapacity = Math.max(city.flunds.productionRate * CAPACITY_MULTIPLIER, this.flunds.amount, 250);
+        const targetCapacity = Math.max((city.flunds.productionRate - city.flunds.consumptionRate) * CAPACITY_MULTIPLIER, this.flunds.amount, 250);
         if (this.flunds.capacity <= targetCapacity) this.flunds.capacity = targetCapacity;
         else this.flunds.capacity = this.flunds.capacity * 0.9 + targetCapacity * 0.1; //Reduce by 10% of the difference each tick if downsizing
         this.flunds.produce(city.flunds.productionRate);
@@ -1495,6 +1497,9 @@ export class FishFarm extends Building {
             0.1,
         );
         this.outputResources.push(new Fish(0, 3));
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, 0.1)]); //Still less than a ranch since the footprint is smaller
     }
 
     override getEfficiencyEffectMultiplier(city: City): number {
@@ -2765,7 +2770,7 @@ export class ConventionCenter extends Building {
         this.businessValue = 1050;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
-        this.outputResources.push(new Tourists(5, 5, 0, 400)); //Brings in 400 tourists per long tick, but it takes 20 days to get up to full steam.
+        this.outputResources.push(new Tourists(3.75, 3.75, 0, 300)); //Brings in 300 tourists per long tick, but it takes 20 days to get up to full steam.
         this.isRestaurant = true;
         this.isEntertainment = true;
         this.maxVariant = 3;
@@ -2794,10 +2799,10 @@ export class ConventionCenter extends Building {
         //Convention centers get a boost to the tourism draw at the START of events for a week or two. Events switch at specific times.
         const tourism = this.outputResources.find(p => p.type === "tourists")!;
         if (this.pickVariant(city) && this.variant !== 0) {
-            tourism.capacity = 800;
+            tourism.capacity = 600;
             tourism.produce(tourism.amount); //Double the current tourism amount, but don't go over the new temporary capacity.
-        } else if (tourism.capacity > 400) {
-            tourism.capacity -= 400 / 14 / LONG_TICKS_PER_DAY; //Takes two weeks to drop back to 400
+        } else if (tourism.capacity > 300) {
+            tourism.capacity -= 300 / 14 / LONG_TICKS_PER_DAY; //Takes two weeks to drop back to 300
             tourism.amount = Math.min(tourism.amount, tourism.capacity);
         }
         
@@ -3676,7 +3681,7 @@ export class QuantumComputingLab extends Building {
             true,
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
-        this.outputResources.push(new Tourists(6.25, 6.25, 0, 250)); //Brings in 250 tourists per long tick, but it takes 10 days to get up to full steam. This makes the building not totally useless if the chance doesn't fire.
+        this.outputResources.push(new Tourists(4.5, 4.5, 0, 180)); //Brings in 180 tourists per long tick, but it takes 10 days to get up to full steam. This makes the building not totally useless if the chance doesn't fire.
     }
 
     override onLongTick(city: City): void {
@@ -3950,7 +3955,7 @@ export class MysteriousRubble extends Building {
     override remove(city: City, justMoving: boolean = false): void {
         const builtOn = this.builtOn.values().next().value as AlienMonolith;
         if (builtOn) {
-            builtOn.outputResources.push(new Tourists(9, 9, 0, 500));
+            builtOn.outputResources.push(new Tourists(5, 5, 0, 280));
             builtOn.owned = true;
             builtOn.lastEfficiency = 1;
         }
