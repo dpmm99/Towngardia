@@ -66,8 +66,8 @@ export class RooftopSolar extends Tech {
             'Small-scale solar installations on building rooftops generate clean electricity for feeding back into the grid. Costs less silicon if you research Perovskite-Blend Solar Cells first.',
             [{ type: 'research', amount: 30 }, { type: 'silicon', amount: 100 }, { type: 'glass', amount: 100 }],
             0.02, 0.018,
-            440, 720,
-            [{ id: "windlattice", path: [] }]
+            520, 720,
+            [{ id: "gridbalancer", path: [] }]
         );
     }
 }
@@ -551,10 +551,56 @@ export class CloudSeeding extends Tech {
     }
 }
 
+export class ThermalRecovery extends Tech { //Intent: to save the player some space
+    constructor() {
+        super(
+            'thermalrecovery',
+            'Thermal Recovery',
+            'A layer of thermoelectric metamaterials increases the efficiency of geothermal, oil, coal, nuclear fission, and nuclear fusion power plants.',
+            [{ type: 'research', amount: 250 }, { type: 'copper', amount: 80 }, { type: 'batteries', amount: 20 }],
+            0.05, 0.008, //~30 days to fully adopt
+            900, 900,
+            [{ id: "fusionpower", path: [] }]
+        );
+    }
+}
+
+export class GridBalancer extends Tech { //Intent: to reduce the player's self-inflicted punishment for producing too much power
+    constructor() {
+        super(
+            'gridbalancer',
+            'Grid Balancer',
+            'Reduces power plant upkeep costs when the city is producing more power than it needs.',
+            [{ type: 'research', amount: 20 }, { type: 'copper', amount: 20 }, { type: 'electronics', amount: 5 }],
+            0.05, 0.025, //~10 days to fully adopt
+            320, 720,
+            [{ id: "windlattice", path: [] }]
+        );
+    }
+
+    override applyEffects(city: City) {
+        city.checkAndAwardTitle(TitleTypes.Pioneergreen.id);
+    }
+}
+
+export class Hydrolox extends Tech {
+    constructor() {
+        super(
+            'hydrolox',
+            'Hydrolox',
+            'Hydrogen-oxygen rocket fuel that eliminates pollution from space launch sites.',
+            [{ type: 'research', amount: 200 }],
+            0.05, 0.025, //~10 days to fully adopt
+            2380, 300,
+            [{ id: "cloudseeding", path: [] }]
+        );
+    }
+}
+
 export const TECH_TYPES: Tech[] = [
     AIDiagnostics, AILogistics, ARShopping, AdvancedRobotics, AutonomousVehicles, BrainComputerInterface,
     BreederReactor, CarbonCapture, CloudSeeding, CoalPowerScrubbers, DroneDelivery, FoodServiceRobots,
-    FusionPower, GMCrops, Geothermal, GrapheneBatteries, HeatPumps, HydroponicGardens, LabGrownMeat,
+    FusionPower, GMCrops, Geothermal, GrapheneBatteries, GridBalancer, HeatPumps, Hydrolox, HydroponicGardens, LabGrownMeat,
     NanomedicineResearch, PerovskiteSolarCells, QuantumComputing, RetainingSoil, RooftopSolar, SmartHomeSystems,
-    TelemedicineInfra, ThreeDPrinting, VRClassrooms, VacuumInsulatedWindows, VerticalFarming, WindTurbineLattice,
+    TelemedicineInfra, ThermalRecovery, ThreeDPrinting, VRClassrooms, VacuumInsulatedWindows, VerticalFarming, WindTurbineLattice,
 ].map(p => new p());

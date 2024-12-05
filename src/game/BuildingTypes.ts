@@ -1039,7 +1039,7 @@ export class GeothermalPowerPlant extends Building {
         return [{ type: "flunds", amount: 16 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
-    override getPowerProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250; }
+    override getPowerProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery")); }
 }
 
 export class OilPowerPlant extends Building {
@@ -1069,7 +1069,7 @@ export class OilPowerPlant extends Building {
     override getPowerProduction(city: City, ideal: boolean = false): number {
         //Show the unpowered warning if it's going to run out soon. Note: this is called right after the loop that sets powered = true for buildings that have enough power.
         if (!ideal && this.inputResources[0].amount <= 4 && city.getBuildingsInArea(this.x, this.y, this.width, this.height, 0, 0).size === 1) this.powered = false;
-        return (ideal ? 1 : this.lastEfficiency) * 250;
+        return (ideal ? 1 : this.lastEfficiency) * 250 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
     }
 }
 
@@ -1147,7 +1147,7 @@ export class CoalPowerPlant extends Building {
         //Show the unpowered warning if it's going to run out soon. Note: this is called right after the loop that sets powered = true for buildings that have enough power.
         //The getBuildingsInArea check is a lazy way to check for a fuel truck.
         if (!ideal && this.inputResources[0].amount <= 4 && city.getBuildingsInArea(this.x, this.y, this.width, this.height, 0, 0).size === 1) this.powered = false;
-        return (ideal ? 1 : this.lastEfficiency) * 300;
+        return (ideal ? 1 : this.lastEfficiency) * 300 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
     } //Realistically, it should be more like 4000 if a wind turbine is 25, but...eh.
 }
 
@@ -1220,7 +1220,7 @@ export class NuclearPowerPlant extends Building {
     override getPowerProduction(city: City, ideal: boolean = false): number {
         //Show the unpowered warning if it's going to run out soon. Note: this is called right after the loop that sets powered = true for buildings that have enough power.
         if (!ideal && this.inputResources[0].amount <= 4 && city.getBuildingsInArea(this.x, this.y, this.width, this.height, 0, 0).size === 1) this.powered = false;
-        return (ideal ? 1 : this.lastEfficiency) * 650;
+        return (ideal ? 1 : this.lastEfficiency) * 650 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
     }
 }
 
@@ -1290,7 +1290,7 @@ export class FusionPowerPlant extends Building {
         //Show the unpowered warning if it's going to run out soon. Note: this is called right after the loop that sets powered = true for buildings that have enough power.
         //The getBuildingsInArea check is a lazy way to check for a fuel truck.
         if (!ideal && this.inputResources[0].amount <= 4 && city.getBuildingsInArea(this.x, this.y, this.width, this.height, 0, 0).size === 1) this.powered = false;
-        return (ideal ? 1 : this.lastEfficiency) * 1000;
+        return (ideal ? 1 : this.lastEfficiency) * 1000 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
     }
 }
 
@@ -2199,9 +2199,13 @@ export class SpaceLaunchSite extends Building {
         this.outputResourceOptions = [new Iron(0, 9.5), new Copper(0, 7), new Lithium(0, 3.5), new Uranium(0, 2.5)]; //TODO: Other options to consider: space tourism to rake in the flunds, asteroid crashing for a chance of damage to nearby structures but higher returns that always include stone
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.2, "dynamicEffectByEfficiency"),
-            new EffectDefinition(EffectType.GreenhouseGases, 0.15, "dynamicEffectByEfficiency"),
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.2, "dynamicEffectByEfficiencyAndHydrolox"),
+            new EffectDefinition(EffectType.GreenhouseGases, 0.15, "dynamicEffectByEfficiencyAndHydrolox"),
             new EffectDefinition(EffectType.Noise, 0.3, "dynamicEffectByEfficiency")]);
+    }
+
+    public dynamicEffectByEfficiencyAndHydrolox(city: City, building: Building | null, x: number, y: number): number {
+        return (this.x === -1 ? 1 : this.lastEfficiency) * (1 - city.techManager.getAdoption("hydrolox"));
     }
 
     override place(city: City, x: number, y: number): void {

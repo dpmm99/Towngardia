@@ -1152,6 +1152,34 @@ export class City {
         return [...GIFT_TYPES].some(type => this.resources.get(type)!.amount >= 1);
     }
 
+    gridBalancerRefund() {
+        const adoption = this.techManager.getAdoption("gridbalancer");
+        if (adoption === 0) return;
+
+        const power = this.resources.get('power')!;
+        let surplus = power.productionRate - power.consumptionRate;
+        if (surplus <= 0) return; //Short-circuit as an optimization
+
+        const powerPlants = this.buildings.filter(p => !p.isResidence && p.owned) //Exclude residences first because I only want to look at actual power plants, minimizing calculations
+            .map(p => ({ building: p, powerProduction: p.getPowerProduction(this) })) //Calculate getPowerProduction just once per building instead of once for filtering and many times for sorting
+            .filter(p => p.powerProduction > 0)
+            .map(p => {
+                const upkeep = p.building.getUpkeep(this).find(q => q.type === "flunds")?.amount || 0.001; //Also only want to calculate this once
+                return { building: p.building, upkeep: upkeep, powerProduction: p.powerProduction, costEffectiveness: p.powerProduction / upkeep };
+            })
+            .sort((a, b) => b.costEffectiveness - a.costEffectiveness); //In a perfect world, I wouldn't even sort. I'd just iterate through the array once and put them in buckets--most should be exactly equal, so there'd be maybe 5 buckets.
+
+        while (surplus > 0 && powerPlants.length) {
+            const powerPlant = powerPlants.shift()!; //Pick the most expensive power producer by upkeep per watts
+            //Refund its upkeep proportionally to the excess power
+            const powerToRefundFor = Math.min(surplus, powerPlant.powerProduction);
+            const refund = powerToRefundFor * (powerPlant.upkeep / powerPlant.powerProduction) * adoption;
+            this.flunds.amount += refund;
+            this.budget.otherExpenses["powerprod"] -= refund;
+            surplus -= powerToRefundFor;
+        }
+    }
+
     onLongTick(): void {
         //Increase auto-buy amount availability first, but to be nice to the player, don't cap it until the end of the tick
         this.resources.forEach(resource => {
@@ -1207,6 +1235,10 @@ export class City {
             building.setUpkeepEfficiency(affordableFraction);
             building.isNew = false;
         });
+
+        //Now that we deducted upkeep, we might refund some of it--a separate step because we want to sort by cost efficiency to give the maximum refund.
+        //We don't adjust the efficiency directly because we don't want to cause the power plants to suddenly be producing too little power when the demand changes.
+        this.gridBalancerRefund();
 
         this.updateHappiness(); //Do before resetting powered time, because it uses it
         this.updateMinigamePlays();

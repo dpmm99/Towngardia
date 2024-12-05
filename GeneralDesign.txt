@@ -45,11 +45,10 @@ Otherwise, I'm pretty well down to just making buildings, events, techs (though 
 
 Coolest open ideas:
 Sort businesses by patron value (or maybe do a fixed sort order for all building types, but need an indicator to show which ones are newly unlocked)
+In medium to large cities (>~15% map coverage), I really need tourism to be more meaningful and taxes to have some diminishing returns--after playing for 1.5 months, I'm earning a surplus of 2k a day but have >1700 citizens with nowhere to shop, not to mention the completely untapped tourists. I probably need to at least double business customer counts (but less for Corner Store and Junkyard) and decrease their value scaling.
 Advisor button that suggests what your city needs the most--businesses, factories, services, decorations, time, space, spread, research, friends, minigame skill, less road, special unlocks
 new techs:
-	grid balancer: turns down efficiency of the most expensive power producers when you're producing excess
-	waste heat recovery: improves output of thermal power plants (could mention a thermal metamaterial or something to make it sound fancy)
-	maybe a tech to reduce/eliminate pollution from space launch sites (by switching out the fuel)
+	no ideas at the moment
 new events:
 	solar storm (increases solar power)
 	aurora (tourism)
@@ -71,7 +70,7 @@ new buildings:
 	Community Center - swappable bonuses (fitness classes, workshops, social events, whatever)
 	Free Stuff Table/Distribution Center could have more options - instead of just happiness, could be healthcare, education, research, traffic reduction, luxury, etc.
 	Social Sciences Center - happiness research
-	Bamboo garden - produces more wood using less space (maybe unlocked with GM crops or as another tech after it)
+	Bamboo Thicket - produces more wood using less space (maybe unlocked with GM crops or as another tech after it)
 	Advanced Recycling Center - converts waste to basic resources - could just produce some random resources based on the nearby building count
 	Molecular Assembler - slow high-tier resource generation
 	Mobile Clinics - spreads healthcare to underserved areas, i.e., it might not be a square/rounded-rectangle AoE
@@ -82,7 +81,7 @@ new buildings:
 	Air quality monitoring and enforcement center - reduces pollution from nearby structures
 	Other environment building ideas: wildlife sanctuary (+tourism), ecosystem restoration center (improves land value)
 	More specific decorations: bronze dragon, giant wind instrument, giant steampunk chess set, plaza that looks like a compass rose, fancy bike path that both reduces traffic and spreads luxury, human-sized hamster wheels (maybe spreads a little healthcare and produces 0.1 MW for the laughs :))
-Mechanical failures - a few buildings would damage themselves slowly over time and show a wrench icon instead of fire when they're damaged, but the damage wouldn't harm efficiency for 5 days, then the backdrop turns from the 'warning' one into the 'error' one after that. A tech could unlock auto-repair.
+Mechanical failures - a few buildings would damage themselves slowly over time and show a wrench icon instead of fire when they're damaged, but the damage wouldn't harm efficiency for 5 days, then the backdrop turns from the 'warning' one into the 'error' one after that. A tech could unlock auto-repair. Could apply to all factories and high-traffic businesses starting at 2k population or something like that as a flunds sink, but factories would go back to not being worth having if you don't need the output resources.
 Disasters like snow accumulation, fission 'close call', lightning strike that only damages one building
 Make city progress -> earn wisdom points -> buy care packages you can send to newer players, e.g., temporary building unlocks, resources or discounts, research speed
 Community projects - like research, but not just spending resources, and different kinds of rewards?

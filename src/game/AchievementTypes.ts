@@ -3,7 +3,7 @@ import { Player } from "./Player.js";
 import { Achievement } from "./Achievement.js";
 import { Building } from "./Building.js";
 import * as ResourceTypes from "./ResourceTypes.js";
-import { AIDiagnostics, AILogistics, ARShopping, AdvancedRobotics, AutonomousVehicles, BrainComputerInterface, CoalPowerScrubbers, DroneDelivery, FoodServiceRobots, GMCrops, GrapheneBatteries, HydroponicGardens, NanomedicineResearch, PerovskiteSolarCells, RetainingSoil, RooftopSolar, SmartHomeSystems, ThreeDPrinting, VRClassrooms, VacuumInsulatedWindows, VerticalFarming, WindTurbineLattice } from "./TechTypes.js";
+import { AIDiagnostics, AILogistics, ARShopping, AdvancedRobotics, AutonomousVehicles, BrainComputerInterface, CoalPowerScrubbers, DroneDelivery, FoodServiceRobots, GMCrops, GrapheneBatteries, Hydrolox, HydroponicGardens, NanomedicineResearch, PerovskiteSolarCells, RetainingSoil, RooftopSolar, SmartHomeSystems, ThermalRecovery, ThreeDPrinting, VRClassrooms, VacuumInsulatedWindows, VerticalFarming, WindTurbineLattice } from "./TechTypes.js";
 import { Bar, Casino, College, ElementarySchool, Farm, FishFarm, GregsGrogBarr, Ranch, TreeFarm, VerticalFarm, getBuildingType } from "./BuildingTypes.js";
 import { EffectType } from "./GridType.js";
 import { LONG_TICKS_PER_DAY } from "./FundamentalConstants.js";
@@ -231,6 +231,8 @@ const TitleTypes = {
             city.techManager.techs.get(new NanomedicineResearch().id)!.adoptionGrowth *= 1.2;
             city.techManager.techs.get(new SmartHomeSystems().id)!.adoptionGrowth *= 1.2;
             city.techManager.techs.get(new VRClassrooms().id)!.adoptionGrowth *= 1.2;
+            city.techManager.techs.get(new ThermalRecovery().id)!.adoptionGrowth *= 1.2;
+            city.techManager.techs.get(new Hydrolox().id)!.adoptionGrowth *= 1.2;
         }
         return progress;
     }, "increases adoption rate of high-tech upgrades"),
