@@ -1167,7 +1167,7 @@ export class City {
                 const upkeep = p.building.getUpkeep(this).find(q => q.type === "flunds")?.amount || 0.001; //Also only want to calculate this once
                 return { building: p.building, upkeep: upkeep, powerProduction: p.powerProduction, costEffectiveness: p.powerProduction / upkeep };
             })
-            .sort((a, b) => b.costEffectiveness - a.costEffectiveness); //In a perfect world, I wouldn't even sort. I'd just iterate through the array once and put them in buckets--most should be exactly equal, so there'd be maybe 5 buckets.
+            .sort((a, b) => a.costEffectiveness - b.costEffectiveness); //In a perfect world, I wouldn't even sort. I'd just iterate through the array once and put them in buckets--most should be exactly equal, so there'd be maybe 5 buckets.
 
         while (surplus > 0 && powerPlants.length) {
             const powerPlant = powerPlants.shift()!; //Pick the most expensive power producer by upkeep per watts
