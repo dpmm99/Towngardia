@@ -65,6 +65,9 @@ In medium to large cities (>~15% map coverage), I really need tourism to be more
 		Food Service Robots would increase patron cap (and could also increase business presence) but increase value less than proportionally
 		AI Driven Logistics would increase warehouse power usage and upkeep
 		Telemedicine Infrastructure, VR Classrooms, Nanomedicine Research, Brain-Computer Interface could all increase service upkeep costs
+	minigame reward upgrades--spend a lot of flunds for a small increase to the non-flunds rewards from a minigame
+	more services--other than water and trash that I still intended to eventually add, there could be cemeteries, homeless shelters, courthouses, employment offices, intelligence agencies, military, occasional grant requests from colleges, consumer and environment protection agencies, scholarship programs...
+	minigame upgrade: pay flunds to allow using 2 or 3 tokens at once in Monobrynth and make the grid 1 column more narrow per additional token + remove the lowest remaining difficulty level
 Advisor button that suggests what your city needs the most--businesses, factories, services, decorations, time, space, spread, research, friends, minigame skill, less road, special unlocks
 new techs:
 	incubators - greatly increases all costs/effects of ranches, fish farms, and carnicultivators
@@ -77,6 +80,7 @@ new events:
 	social events
 	perfect weather (Claude suggested "clear skies week" = solar power + happiness, "perfect growing conditions" = agriculture)
 	food festival (happiness + business)
+	February event: a "chocolate bar" that acts like a Bar but also produces the 'chocolate' resource, luxury flower tower, and a heart monument that directly increases residence spawn chance (Hearty Shack)
 new buildings:
 	I mainly need more mid-tier businesses (better than Greg's Grogg B'Arr and worse than Resort Hotel)
 	maybe a building that can be placed on roads to reduce nearby residential power consumption (and even then, maybe only in summer) - could be a solar panel or just a vegetation trellis or whatever

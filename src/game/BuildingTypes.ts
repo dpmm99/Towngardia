@@ -418,8 +418,8 @@ export class CityHall extends Building {
 
         //I considered a property tax formula using residenceLevel**2, but sum of residenceLevel + 1 is better because it dampens the huge wealth that easily comes with higher-tier residences.
         //Simpler but less efficient version of this math: city.buildings.filter(b => b.isResidence).reduce((sum, b) => sum + b.residenceLevel + 1, 0)
-        city.budget.lastRevenue["property"] = 30 * (city.budget.taxRates["property"] ?? 0.1) *
-            (city.presentBuildingCount.get(getBuildingType(SmallHouse)) ?? 0 +
+        city.budget.lastRevenue["property"] = 10 * (city.budget.taxRates["property"] ?? 0.1) *
+            ((city.presentBuildingCount.get(getBuildingType(SmallHouse)) ?? 0) +
                 2 * (city.presentBuildingCount.get(getBuildingType(Quadplex)) ?? 0) + 2 * (city.presentBuildingCount.get(getBuildingType(SmallApartment)) ?? 0) +
                 3 * (city.presentBuildingCount.get(getBuildingType(Highrise)) ?? 0) +
                 4 * (city.presentBuildingCount.get(getBuildingType(Skyscraper)) ?? 0));
