@@ -46,6 +46,7 @@ export class BottomBar implements IHasDrawable, IOnResizeEvent {
             height: barHeight + "px",
             fallbackColor: backgroundColor,
             id: "bottomBar",
+            onClick: () => { }, //To capture clicks so they don't go through to the city
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(x, barDrawable.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); },
             biggerOnMobile: true,

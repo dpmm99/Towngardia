@@ -4,15 +4,17 @@ import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { TitleTypes } from "./AchievementTypes.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { BuildingEffects } from "./BuildingEffects.js";
+import { BuildingEffects, EffectDefinition } from "./BuildingEffects.js";
 import { City } from "./City.js";
 import { Effect } from "./Effect.js";
 import { FootprintType } from "./FootprintType.js";
 import { SHORT_TICKS_PER_LONG_TICK, SHORT_TICK_TIME } from "./FundamentalConstants.js";
 import { EffectType } from "./GridType.js";
 import { Resource } from "./Resource.js";
-import { CAPACITY_MULTIPLIER, ProductionEfficiency, getResourceType } from "./ResourceTypes.js";
+import { Batteries, CAPACITY_MULTIPLIER, Clothing, Electronics, Furniture, Glass, Iron, Paper, Population, ProductionEfficiency, Research, Steel, Toys, Wood, getResourceType } from "./ResourceTypes.js";
 
+export type BuildingModEffectType = EffectType | "research" | "population" | "storage";
+export type BuildingMod = { type: BuildingModEffectType; magnitude: number };
 export class Building implements IHasDrawable {
     poweredTimeDuringLongTick: number = 0;
     powered = false; //Mainly for drawing
@@ -67,6 +69,8 @@ export class Building implements IHasDrawable {
     public readonly stores: Resource[] = []; //Not cloned since it doesn't change
     public storeAmount: number = 0;
 
+    public mods: BuildingMod[] = []; // Store all modified building effects here //TODO: Serialize and deserialize these and reapply them as needed upon deserialization (some types won't need to be)
+
     constructor(
         public type: string,
         public displayName: string,
@@ -106,11 +110,73 @@ export class Building implements IHasDrawable {
         return newBuilding;
     }
 
+    public applyMods(city: City, mods?: BuildingMod[], negate: boolean = false, reapply: boolean = false) {
+        if (mods) {
+            if (this.mods?.length) this.applyMods(city, undefined, true); //Overwrite mods entirely by first negating any existing mods
+            this.mods = mods;
+        }
+        const newEffects: EffectDefinition[] = [];
+        for (const mod of this.mods) {
+            if (typeof mod.type === 'string') {
+                //Handle string type modifications
+                switch (mod.type) {
+                    case "storage": //Apply and reapply are the same for storage because it's not serialized
+                        if (negate) this.stores.length = 0;
+                        else this.stores.push(...[Wood, Iron, Steel, Glass, Batteries, Clothing, Furniture, Electronics, Paper, Toys].map(p => new p()));
+                        if (isNaN(this.storeAmount)) this.storeAmount = 0; //TODO: Why does that end up as NaN?
+                        this.storeAmount += (negate ? -1 : 1) * mod.magnitude;
+                        break;
+                    case "population": // Modify existing population resource--unless we're reapplying, in which case there's nothing to do here.
+                        if (reapply) continue;
+                        const populationResource = this.outputResources.find(res => res instanceof Population) as Population;
+                        if (populationResource) {
+                            populationResource.capacity = Math.max(0, populationResource.capacity + (negate ? -1 : 1) * mod.magnitude);
+                            if (populationResource.capacity === 0) this.outputResources = this.outputResources.filter(p => p !== populationResource); //Would only happen if (negate).
+                        } else if (!negate) {
+                            //Add new population resource if there isn't one already
+                            this.outputResources.push(new Population(0, mod.magnitude))
+                        }
+                        break;
+                    case "research": //Same code as population but for Research
+                        if (reapply) continue;
+                        const researchResource = this.outputResources.find(res => res instanceof Research);
+                        if (researchResource) {
+                            researchResource.amount = Math.max(0, researchResource.amount + (negate ? -1 : 1) * mod.magnitude);
+                            if (researchResource.amount === 0) this.outputResources = this.outputResources.filter(p => p !== researchResource);
+                        } else if (!negate) {
+                            this.outputResources.push(new Research(0, mod.magnitude));
+                        }
+                        break;
+                    default:
+                        //TODO: Any other non-enum modifiers to be applied (this can be expanded later)
+                        console.error("Unhandled mod effect type: ", mod.type);
+                        break;
+                }
+            } else if (mod.type === EffectType.FireHazard) { //This one DOES have an EffectType enum entry, but FireHazard effects don't go in the grid.
+                //Doesn't get serialized, so reapply is the same as apply.
+                this.fireHazard = Math.max(0, this.fireHazard + (negate ? -1 : 1) * mod.magnitude);
+            } else {
+                newEffects.push(new EffectDefinition(mod.type, mod.magnitude, undefined, false, 0, 0, false)); //The effects that belong in the grid--all 0 radius
+            }
+        }
+        if (newEffects.length) {
+            if (negate) {
+                //Remove just these exact effects by type and magnitude
+                if (this.effects) this.effects.effects = this.effects.effects.filter(p => !newEffects.some(q => q.type === p.type && q.magnitude === p.magnitude));
+            } else {
+                if (this.effects) this.effects.effects.push(...newEffects);
+                else this.effects = new BuildingEffects(newEffects);
+            }
+            //Reapply effects to the city grid
+            this.upgradeRadius(city);
+        }
+    }
+
     getRadiusUpgradeAmount(city: City): number {
         return this.effects?.getRadiusUpgradeAmount(city) ?? 0;
     }
 
-    upgradeRadius(city: City) { //Only runs for already-placed clinics and hospitals when the telemedicine tech gets researched.
+    upgradeRadius(city: City) { //Only runs for already-placed clinics and hospitals when the telemedicine tech gets researched... and for Skyscrapers when applyMods is called.
         this.effects?.stopEffects(this, city);
         this.effects?.applyEffects(this, city);
         if (this.upkeepScales) this.recalculateAffectingBuildings(city);

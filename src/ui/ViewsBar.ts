@@ -43,6 +43,7 @@ export class ViewsBar implements IHasDrawable, IOnResizeEvent {
             height: this.barHeight + "px",
             fallbackColor: backgroundColor,
             id: "viewsBar",
+            onClick: () => { }, //To capture clicks so they don't go through to the city
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(x, barDrawable.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); },
             biggerOnMobile: true, scaleYOnMobile: true,

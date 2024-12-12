@@ -65,6 +65,7 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
             y: topBarHeight,
             fallbackColor: '#333333',
             id: "resourcesBar",
+            onClick: () => { }, //To capture clicks so they don't go through to the city
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, barDrawable.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); },
             biggerOnMobile: true, scaleYOnMobile: true,
@@ -116,7 +117,7 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
             barDrawable.addChild(new Drawable({
                 x: padding + iconSize,
                 y: nextY + iconSize / 2,
-                width: iconSize + "px",
+                width: iconSize + 5 + "px",
                 height: iconSize / 2 + "px",
                 text: humanizeFloor(resource.amount),
                 rightAlign: true,

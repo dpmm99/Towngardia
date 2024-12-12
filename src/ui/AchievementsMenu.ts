@@ -193,7 +193,7 @@ export class AchievementsMenu implements IHasDrawable, IOnResizeEvent {
             height: "48px",
             image: new TextureInfo(48, 48, "ui/x"),
             biggerOnMobile: true,
-            onClick: () => this.hide()
+            onClick: () => this.uiManager.hideAchievementsMenu()
         }));
 
         // Toggle mode button

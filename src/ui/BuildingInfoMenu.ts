@@ -49,6 +49,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             y: 0,
             fallbackColor: '#333333',
             id: "buildingInfo",
+            onClick: () => { this.show(undefined); }, //To capture clicks so they don't go through to the city
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, infoDrawable.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); },
         });

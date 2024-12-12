@@ -158,7 +158,7 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
             height: "48px",
             image: new TextureInfo(48, 48, "ui/x"),
             biggerOnMobile: true,
-            onClick: () => this.hide()
+            onClick: () => this.uiManager.hideFriendsMenu()
         }));
 
         this.lastDrawable = menuDrawable;

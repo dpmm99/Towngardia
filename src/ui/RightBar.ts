@@ -34,11 +34,12 @@ export class RightBar implements IHasDrawable, IOnResizeEvent {
         const iconSize = 40;
 
         const barDrawable = new Drawable({
-            y: 60,
+            y: 60 + (this.uiManager.viewsBarShown() ? 60 : 0),
             anchors: ['right'],
             width: barWidth + "px",
             fallbackColor: '#333333',
             id: "rightBar",
+            onClick: () => { }, //To capture clicks so they don't go through to the city
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, barDrawable.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); },
             biggerOnMobile: true, scaleYOnMobile: true,
@@ -129,7 +130,8 @@ export class RightBar implements IHasDrawable, IOnResizeEvent {
         this.scroller.setChildrenSize(totalHeight);
 
         //Needed 'min' because of landscape mode on mobile, or else it has to always fill up the right side of the screen.
-        barDrawable.height = `min(${totalHeight}px, calc(100% - 140px))`; //TopBar height: 60px. BottomBar height: 80px.
+        const myTop = 80 + barDrawable.y!; //TopBar height and ViewsBar height are both 60px, included in barDrawable.y. BottomBar height is 80px.
+        barDrawable.height = `min(${totalHeight}px, calc(100% - ${myTop}px))`;
 
         this.lastDrawable = barDrawable;
         return barDrawable;

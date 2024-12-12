@@ -35,6 +35,7 @@ export class TopBar implements IHasDrawable, IOnResizeEvent {
             height: barHeight + "px",
             fallbackColor: '#333333',
             id: "topBar",
+            onClick: () => { }, //To capture clicks so they don't go through to the city
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(x, barDrawable.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); },
             biggerOnMobile: true

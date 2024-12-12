@@ -453,7 +453,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         this.calculateWinnings();
         this.city.updateLastUserActionTime();
         this.game.fullSave();
-        // Freeze input and keep showing the grid for a couple seconds before returinng to the main screen.
+        // Freeze input and keep showing the grid for a couple seconds before returning to the main screen.
         this.userInputLocked = true;
         setTimeout(() => { this.gameStarted = false; }, 1000); //Will wait for the user to tap to continue.
     }
@@ -613,11 +613,19 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
             anchors: ["centerX"],
             centerOnOwnX: true,
             width: "min(100%, 600px)",
-            height: "100%",
-            fallbackColor: '#000000CC',
+            height: "100%", //Has to be 100% for the drag-to-scroll to work.
+            fallbackColor: '#111111',
             id: "startOverlay",
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, overlay.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); },
+        }));
+        //Fill in the rest if scroller is negative
+        if (overlay.y! < 0) overlay.addChild(new Drawable({
+            y: overlay.y,
+            anchors: ['bottom'],
+            width: "100%",
+            height: this.scroller.getScroll() + "px",
+            fallbackColor: overlay.fallbackColor,
         }));
 
         if (this.howToPlayShown) {

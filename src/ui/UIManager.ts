@@ -6,6 +6,7 @@ import { Player } from "../game/Player.js";
 import { getResourceType, Research } from "../game/ResourceTypes.js";
 import { Tech } from "../game/Tech.js";
 import { TechManager } from "../game/TechManager.js";
+import { Altitect } from "../minigame/Altitect.js";
 import { MemoryMixology } from "../minigame/MemoryMixology.js";
 import { Monobrynth } from "../minigame/Monobrynth.js";
 import { NepotismNetworking } from "../minigame/NepotismNetworking.js";
@@ -71,6 +72,7 @@ export class UIManager {
     private starbox!: Starbox;
     private monobrynth!: Monobrynth;
     private neponet!: NepotismNetworking;
+    private Altitect!: Altitect;
 
     private city!: City; //Set in switchRenderer, called by the constructor, but TypeScript compiler doesn't know that
     public renderer!: IRenderer;
@@ -146,6 +148,7 @@ export class UIManager {
         this.city = newCity = this.game.visitingCity || this.game.city!;
         this.cityView = new CityView(newCity, this);
         this.city.uiManager = this; //In case the city needs to trigger dialogs or whatever.
+        this.hideMinigame();
 
         this.windows = [
             this.rightBar = new RightBar(owner, this.isMyCity ? newCity : null, this), //Never given another player's city--only used for showing notifications
@@ -155,15 +158,10 @@ export class UIManager {
             this.buildTypeBar = new BuildTypeBar(newCity, this), //No reason to appear in other players' cities
             this.topBar = new TopBar(newCity, this),
             this.happinessFactorsWindow = new HappinessFactorsWindow(newCity),
-            this.techMenu = new TechTreeMenu(newCity, this),
-            this.budgetMenu = new BudgetMenu(newCity, this),
             this.citizenDietWindow = new CitizenDietWindow(newCity, this),
-            this.achievementsMenu = new AchievementsMenu(owner, newCity, this),
-            this.notificationsMenu = new NotificationsMenu(this.game.player!, this.game.city!, this.game), //NEVER changes cities/players
             this.buildingInfoMenu = new BuildingInfoMenu(newCity, this),
             this.friendVisitWindow = new FriendVisitWindow(),
             this.friendGiftWindow = new FriendGiftWindow(this.game.city!, newCity, this, this.game), //Affects BOTH your city and the other player's
-            this.friendsMenu = new FriendsMenu(this.game.player!, this),
         ];
         this.worldCoordinateDrawables = [
             this.constructMenu = new ConstructMenu(),
@@ -172,12 +170,20 @@ export class UIManager {
 
         this.bottomBar.shown = this.isMyCity;
 
+        //Full-screen views
+        this.techMenu = new TechTreeMenu(newCity, this);
+        this.friendsMenu = new FriendsMenu(this.game.player!, this);
+        this.budgetMenu = new BudgetMenu(newCity, this);
+        this.achievementsMenu = new AchievementsMenu(owner, newCity, this);
+        this.notificationsMenu = new NotificationsMenu(this.game.player!, this.game.city!, this.game, this); //NEVER changes cities/players
+
         //Minigames never change cities/players
         this.memoryMixology = new MemoryMixology(this.game.city!, this, this.game);
         this.slots = new SlotMachine(this.game.city!, this, this.game);
         this.starbox = new Starbox(this.game.city!, this, this.game);
         this.monobrynth = new Monobrynth(this.game.city!, this, this.game);
         this.neponet = new NepotismNetworking(this.game.city!, newCity, this, this.game); //Affects BOTH your city and the other player's
+        this.Altitect = new Altitect(this.game.city!, this, this.game);
 
         //This overlay has to be instantiated after bottomBar.shown is set, because the tutorial hides the bottom bar.
         this.windows.push(this.tutorialOverlay = new TutorialOverlay(this.game.player!, this.game.city!, this)); //Also NEVER changes cities/players
@@ -232,13 +238,7 @@ export class UIManager {
         if (this.checkClickComponent(this.warningWindow, x, y)) return true;
 
         if (this.tutorialOverlay.isShown() && !wasSingleTap && this.checkClickComponent(this.tutorialOverlay, x, y)) return true;
-        //TODO: Start using that renderOnlyWindow field for these windows
-        if (this.techMenu.isShown()) return this.checkClickComponent(this.techMenu, x, y); //Tech tree is the only thing that can be clicked while it's open)
-        if (this.budgetMenu.isShown()) return this.checkClickComponent(this.budgetMenu, x, y);
-        if (this.friendsMenu.isShown()) return this.checkClickComponent(this.friendsMenu, x, y);
-        if (this.achievementsMenu.isShown()) return this.checkClickComponent(this.achievementsMenu, x, y);
         if (this.citizenDietWindow.isShown()) return this.checkClickComponent(this.citizenDietWindow, x, y);
-        if (this.notificationsMenu.isShown()) return this.checkClickComponent(this.notificationsMenu, x, y);
 
         if (this.friendVisitWindow.isShown() && this.checkClickComponent(this.friendVisitWindow, x, y)) return true;
         this.friendVisitWindow.shown = false;
@@ -253,6 +253,7 @@ export class UIManager {
 
         const contextMenuBuildingWas = this.contextMenu.building; //because the very next line closes that menu and resets its building
         if (this.contextMenu.isShown() && !wasSingleTap) this.contextMenu.update(this.city, -1, -1);
+        if (this.checkClickComponent(this.buildingInfoMenu, x, y)) return true;
         if (this.buildingInfoMenu.isShown() && !wasSingleTap) this.buildingInfoMenu.show(undefined);
         this.requestRedraw();
 
@@ -328,34 +329,54 @@ export class UIManager {
     }
 
     async showTechMenu() {
-        this.techMenu.show();
         game.onLoadStart?.();
         await this.techMenu.preloadImages();
         game.onLoadEnd?.();
-        this.frameRequested = true;
-        if (this.cityView instanceof ProvisioningView) this.toggleProvisioning();
+
+        this.showFullScreen(this.techMenu);
+    }
+    hideTechMenu() {
+        this.techMenu.hide();
+        this.hideMinigame();
+    }
+
+    showFullScreen(menu: IHasDrawable, ...showArgs: any[]) {
+        if ('show' in menu && typeof menu.show === 'function') menu.show(...showArgs);
+        this.renderOnlyWindow = menu;
         this.cityView.drawBuildings = false;
+        this.switchRenderer(this.renderer);
     }
 
     showBudget() {
-        this.budgetMenu.show();
-        if (this.cityView instanceof ProvisioningView) this.toggleProvisioning();
+        this.showFullScreen(this.budgetMenu);
+    }
+    hideBudget() {
+        this.budgetMenu.hide();
+        this.hideMinigame();
     }
     showAchievements() {
-        this.achievementsMenu.show("achievements");
-        if (this.cityView instanceof ProvisioningView) this.toggleProvisioning();
+        this.showFullScreen(this.achievementsMenu, "achievements");
     }
     showTitles() {
-        this.achievementsMenu.show("titles");
-        if (this.cityView instanceof ProvisioningView) this.toggleProvisioning();
+        this.showFullScreen(this.achievementsMenu, "titles");
+    }
+    hideAchievementsMenu() {
+        this.achievementsMenu.hide();
+        this.hideMinigame();
     }
     showNotifications() {
-        this.notificationsMenu.show();
-        if (this.cityView instanceof ProvisioningView) this.toggleProvisioning();
+        this.showFullScreen(this.notificationsMenu);
+    }
+    hideNotifications() {
+        this.notificationsMenu.hide();
+        this.hideMinigame();
     }
     showFriendsMenu() {
-        this.friendsMenu.show();
-        if (this.cityView instanceof ProvisioningView) this.toggleProvisioning();
+        this.showFullScreen(this.friendsMenu);
+    }
+    hideFriendsMenu() {
+        this.friendsMenu.hide();
+        this.hideMinigame();
     }
     showTutorials() {
         this.tutorialOverlay.showCompletedSteps();
@@ -623,11 +644,6 @@ export class UIManager {
     isConstructing() { return this.isConstructionMode; }
     inTutorial() { return this.tutorialOverlay.isShown(); }
 
-    hideTechMenu() {
-        this.techMenu.hide();
-        this.cityView = new CityView(this.city, this); //Because we hid the buildings when that menu was open
-    }
-
     buildTypeBarShown() {
         return this.buildTypeBar.expandedCategory !== null;
     }
@@ -694,7 +710,18 @@ export class UIManager {
         this.switchRenderer(this.renderer);
     }
 
-    hideMinigame() {
+    async showAltitectMinigame(building: Building): Promise<void> {
+        game.onLoadStart?.();
+        await this.Altitect.preloadImages();
+        game.onLoadEnd?.();
+
+        this.Altitect.show(building);
+        this.renderOnlyWindow = this.Altitect;
+        this.cityView.drawBuildings = false;
+        this.switchRenderer(this.renderer);
+    }
+
+    hideMinigame() { //TODO: Rename to hideRenderOnlyWindow
         if (this.renderOnlyWindow && 'hide' in this.renderOnlyWindow && typeof this.renderOnlyWindow.hide === 'function') this.renderOnlyWindow.hide();
         this.cityView = new CityView(this.city, this);
         this.renderOnlyWindow = null;
@@ -703,7 +730,7 @@ export class UIManager {
 
     isPlayingMinigame() {
         //Detect if any of the minigames are actively being played--not just shown, but actually playing. In such a case, we don't want to auto-refresh.
-        return this.starbox.isPlaying() || this.neponet.isPlaying() || this.memoryMixology.isPlaying() || this.monobrynth.isPlaying() || this.slots.isPlaying();
+        return this.starbox.isPlaying() || this.neponet.isPlaying() || this.memoryMixology.isPlaying() || this.monobrynth.isPlaying() || this.slots.isPlaying() || this.Altitect.isPlaying();
     }
 
     //Because screenToWorldCoordinates doesn't round/truncate
@@ -830,9 +857,10 @@ export class UIManager {
         this.isDragging = true;
         if (this.multitouched) return null; //Allow scrolling around the city without fully letting go after zooming, but don't allow any other interaction
         if (this.contextMenuTimeout) clearTimeout(this.contextMenuTimeout);
+        if (this.draggingElem) return this.draggingElem;
 
         if (this.renderOnlyWindow) {
-            return this.draggingElem = this.renderOnlyWindow.getLastDrawable()?.getClickedDescendant(x, y) || null;
+            return this.draggingElem = this.renderOnlyWindow.getLastDrawable()?.getClickedDescendant(x, y, true) || null;
         }
 
         for (const draggable of this.tutorialOverlay.getLastDraggables()) {
@@ -840,33 +868,26 @@ export class UIManager {
         }
 
         for (const draggable of this.cityView.getLastWindowDraggables()) {
-            this.draggingElem = draggable?.getClickedDescendant(x, y);
+            this.draggingElem = draggable?.getClickedDescendant(x, y, true);
             if (this.draggingElem?.onDrag) return this.draggingElem;
         }
 
-        //For those that have draggable elements within them
-        this.draggingElem =
-            this.budgetMenu.getLastDrawable()?.getClickedDescendant(x, y) ??
-            this.resourcesBar.getLastDrawable()?.getClickedDescendant(x, y) ??
-            null; //Note: draggable Drawables have to have onClick specified
-        if (this.draggingElem?.onDrag) return this.draggingElem;
-
-        //Plug in other draggable (mainly for scrolling) elements here. Descendants are not checked.
-        const draggables: IHasDrawable[] = [this.buildingInfoMenu, this.techMenu, this.budgetMenu, this.friendsMenu, this.citizenDietWindow, this.achievementsMenu, this.notificationsMenu, this.happinessFactorsWindow, this.buildTypeBar, this.topBar, this.bottomBar, this.resourcesBar, this.viewsBar, this.rightBar];
+        //Plug in other draggable (mainly for scrolling) elements here.
+        const draggables: IHasDrawable[] = [this.citizenDietWindow, this.happinessFactorsWindow, this.buildingInfoMenu, this.buildTypeBar, this.topBar, this.bottomBar, this.resourcesBar, this.viewsBar, this.rightBar];
         for (const draggable of draggables) {
-            if (this.draggingElem) break;
-            const drawable = draggable.getLastDrawable();
-            if (drawable?.checkDrag(x, y)) return this.draggingElem = drawable;
+            this.draggingElem = draggable.getLastDrawable()?.getClickedDescendant(x, y, true) ?? null;
+            if (this.draggingElem?.onDrag) return this.draggingElem;
         }
 
         return this.draggingElem;
     }
 
     private adjustDragDueToResize() {
-        const draggables: IOnResizeEvent[] = [this.buildingInfoMenu, this.techMenu, this.budgetMenu, this.friendsMenu, this.citizenDietWindow, this.achievementsMenu, this.notificationsMenu, this.happinessFactorsWindow, this.buildTypeBar, this.topBar, this.bottomBar, this.resourcesBar, this.viewsBar, this.rightBar, this.tutorialOverlay];
+        const draggables: IOnResizeEvent[] = [this.citizenDietWindow, this.happinessFactorsWindow, this.buildingInfoMenu, this.buildTypeBar, this.topBar, this.bottomBar, this.resourcesBar, this.viewsBar, this.rightBar, this.tutorialOverlay];
         for (const draggable of draggables) {
             draggable.onResize();
         }
+        if (this.renderOnlyWindow && 'onResize' in this.renderOnlyWindow) (this.renderOnlyWindow as IOnResizeEvent).onResize();
     }
 
     private onMouseDown(e: MouseEvent) {
@@ -902,6 +923,7 @@ export class UIManager {
     private endDrag() {
         this.isDragging = false;
         if (this.draggingElem?.onDragEnd) this.draggingElem.onDragEnd();
+        this.draggingElem = null;
     }
 
     private onMouseMove(e: MouseEvent) {

@@ -107,7 +107,8 @@ export class ProvisioningView extends CityView {
             height: "300px",
             fallbackColor: '#222222',
             id: "provisioningMenu",
-            anchors: ['right']
+            anchors: ['right'],
+            onClick: () => { }, //Prevent clicks from going through to the city
         });
 
         // Title and icon

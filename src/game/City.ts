@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, ElementarySchool, FireBay, FireStation, FreeStuffTable, GregsGrogBarr, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, ElementarySchool, FireBay, FireStation, FreeStuffTable, GregsGrogBarr, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -60,6 +60,7 @@ export class City {
     public happinessMaxima: Map<string, number> = new Map();
     public minigameOptions: Map<string, string> = new Map(); //Group -> option ID
     public unlockedMinigameOptions: Set<string> = new Set(); //Group + option ID
+    public altitectPlays: number = 0;
 
     public lastImportedPowerCost: number = 0;
     public recentConstructionResourcesSold: number = 0;
@@ -145,8 +146,11 @@ export class City {
             this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) + 1);
         }
 
-        //Reapply building-originated effects so they don't have to be saved
-        for (const building of this.buildings) building.effects?.applyEffects(building, this);
+        //Reapply building-originated effects so they don't have to be saved and reapply mods so not every moddable field has to be saved separately
+        for (const building of this.buildings) {
+            building.effects?.applyEffects(building, this);
+            building.applyMods(this, undefined, false, true);
+        }
 
         //Cached calculated values that normally get calculated on long tick
         this.calculatePowerUsageMultiplier();
@@ -1697,7 +1701,7 @@ export class City {
             this.flags.add(CityFlags.B12Matters);
         }
         if (this.peakPopulation >= 1500 && !this.flags.has(CityFlags.UnlockedLogisticsCenter)) {
-            this.notify(new Notification("Logistics Center", "You've reached a population of 1500! You can now build a logistics center. Placing this building unlocks the ability to collect all resources across the city with one click. But even more interestingly, you can build a few 'free stuff' tables on the empty part of its lot and hand out your extra manufactured goods for a small happiness bonus.", "logistics")); //TODO: icon
+            this.notify(new Notification("Logistics Center", "You've reached a population of 1500! You can now build a logistics center. Placing this building unlocks the ability to collect all resources across the city with one click. But even more interestingly, you can build a few 'free stuff' tables on the empty part of its lot and hand out your extra manufactured goods for a small happiness bonus.", "logistics"));
             this.unlock(getBuildingType(LogisticsCenter));
             this.unlock(getBuildingType(FreeStuffTable));
             this.flags.add(CityFlags.UnlockedLogisticsCenter);
@@ -1711,6 +1715,10 @@ export class City {
             this.notify(new Notification("Minigame Minilab", "You've reached a population of 2100! You can now build a Minigame Minilab to unlock different reward sets in most of the minigames. It also produces extra tokens for the minigames at random, so it pays for itself pretty quickly--unless you're terrible at the minigames!", "minigames"));
             this.unlock(getBuildingType(MinigameMinilab));
             this.flags.add(CityFlags.UnlockedMinigameLab);
+        }
+        if (this.peakPopulation >= 2400 && !this.flags.has(CityFlags.UnlockedAltitect) && this.flunds.amount > 1000 && (this.presentBuildingCount.get(getBuildingType(Skyscraper)) ?? 0) > 3) {
+            this.notify(new Notification("Altitect", "Reach for the sky! You can now play the Altitect minigame, though it costs a pretty penny. You can access the minigame by long-tapping or right-clicking a Skyscraper in your city. Playing Altitect changes your selected skyscraper's stats permanently depending on your actions in the minigame. You can play it as many times as you like on each skyscraper, but the cost keeps increasing.", "minigames"));
+            this.flags.add(CityFlags.UnlockedAltitect);
         }
         if (this.peakPopulation >= GREENHOUSE_GASES_MIN_POPULATION && !this.flags.has(CityFlags.GreenhouseGasesMatter)) {
             this.notify(new Notification("Disastrous Change", "As our population rises, so does the concern that unchecked pollution will harm our environment and lead to more frequent severe weather. We should choose the cleaner, greener option when we have a choice, and for when we don't, we should look into technologies that can undo our damage. See Tutorials in the main menu for more info.", "greenhousegases"));

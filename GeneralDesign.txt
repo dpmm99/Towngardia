@@ -35,6 +35,8 @@ Prompt for UI icons:
 Four clean images, ICON OBJECTS GO HERE, style of a mostly flat (slightly 3D, slightly cartoony) software icon, plain black background
 Prompt for buildings:
 XYZ building, in the style of a detailed 3D realistic cartoon isometric city sim, no background or shadows around the tile, omnidirectional lighting, fitting completely in frame, plain black background
+Prompt for rooms in Altitect (but I varied it a lot):
+Two images, one on top of the other, depicting a cutaway of a XYZ room, in the style of a detailed realistic cartoon side-scrolling sidescroller cutaway tower game, elongated, ordinary lighting, just one room fitting completely in frame, orthographic perspective, flat projection, direct horizontal side view from floor level, seen from straight on, plain black background
 
 
 

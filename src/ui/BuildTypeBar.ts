@@ -7,7 +7,7 @@ import { IOnResizeEvent } from "./IOnResizeEvent.js";
 import { StandardScroller } from "./StandardScroller.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { UIManager } from "./UIManager.js";
-import { addResourceCosts } from "./UIUtil.js";
+import { addResourceCosts, humanizePowerCeil, humanizePowerFloor } from "./UIUtil.js";
 
 export class BuildTypeBar implements IHasDrawable, IOnResizeEvent {
     //Main bar (shouldn't be here, really)
@@ -76,6 +76,10 @@ export class BuildTypeBar implements IHasDrawable, IOnResizeEvent {
             fallbackColor: '#444444',
             id: "expandedCategory",
             biggerOnMobile: true, scaleYOnMobile: true,
+            onClick: () => {
+                //To capture clicks so they don't go through to the city, but also to deselect the building if you click anywhere in the bar with a building selected
+                if (this.selectedBuilding) this.selectBuildingType(this.selectedBuilding.type, true);
+            },
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(x, expandedDrawable.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); }
         });
@@ -260,6 +264,37 @@ export class BuildTypeBar implements IHasDrawable, IOnResizeEvent {
 
             const buyable = costs.filter(p => p.type !== 'flunds').map(cost => ({ type: cost.type, amount: this.city.resources.get(cost.type)!.buyableAmount }));
             nextX = Math.max(nextX + 200 + this.buildingPadding, addResourceCosts(expandedDrawable, buyable, nextX, this.buildingPadding + 32, true, true, true, 32, 10, 32, 8));
+        }
+
+        //Show building power usage, current power surplus, and importable power
+        const powerUsage = building.getPowerUpkeep(this.city, true);
+        if (powerUsage) {
+            const powerSurplus = this.city.resources.get('power')!.productionRate - this.city.resources.get('power')!.consumptionRate;
+            expandedDrawable.addChild(new Drawable({
+                x: nextX,
+                y: this.buildingPadding,
+                width: "250px",
+                height: "32px",
+                text: "Power usage: " + humanizePowerCeil(powerUsage),
+                biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+            }));
+            expandedDrawable.addChild(new Drawable({
+                x: nextX,
+                y: this.buildingPadding + 32,
+                width: "250px",
+                height: "32px",
+                text: (powerSurplus >= 0 ? "City surplus: " : "City deficit: ") + humanizePowerFloor(Math.abs(powerSurplus)),
+                biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+            }));
+            expandedDrawable.addChild(new Drawable({
+                x: nextX,
+                y: this.buildingPadding + 64,
+                width: "250px",
+                height: "32px",
+                text: "Importable: " + humanizePowerFloor(this.city.desiredPower * 0.5 + Math.min(0, powerSurplus)), //positive powerSurplus doesn't affect this calculation
+                biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+            }));
+            nextX += 250 + this.buildingPadding;
         }
 
         this.scroller.setChildrenSize(nextX - baseX);

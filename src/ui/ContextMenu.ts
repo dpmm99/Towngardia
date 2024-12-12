@@ -1,6 +1,7 @@
 import { Building } from "../game/Building.js";
-import { CityHall, LogisticsCenter, SandsOfTime, getBuildingType } from "../game/BuildingTypes.js";
+import { CityHall, LogisticsCenter, SandsOfTime, Skyscraper, getBuildingType } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
+import { CityFlags } from "../game/CityFlags.js";
 import { LONG_TICK_TIME } from "../game/FundamentalConstants.js";
 import { GameState } from "../game/GameState.js";
 import { Timeslips } from "../game/ResourceTypes.js";
@@ -136,6 +137,13 @@ export class ContextMenu implements IHasDrawable {
                     image: new TextureInfo(96, 96, "ui/majorsalience"),
                 }));
             }
+        }
+        if (building instanceof Skyscraper && this.uiManager.isMyCity && this.city!.flags.has(CityFlags.UnlockedAltitect)) {
+            menu.addChild(new Drawable({
+                image: new TextureInfo(childWidth, childHeight, "ui/Altitect"),
+                id: menu.id + ".Altitect",
+                onClick: () => this.uiManager.showAltitectMinigame(building)
+            }));
         }
 
         const infoButton = menu.addChild(new Drawable({

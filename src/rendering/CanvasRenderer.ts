@@ -343,13 +343,15 @@ export class CanvasRenderer implements IRenderer {
         let x = drawable.getX(width, parentWidth);
         let y = drawable.getY(height, parentHeight);
 
+        //noXStretch: Don't stretch text width more than you stretched its height
+        const correctedWidth = sprite && drawable.noXStretch ? this.getCorrectedWidth(sprite, width, height) : width;
         //Right-align, e.g., for resources "x/y" the x should be right-aligned to the "/capacity"... not quite the same as anchor, as it doesn't depend on the parent, just on itself.
         if (drawable.text && sprite && drawable.rightAlign) {
-            if (!drawable.anchors.includes('right')) x += width - Math.min(width, drawable.getNaturalWidth(sprite, parentWidth) * (drawable.biggerOnMobile ? BIGGER_MOBILE_RATIO : 1));
-            else if (drawable.noXStretch) x = drawable.getX(this.getCorrectedWidth(sprite, width, height), parentWidth);
+            if (!drawable.anchors.includes('right')) x += width - correctedWidth;
+            else if (drawable.noXStretch) x = drawable.getX(correctedWidth, parentWidth);
         }
-        //noXStretch: Don't stretch text width more than you stretched its height
-        if (sprite && drawable.noXStretch) width = this.getCorrectedWidth(sprite, width, height); //After the X positioning because if it's anchored to the right, I want to subtract the full width from the parent's right.
+        
+        width = correctedWidth; //After the X positioning because if it's anchored to the right, I want to subtract the full width from the parent's right.
         if (drawable.anchors.includes('centerX')) x += parentWidth / 2; //Can't be part of getX because of the width adjustment that happens afterward for noXStretch text.
         if (drawable.centerOnOwnX) x -= width / 2;
 

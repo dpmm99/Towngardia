@@ -61,12 +61,12 @@ export class Drawable {
         return x >= left && x <= right && y >= top && y <= bottom;
     }
 
-    getClickedDescendant(x: number, y: number): Drawable | null { //Parents don't *contain* the children; it's just for relative positioning and relative draw order.
+    getClickedDescendant(x: number, y: number, forDrag: boolean = false): Drawable | null { //Parents don't *contain* the children; it's just for relative positioning and relative draw order.
         for (const child of this.children.toReversed()) {
-            const descendant = child.getClickedDescendant(x, y);
+            const descendant = child.getClickedDescendant(x, y, forDrag);
             if (descendant) return descendant;
         }
-        if (this.checkClick(x, y)) return this;
+        if (forDrag ? this.checkDrag(x, y) : this.checkClick(x, y)) return this;
         return null;
     }
 

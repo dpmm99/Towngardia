@@ -74,7 +74,7 @@ export class GameState {
             this.onLoadStart?.();
             this.loading = true;
             try {
-                console.trace("Loading in switchCity; see stack");
+                console.log("Loading in switchCity");
                 toCity = (await this.storage.loadCity(owner, cityID))!;
             } catch (err) {
                 console.error('Failed to load city:', err);
@@ -254,7 +254,7 @@ export class GameState {
         }
         this.saving = true;
         try {
-            console.trace("Saving; see stack.");
+            console.log("Saving fully."); //Removed stack trace because it was making it hard to debug other things. :)
             const playerActionTimeWhenSaveStarted = this.player!.lastUserActionTimestamp; //because it's async; user could keep doing stuff
             await this.storage.updatePlayer(this.player!);
             this.player!.lastSavedUserActionTimestamp = playerActionTimeWhenSaveStarted;

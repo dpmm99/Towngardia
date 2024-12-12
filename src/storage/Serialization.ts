@@ -63,6 +63,7 @@ export class CitySerializer {
             ru: o.roadUpkeepPrecalculation,
             la: o.lastUserActionTimestamp,
             ls: o.lastSavedUserActionTimestamp,
+            ap: o.altitectPlays,
         };
 
         return r;
@@ -172,6 +173,7 @@ export class CitySerializer {
             fc: o.businessFailureCounter || undefined, //not for templates unless there was an upgrade
             pe: o.patronageEfficiency !== 1 ? o.patronageEfficiency : undefined, //not for templates unless there was an upgrade; defaults to 1 so we don't need to serialize it if it's 1
             sa: (<any>o).storeAmount || undefined,
+            mo: o.mods.length ? o.mods : undefined, //Direct JSON serialization of these is fine
         };
         if (isTemplate) {
             //Fields that only apply to templates
@@ -270,6 +272,7 @@ export class CityDeserializer {
         r.citizenDietSystem.lastDietComposition = dietComposition;
         r.trafficPrecalculation = o.tp || 0;
         r.roadUpkeepPrecalculation = o.ru || 0;
+        r.altitectPlays = o.ap || 0;
 
         //Old defunct storage of some flags
         if (o.pm) r.flags.add(CityFlags.PoliceProtectionMatters);
@@ -415,6 +418,7 @@ export class CityDeserializer {
         if (o.va !== undefined) r.variant = o.va;
         if ("storeAmount" in r) (<any>r).storeAmount = o.sa;
         if ("trafficQuantity" in r) (<any>r).trafficQuantity = o.tq || 0;
+        r.mods = o.mo || [];
 
         if (isTemplate) { //Leave the values alone for some fields if it's a template
             if (o.lo !== undefined) r.locked = o.lo;

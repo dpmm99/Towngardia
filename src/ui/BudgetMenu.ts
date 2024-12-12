@@ -92,7 +92,7 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
             height: "48px",
             image: new TextureInfo(48, 48, "ui/x"),
             biggerOnMobile: true,
-            onClick: () => this.shown = false
+            onClick: () => this.uiManager.hideBudget(),
         }));
 
         // Tax sliders
@@ -192,7 +192,7 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
 
         // Apply the budget effects to the city
         this.budget.applyBudgetEffects(this.city);
-        this.shown = false;
+        this.uiManager.hideBudget();
         this.city.updateLastUserActionTime();
         this.uiManager.game.fullSave();
     }
@@ -213,5 +213,9 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
 
     isShown(): boolean {
         return this.shown;
+    }
+
+    hide() {
+        this.shown = false;
     }
 }

@@ -7,6 +7,7 @@ import { StandardScroller } from "./StandardScroller.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
 import { GameState } from "../game/GameState.js";
+import { UIManager } from "./UIManager.js";
 
 export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
@@ -16,7 +17,7 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
     private notificationPadding = 10;
     private expandedNotifications: Set<Notification> = new Set();
 
-    constructor(private player: Player, private city: City, private game: GameState) { }
+    constructor(private player: Player, private city: City, private game: GameState, private uiManager: UIManager) { }
 
     onResize(): void { this.scroller.onResize(); }
 
@@ -171,7 +172,7 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
             height: "48px",
             image: new TextureInfo(48, 48, "ui/x"),
             biggerOnMobile: true,
-            onClick: () => this.hide()
+            onClick: () => this.uiManager.hideNotifications()
         }));
 
         this.scroller.setChildrenSize(this.notifications.length * (this.notificationIconSize + this.notificationPadding) + 140 * this.expandedNotifications.size + 200); //TODO: doesn't account for word wrapped text so I just added 200 arbitrarily

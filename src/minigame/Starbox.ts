@@ -667,9 +667,17 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             anchors: ["centerX"],
             centerOnOwnX: true,
             width: "min(100%, 600px)",
-            height: "100%",
-            fallbackColor: '#000000CC',
+            height: "100%", //Has to be 100% for the drag-to-scroll to work.
+            fallbackColor: '#111111',
             id: "startOverlay",
+        }));
+        //Fill in the rest if scroller is negative
+        if (overlay.y! < 0) overlay.addChild(new Drawable({
+            y: overlay.y,
+            anchors: ['bottom'],
+            width: "100%",
+            height: this.scroller.getScroll() + "px",
+            fallbackColor: overlay.fallbackColor,
         }));
 
         if (this.howToPlayShown) {
