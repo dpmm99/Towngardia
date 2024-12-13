@@ -531,7 +531,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             y: nextY,
             width: (barWidth - padding * 2) + "px",
             height: "24px",
-            text: `Stores ${building.storeAmount} of:`,
+            text: `Stores ${humanizeFloor(building.storeAmount)} of:`,
             id: `${infoDrawable.id}.storageLabel`,
         }));
         nextY += 24 + 5;

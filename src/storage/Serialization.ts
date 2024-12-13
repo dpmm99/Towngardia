@@ -416,7 +416,7 @@ export class CityDeserializer {
         if (o.fc !== undefined) r.businessFailureCounter = o.fc;
         r.patronageEfficiency = o.pe === undefined ? 1 : o.pe;
         if (o.va !== undefined) r.variant = o.va;
-        if ("storeAmount" in r) (<any>r).storeAmount = o.sa;
+        if ("storeAmount" in r) (<any>r).storeAmount = o.sa || 0;
         if ("trafficQuantity" in r) (<any>r).trafficQuantity = o.tq || 0;
         r.mods = o.mo || [];
 

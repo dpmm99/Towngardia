@@ -66,7 +66,7 @@ export class Building implements IHasDrawable {
     effects: BuildingEffects | null = null; //For buildings that spread effects; not cloned since it has no modifiable state
 
     //For storage facilities
-    public readonly stores: Resource[] = []; //Not cloned since it doesn't change
+    public stores: Resource[] = [];
     public storeAmount: number = 0;
 
     public mods: BuildingMod[] = []; // Store all modified building effects here //TODO: Serialize and deserialize these and reapply them as needed upon deserialization (some types won't need to be)
@@ -102,6 +102,7 @@ export class Building implements IHasDrawable {
         newBuilding.stampFootprint = this.stampFootprint.map(row => row.slice());
         newBuilding.outputResourceOptions = this.outputResourceOptions.map(p => p.clone());
         newBuilding.inputResourceOptions = this.inputResourceOptions.map(p => p.clone());
+        newBuilding.stores = this.stores.map(p => p.clone());
         newBuilding.builtOn = new Set();
         newBuilding.x = newBuilding.y = -1;
         if (this.businessPatronCap > 0) newBuilding.patronageEfficiency = 0; //Reset if it's a business so it doesn't start off at max output when you build it.

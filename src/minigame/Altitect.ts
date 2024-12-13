@@ -144,6 +144,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         this.userInputLocked = false;
         this.towerState = this.generateInitialTowerState();
         this.towerState.floors.push(this.generateFloor());
+        this.selectedRoom = null;
         this.endReason = "";
         this.selectRandomRoomTypes();
         this.startTimer();
@@ -783,7 +784,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
 
         // TODO: Add more rules here, images, and especially the list of rooms and their effects since the minigame costs a lot to repeatedly play
 
-        this.scroller.setChildrenSize(1700);
+        this.scroller.setChildrenSize(1800);
     }
 
     private drawGameArea(parent: Drawable): void {

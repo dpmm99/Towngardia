@@ -157,6 +157,7 @@ keep a Museum of Future Arts running for several days: Sands of Time
 1800 population: maximum food requirements
 2100 population: Minigame Minilab
 minigame minilab + playing the minigames: alternative reward sets as options for the minigames
+2400 population + >=4 skyscrapers + >=1k flunds: Altitect minigame
 earthquake: geothermal tech and a hot spring inn
 8000 population: greenhouse gases begin to affect happiness and weather event chances
 and techs unlock 11 buildings
