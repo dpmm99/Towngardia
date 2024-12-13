@@ -609,7 +609,6 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
 
     private drawStartOverlay(parent: Drawable): void {
         const overlay = parent.addChild(new Drawable({
-            y: -this.scroller.getScroll(),
             anchors: ["centerX"],
             centerOnOwnX: true,
             width: "min(100%, 600px)",
@@ -619,21 +618,14 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, overlay.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); },
         }));
-        //Fill in the rest if scroller is negative
-        if (overlay.y! < 0) overlay.addChild(new Drawable({
-            y: overlay.y,
-            anchors: ['bottom'],
-            width: "100%",
-            height: this.scroller.getScroll() + "px",
-            fallbackColor: overlay.fallbackColor,
-        }));
 
         if (this.howToPlayShown) {
             this.drawHowToPlay(overlay, parent);
             return;
         }
 
-        let nextY = 10;
+        let nextY = 10 - this.scroller.getScroll();
+        const baseY = nextY;
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
@@ -761,7 +753,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
             { group: "nn-r", id: "1", text: "Power Pals (-power cost)", icon: "resource/power" },
             { group: "nn-r", id: "2", text: "Industrial Invitees (+production)", icon: "ui/logistics" }]);
 
-        this.scroller.setChildrenSize(nextY);
+        this.scroller.setChildrenSize(nextY - baseY);
     }
 
     private toggleRules(): void {
@@ -776,7 +768,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         parent.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 10,
+            y: 10 - this.scroller.getScroll(),
             width: "100%",
             height: "48px",
             text: "Nepotism Networking Rules",
@@ -786,7 +778,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
 
         parent = parent.addChild(new Drawable({
             x: 20,
-            y: 80,
+            y: 80 - this.scroller.getScroll(),
             width: "calc(100% - 40px)",
             height: "40px",
             wordWrap: true,

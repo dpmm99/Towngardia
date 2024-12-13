@@ -69,7 +69,7 @@ interface TowerState {
 }
 
 const effectTypeIconMap = new Map<BuildingModEffectType, string>([[EffectType.PoliceProtection, "ui/policeprotection"], [EffectType.Luxury, "ui/luxury"], [EffectType.Noise, "ui/noise"],
-    [EffectType.BusinessPresence, "ui/businesspresence"], [EffectType.FireHazard, "ui/fireprotection"], [EffectType.Education, "ui/education"], [EffectType.Healthcare, "ui/healthcare"],
+    [EffectType.BusinessPresence, "ui/businesspresence"], [EffectType.FireHazard, "ui/fire"], [EffectType.Education, "ui/education"], [EffectType.Healthcare, "ui/healthcare"],
     ["research", "resource/research"], ["population", "resource/population"],
     ["storage", "ui/resources"]]);
 const effectTextMap = new Map<BuildingModEffectType, (magnitude: number) => string>([
@@ -473,6 +473,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
             if (this.timer >= TRASH_CAN_COST) { // Trashing is a freebie when you have nearly no time left.
                 this.timer -= TRASH_CAN_COST;
             }
+            this.checkFloorCompletion(floor); //If you toss out your last 1-tile room, the floor should auto-fill so you don't get stuck hunting for another 1-tile room
         }
     }
 
@@ -498,8 +499,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     }
 
     private drawStartOverlay(parent: Drawable): void {
-        const overlay = parent.addChild(new Drawable({
-            y: -this.scroller.getScroll(),
+        const overlay = parent.addChild(new Drawable({ //TODO: make sure I didn't use getScroll on any of the backdrops in any minigame, because you lose the ability to scroll if you scroll up far enough since the onDrag event belongs to this!
             anchors: ["centerX"],
             centerOnOwnX: true,
             width: "min(100%, 600px)",
@@ -509,21 +509,14 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, overlay.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); },
         }));
-        //Fill in the rest if scroller is negative
-        if (overlay.y! < 0) overlay.addChild(new Drawable({
-            y: overlay.y,
-            anchors: ['bottom'],
-            width: "100%",
-            height: this.scroller.getScroll() + "px",
-            fallbackColor: overlay.fallbackColor,
-        }));
 
         if (this.howToPlayShown) {
             this.drawHowToPlay(overlay, parent);
             return;
         }
 
-        let nextY = 10;
+        let nextY = 10 - this.scroller.getScroll();
+        let baseY = nextY;
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
@@ -641,7 +634,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         //    { group: "aa-r", id: "1", text: "Power Pals (-power cost)", icon: "resource/power" },
         //    { group: "aa-r", id: "2", text: "Industrial Invitees (+production)", icon: "ui/logistics" }]);
 
-        this.scroller.setChildrenSize(nextY);
+        this.scroller.setChildrenSize(nextY - baseY);
     }
 
     private toggleRules(): void {
@@ -656,7 +649,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         parent.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: 10,
+            y: 10 - this.scroller.getScroll(),
             width: "100%",
             height: "48px",
             text: "Altitect Rules",
@@ -664,9 +657,17 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
 
         root.onClick = () => this.toggleRules();
 
+        //Mock tower state for demonstrating the controls and such
+        this.towerState = {
+            flunds: BASE_FUNDS, maxFlunds: BASE_FUNDS, power: BASE_POWER, maxPower: BASE_POWER, water: BASE_WATER, maxWater: BASE_WATER, weight: 0, maxWeight: BASE_WEIGHT,
+            currentFloor: 0, drawOffset: 0, floors: [], weightThresholds: [], selectedRoom: null,
+            currentRoomTypes: [this.RoomTypes[0], this.RoomTypes[3], this.RoomTypes[7], this.RoomTypes[13], this.RoomTypes[9]],
+            nextRoomTypes: [this.RoomTypes[17], this.RoomTypes[12], this.RoomTypes[3], this.RoomTypes[10], this.RoomTypes[3]],
+        };
+
         parent = parent.addChild(new Drawable({
             x: 20,
-            y: 80,
+            y: 80 - this.scroller.getScroll(),
             width: "calc(100% - 40px)",
             height: "40px",
             wordWrap: true,
@@ -682,18 +683,52 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
             keepParentWidth: true,
             text: "You are given " + SELECTOR_ROOM_COUNT + " rooms to pick from. You can also see the next room that will become available in each column once the current one is used.",
         }));
+
+        const selectorBox = parent.addChild(new Drawable({
+            anchors: ['bottom'],
+            x: 30, //offset a bit more because the selector is normally centered around an off-center point anyway
+            y: -10,
+            width: "100%",
+            height: "0px",
+        }));
+        this.drawRoomSelector(selectorBox, 0, true);
+        selectorBox.addChild(new Drawable({
+            x: -30,
+            y: 22,
+            width: "170px",
+            height: "40px",
+            text: "Current options:",
+        }));
+        selectorBox.addChild(new Drawable({
+            x: -30,
+            y: 45 + TILE_SIZE,
+            width: "170px",
+            height: "40px",
+            text: "Upcoming options:",
+        }));
+
         parent = parent.addChild(new Drawable({
             anchors: ['bottom'],
-            y: -60,
+            y: -240,
             width: "calc(100% - 40px)",
             height: "40px",
             wordWrap: true,
             keepParentWidth: true,
             text: "If you don't like one of the rooms, either already placed in the tower or in the room selector below that, you can tap the trash can to get rid of it... for a cost of " + TRASH_CAN_COST + " seconds.",
         }));
+        parent.addChild(new Drawable({
+            anchors: ['bottom', 'centerX'],
+            centerOnOwnX: true,
+            x: -10,
+            y: -80,
+            width: "64px",
+            height: "64px",
+            image: new TextureInfo(64, 64, "minigame/altitrash"),
+        }));
+
         parent = parent.addChild(new Drawable({
             anchors: ['bottom'],
-            y: -60,
+            y: -150,
             width: "calc(100% - 40px)",
             height: "40px",
             wordWrap: true,
@@ -727,9 +762,19 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
             keepParentWidth: true,
             text: "Immovable support pillars appear on each floor. More weight means more pillars, so later floors will have less space for rooms, especially bigger rooms.",
         }));
+        parent.addChild(new Drawable({
+            anchors: ['bottom', 'centerX'],
+            centerOnOwnX: true,
+            x: -10,
+            y: -90,
+            width: "64px",
+            height: "64px",
+            image: new TextureInfo(64, 64, "minigame/alti" + this.SupportPillar.id),
+        }));
+
         parent = parent.addChild(new Drawable({
             anchors: ['bottom'],
-            y: -60,
+            y: -155,
             width: "calc(100% - 40px)",
             height: "40px",
             wordWrap: true,
@@ -782,9 +827,73 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
             text: "If you play for the same Skyscraper multiple times, after the game ends, you get to choose whether you like the old or the new version of the tower better.",
         }));
 
-        // TODO: Add more rules here, images, and especially the list of rooms and their effects since the minigame costs a lot to repeatedly play
+        parent.addChild(new Drawable({
+            anchors: ['bottom', 'centerX'],
+            centerOnOwnX: true,
+            x: -10,
+            y: -80,
+            width: "calc(100% - 40px)",
+            height: "48px",
+            text: "Room types",
+        }));
+        parent = parent.addChild(new Drawable({ //Just a blank space to align the room types to
+            anchors: ['bottom'],
+            y: -90,
+            width: "calc(100% - 40px)",
+            height: "0px",
+            keepParentWidth: true,
+            fallbackColor: '#00000000',
+        }));
 
-        this.scroller.setChildrenSize(1800);
+        //Loop through all room types and their effects, and draw their icons, names, costs (where nonzero), and effects
+        let nextY = 0; //starting at the base of the blank space
+        for (const room of this.RoomTypes.filter(p => p !== this.SupportPillar)) {
+            parent.addChild(new Drawable({
+                y: nextY,
+                width: "64px",
+                height: "64px",
+                image: new TextureInfo(64, 64, "minigame/alti" + room.id + "i"),
+            }));
+            parent.addChild(new Drawable({
+                x: 74,
+                y: nextY + 18,
+                width: "calc(100% - 94px)",
+                height: "40px",
+                text: room.displayName + ":",
+            }));
+            nextY += 74;
+
+            const costs = [{ type: "flunds", amount: room.cost }, { type: "power", amount: room.power }, { type: "water", amount: room.water }, { type: "weight", amount: room.weight }].filter(p => p.amount);
+            const nextX = addResourceCosts(parent, costs, 20, nextY, false, false, false, 48, 6, 28, 4);
+            parent.addChild(new Drawable({
+                x: nextX + 10,
+                y: nextY + 12,
+                width: "calc(100% - " + (nextX + 10) + "px)",
+                height: "40px",
+                text: "Size: " + room.size,
+            }));
+            nextY += 84;
+            for (const effect of room.effects) {
+                parent.addChild(new Drawable({
+                    x: 20,
+                    y: nextY,
+                    width: "48px",
+                    height: "48px",
+                    image: new TextureInfo(64, 64, effectTypeIconMap.get(effect.type) ?? "ui/info"),
+                }));
+                parent.addChild(new Drawable({
+                    x: 80,
+                    y: nextY + 8,
+                    width: "calc(100% - 100px)",
+                    height: "40px",
+                    text: effectTextMap.get(effect.type)?.(effect.magnitude) ?? `${effect.magnitude >= 0 ? "+" : ""}${humanizeFloor(effect.magnitude)} unknown `,
+                }));
+                nextY += 58;
+            }
+            nextY += 15;
+        }
+
+        this.scroller.setChildrenSize(2080 + nextY); //Sized for the ultra-small iPhone 12 screen.
     }
 
     private drawGameArea(parent: Drawable): void {
@@ -1042,7 +1151,8 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
                         x: x * TILE_SIZE,
                         width: TILE_SIZE + "px",
                         height: TILE_SIZE + "px",
-                        fallbackColor: '#444444', //TODO: a tileable image for an unfinished interior
+                        fallbackColor: '#444444',
+                        image: new TextureInfo(64, 64, "minigame/altiempty"), //A tileable image for an unfinished interior, darkened so it doesn't stick out too much
                         onClick: () => this.handleFloorClick(x)
                     }));
                 }
@@ -1091,7 +1201,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         return nextY + TILE_SIZE + 10;
     }
 
-    private drawRoomSelector(parent: Drawable, nextY: number): number {
+    private drawRoomSelector(parent: Drawable, nextY: number, mock: boolean = false): number {
         if (!this.towerState) return nextY;
 
         const selectorArea = parent.addChild(new Drawable({
@@ -1114,7 +1224,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
                 width: TILE_SIZE + "px",
                 height: TILE_SIZE + dotWidth + 2 + "px",
                 fallbackColor: '#444444',
-                onClick: () => selectable ? self.handleRoomClick(room) : undefined
+                onClick: () => !mock && selectable ? self.handleRoomClick(room) : undefined
             }));
             button.addChild(new Drawable({
                 y: Math.round((TILE_SIZE - TILE_SIZE / room.size) / 2), //Basically Y-centering in its space
@@ -1122,6 +1232,12 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
                 height: Math.round(TILE_SIZE / room.size) + "px",
                 fallbackColor: self.hashRoomColor(room.id),
                 image: new TextureInfo(200, 20, "minigame/alti" + room.id),
+            }));
+            button.addChild(new Drawable({ //Icon representing the room
+                width: TILE_SIZE + "px",
+                height: TILE_SIZE + "px",
+                fallbackColor: '#00000000',
+                image: new TextureInfo(64, 64, "minigame/alti" + room.id + "i"),
             }));
             //Draw same number of dots as the room's size, to indicate how big it is (at least temporary until I have images for all the rooms)
             const dotSpace = (TILE_SIZE - room.size * dotWidth) / (room.size + 1);
@@ -1152,7 +1268,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
                 width: TILE_SIZE + 2 * pad + "px",
                 height: TILE_SIZE + dotWidth + 2 + 2 * pad + "px",
                 fallbackColor: '#BBFF2255', //TODO: Use border, not highlight, or use a highlight image because it's more efficient than a solid color in Canvas2D for whatever reason
-                onClick: () => this.handleRoomClick(this.selectedRoom!)
+                onClick: () => mock ? this.handleRoomClick(this.selectedRoom!) : undefined
             }));
         }
 
@@ -1384,10 +1500,12 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         if (this.preloaded) return;
         const urls: { [key: string]: string } = {
             "minigame/altitrash": "assets/minigame/altitrash.png",
+            "minigame/altiempty": "assets/minigame/altiempty.png",
         };
 
         this.RoomTypes.forEach(room => {
             urls[`minigame/alti${room.id}`] = `assets/minigame/alti${room.id}.png`;
+            if (room !== this.SupportPillar) urls[`minigame/alti${room.id}i`] = `assets/minigame/alti${room.id}i.png`;
         });
 
         await this.uiManager.renderer.loadMoreSprites(this.city, urls);

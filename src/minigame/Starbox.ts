@@ -663,21 +663,14 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
 
     private drawStartOverlay(parent: Drawable): void {
         const overlay = parent.addChild(new Drawable({
-            y: -this.scroller.getScroll(),
             anchors: ["centerX"],
             centerOnOwnX: true,
             width: "min(100%, 600px)",
             height: "100%", //Has to be 100% for the drag-to-scroll to work.
             fallbackColor: '#111111',
             id: "startOverlay",
-        }));
-        //Fill in the rest if scroller is negative
-        if (overlay.y! < 0) overlay.addChild(new Drawable({
-            y: overlay.y,
-            anchors: ['bottom'],
-            width: "100%",
-            height: this.scroller.getScroll() + "px",
-            fallbackColor: overlay.fallbackColor,
+            onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, overlay.screenArea); },
+            onDragEnd: () => { this.scroller.resetDrag(); },
         }));
 
         if (this.howToPlayShown) {
@@ -686,15 +679,15 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             parent.addChild(new Drawable({
                 anchors: ['centerX'],
                 centerOnOwnX: true,
-                y: 10,
+                y: 10 - this.scroller.getScroll(),
                 width: "100%",
                 height: "48px",
                 text: "Starbox Rules",
             }));
 
-            parent.addChild(parent = new Drawable({
-                y: 88,
+            parent = parent.addChild(new Drawable({
                 x: 20,
+                y: 88 - this.scroller.getScroll(),
                 width: "calc(100% - 40px)",
                 height: "40px",
                 text: "Move and swap your stars before pressing Drop.",
@@ -868,12 +861,13 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
                 wordWrap: true,
             }));
 
-            this.scroller.setChildrenSize(1100);
+            this.scroller.setChildrenSize(1200);
             return;
         }
 
         //Title
-        let nextY = 10;
+        let nextY = 10 - this.scroller.getScroll();
+        const baseY = nextY;
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
@@ -1008,7 +1002,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             { group: "sb-r", id: "1", text: "Star Fuel (+uranium, tritium)", icon: "resource/tritium" },
             { group: "sb-r", id: "2", text: "Fermi Paradox (+organics, electronics, research)", icon: "resource/oil" }]);
 
-        this.scroller.setChildrenSize(nextY);
+        this.scroller.setChildrenSize(nextY - baseY);
     }
 
     getLastDrawable(): Drawable | null {

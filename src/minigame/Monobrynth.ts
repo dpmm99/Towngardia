@@ -397,7 +397,6 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
     private drawStartOverlay(parent: Drawable): void {
         const overlay = parent.addChild(new Drawable({
-            y: -this.scroller.getScroll(),
             anchors: ["centerX"],
             centerOnOwnX: true,
             width: "min(100%, 600px)",
@@ -407,21 +406,14 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             onDrag: (x: number, y: number) => { this.scroller.handleDrag(y, overlay.screenArea); },
             onDragEnd: () => { this.scroller.resetDrag(); },
         }));
-        //Fill in the rest if scroller is negative
-        if (overlay.y! < 0) overlay.addChild(new Drawable({
-            y: overlay.y,
-            anchors: ['bottom'],
-            width: "100%",
-            height: this.scroller.getScroll() + "px",
-            fallbackColor: overlay.fallbackColor,
-        }));
 
         if (this.howToPlayShown) {
             this.drawHowToPlay(overlay, parent);
             return;
         }
 
-        let nextY = 10;
+        let nextY = 10 - this.scroller.getScroll();
+        const baseY = nextY;
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
@@ -530,7 +522,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             { group: "mb-r", id: "1", text: "Scraps (+metals, gemstones, electronics)", icon: "resource/steel" },
             { group: "mb-r", id: "2", text: "Fuel Replicator (+needed fuel, research)", icon: "resource/" + this.getBestFuelType() }]);
 
-        this.scroller.setChildrenSize(nextY);
+        this.scroller.setChildrenSize(nextY - baseY);
     }
 
     private drawClothingSelector(parent: Drawable, nextY: number): number {
