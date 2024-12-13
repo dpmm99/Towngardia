@@ -140,7 +140,7 @@ export class ContextMenu implements IHasDrawable {
         }
         if (building instanceof Skyscraper && this.uiManager.isMyCity && this.city!.flags.has(CityFlags.UnlockedAltitect)) {
             menu.addChild(new Drawable({
-                image: new TextureInfo(childWidth, childHeight, "ui/Altitect"),
+                image: new TextureInfo(childWidth, childHeight, "ui/altitect"),
                 id: menu.id + ".Altitect",
                 onClick: () => this.uiManager.showAltitectMinigame(building)
             }));
