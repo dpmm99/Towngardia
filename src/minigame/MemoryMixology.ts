@@ -15,7 +15,7 @@ import { StandardScroller } from "../ui/StandardScroller.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { UIManager } from "../ui/UIManager.js";
 import { addResourceCosts, longTicksToDaysAndHours } from "../ui/UIUtil.js";
-import { progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
+import { OnePracticeRun, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
 interface Recipe {
     name: string;
@@ -62,6 +62,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
     private userInputLocked: boolean = true;
     private preloaded: boolean = false;
     private costs = [{ type: new BarPlays().type, amount: 1, reddize: false }];
+    private isPractice: boolean = false;
 
     private readonly countdownSteps = [8, 7, 6, 5, 4, 3, 2, 1, "GO"];
     private countdownStep = 0;
@@ -211,7 +212,15 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
 
     private endGame(): void {
         this.gameStarted = false;
+        this.calculateWinnings();
+        this.city.updateLastUserActionTime();
+        this.game.fullSave();
+    }
+
+    private calculateWinnings(): void {
         this.winnings = [];
+        if (this.isPractice) return;
+
         //Early game, you just get a tiny bit of flunds. Once you unlock tourism, it gives you a temporary tourism boost.
         if (this.score >= 10) this.winnings.push(new Flunds(this.score)); //Theoretical max score with the game rules: 2 * 15 (four-ingredient recipes) + 2 * 10 (three-ingredient recipes) = 50. If you mess up on one of the 4-ingredient ones, 15 + 3 * 10 = 45. Mess up both and you can score 50 again, though... 5 * 10 = 50 because it'd leave 6 cards at the end.
         if (this.score >= 30) this.winnings[0].amount += 10;
@@ -231,8 +240,6 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         }
 
         progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.05, 25, 50, 0.001));
-        this.city.updateLastUserActionTime();
-        this.game.fullSave();
     }
 
     asDrawable(): Drawable {
@@ -424,7 +431,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
     }
 
     private startGame(): void {
-        if (this.city.checkAndSpendResources(this.costs)) {
+        if (this.city.checkAndSpendResources(this.isPractice ? OnePracticeRun : this.costs)) {
             this.gameStarted = true;
             this.initializeGame();
             this.city.updateLastUserActionTime();
@@ -482,8 +489,9 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             ]
         }));
 
-        this.costs[0].reddize = !this.city.hasResources(this.costs, false);
-        addResourceCosts(overlay.children[overlay.children.length - 1], this.costs, 86, 58, false, false, false, 48, 10, 32);
+        const costs = this.isPractice ? OnePracticeRun : this.costs;
+        const unaffordable = !this.city.hasResources(costs, false);
+        addResourceCosts(overlay.children[overlay.children.length - 1], costs, 86, 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
         nextY += 160;
 
         overlay.addChild(new Drawable({
@@ -509,6 +517,34 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             onClick: () => this.startGame(),
         }));
         nextY += 140;
+
+        overlay.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "500px",
+            height: "48px",
+            fallbackColor: '#00000000',
+            onClick: () => { this.isPractice = !this.isPractice; },
+            children: [
+                new Drawable({
+                    x: 5,
+                    width: "48px",
+                    height: "48px",
+                    image: new TextureInfo(64, 64, this.isPractice ? "ui/checked" : "ui/unchecked"),
+                }),
+                new Drawable({
+                    anchors: ["right"],
+                    rightAlign: true,
+                    x: 5,
+                    y: 7,
+                    width: "calc(100% - 60px)",
+                    height: "100%",
+                    text: "Practice Run (no rewards)",
+                }),
+            ]
+        }));
+        nextY += 60;
 
         //How to play button
         overlay.addChild(new Drawable({

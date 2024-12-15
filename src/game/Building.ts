@@ -11,7 +11,7 @@ import { FootprintType } from "./FootprintType.js";
 import { SHORT_TICKS_PER_LONG_TICK, SHORT_TICK_TIME } from "./FundamentalConstants.js";
 import { EffectType } from "./GridType.js";
 import { Resource } from "./Resource.js";
-import { Batteries, CAPACITY_MULTIPLIER, Clothing, Electronics, Furniture, Glass, Iron, Paper, Population, ProductionEfficiency, Research, Steel, Toys, Wood, getResourceType } from "./ResourceTypes.js";
+import { Batteries, CAPACITY_MULTIPLIER, Clothing, Electronics, Furniture, Glass, Iron, Paper, Population, ProductionEfficiency, Research, Steel, Tourists, Toys, Wood, getResourceType } from "./ResourceTypes.js";
 
 export type BuildingModEffectType = EffectType | "research" | "population" | "storage";
 export type BuildingMod = { type: BuildingModEffectType; magnitude: number };
@@ -306,7 +306,8 @@ export class Building implements IHasDrawable {
     //By default, it's affected by the Culinary Capital title for restaurants and the Production Efficiency resource for any non-business that produces resources.
     getEfficiencyEffectMultiplier(city: City): number {
         return (this.isRestaurant && city.titles.get(TitleTypes.CulinaryCapital.id)?.attained ? 1.1 : 1) *
-            (this.outputResources.length && !this.businessPatronCap ? city.resources.get(getResourceType(ProductionEfficiency))!.amount : 1);
+            (this.outputResources.filter(p => !p.isSpecial && p.type !== getResourceType(Tourists)).length && !this.businessPatronCap
+                ? city.resources.get(getResourceType(ProductionEfficiency))!.amount : 1);
     }
 
     //Calculate the given type of effect for each cell the building covers and return the highest one.

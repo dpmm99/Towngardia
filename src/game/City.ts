@@ -602,7 +602,7 @@ export class City {
         //Ensure the thing built on top is always listed BEFORE the thing it's built on, in case the built-on-top one needs to fuel the other.
         const builtOn = building.builtOn.values().next().value as Building | undefined;
         if (builtOn) {
-            const builtOnIndex = this.buildings.findIndex(p => p === builtOn);
+            const builtOnIndex = this.buildings.indexOf(builtOn);
             const myIndex = this.buildings.length - 1; //Same as this.buildings.findLastIndex(p => p === building);
             if (builtOnIndex < myIndex) {
                 this.buildings[myIndex] = builtOn;
@@ -724,7 +724,9 @@ export class City {
     }
 
     removeBuilding(building: Building, demolish: boolean = false, justMoving: boolean = false): void { //Demolition costs go elsewhere.
-        this.buildings.splice(this.buildings.findIndex(p => p == building), 1);
+        const index = this.buildings.indexOf(building);
+        if (index === -1) return; //TODO: Figure out how this happens sometimes; it's a very rare bug, but there SHOULD be no code calling removeBuilding on a building that isn't placed
+        this.buildings.splice(index, 1);
         if (!demolish) this.unplacedBuildings.push(building); //Store for later.
         else this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) - 1); //Demolish = no longer owned.
         this.removeFromGrid(building);
@@ -1347,11 +1349,14 @@ export class City {
         //Random order to allow rolling blackouts if the city can't even buy enough power. Entirely ignore buildings that need but lack a road connection.
         const connectedBuildings = this.buildings.filter(p => p.powerConnected && (!p.needsRoad || p.roadConnected));
         inPlaceShuffle(connectedBuildings).forEach(building => {
-            const powerNeeded = building.getPowerUpkeep(this) * this.powerUsageMultiplier;
+            let powerNeeded = building.getPowerUpkeep(this) * this.powerUsageMultiplier;
             power.consumptionRate += powerNeeded;
             building.powered = power.amount + importablePower >= powerNeeded || powerNeeded === 0; //Buildings will be unpowered if they need more power than is available even via trading
             if (building.powered) {
-                if (power.amount < powerNeeded) importablePower -= powerNeeded - Math.max(0, power.amount); //Start taking from importablePower as soon as power.amount is about to go negative
+                if (power.amount < powerNeeded) {
+                    importablePower -= powerNeeded - Math.max(0, power.amount); //Start taking from importablePower as soon as power.amount is about to go negative
+                    powerNeeded = power.amount; //Because consume() doesn't stop at 0
+                }
                 power.consume(powerNeeded); //Will represent the total requested power; may not be the same as desiredPower if efficiency is down for other reasons
                 building.poweredTimeDuringLongTick += 1 / SHORT_TICKS_PER_LONG_TICK;
                 if (building.poweredTimeDuringLongTick > 0.99) building.poweredTimeDuringLongTick = 1;
@@ -1398,6 +1403,8 @@ export class City {
     }
 
     updateMinigamePlays() {
+        this.resources.get(ResourceTypes.getResourceType(ResourceTypes.PracticeRuns))!.produce(1 / LONG_TICKS_PER_DAY); //One free practice run a day for any minigame
+
         { //TODO: Memory Mixology may need a bar to unlock, but for now, it's a freebie
             const plays = this.resources.get(new ResourceTypes.BarPlays().type)!;
             plays.produce(plays.productionRate);

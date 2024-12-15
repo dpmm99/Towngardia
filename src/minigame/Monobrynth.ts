@@ -13,7 +13,7 @@ import { TeleportationPod, getBuildingType } from "../game/BuildingTypes.js";
 import { Notification } from "../game/Notification.js";
 import { GameState } from "../game/GameState.js";
 import { drawMinigameOptions } from "../ui/MinigameOptions.js";
-import { filterConvertAwardWinnings, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
+import { OnePracticeRun, filterConvertAwardWinnings, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
 const SYMBOL_COUNT = 6;
 const GRID_WIDTH = 5;
@@ -57,6 +57,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private sequenceFailed: boolean = false;
     private preloaded: boolean = false;
     private costs = [{ type: new MonobrynthPlays().type, amount: 1 }, { type: new Clothing().type, amount: 0 }];
+    private isPractice: boolean = false;
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
 
@@ -279,6 +280,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
     private calculateWinnings(): void {
         this.winnings = [];
+        if (this.isPractice) return;
 
         //This minigame has a fairly low skill cap, so the rewards aren't too high. Note: minimum possible score is 28 if you play it perfectly and get unlucky with the artifact types.
         if (this.city.minigameOptions.get("mb-r") === "1") {
@@ -310,7 +312,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     }
 
     public startGame(): void {
-        if (this.city.checkAndSpendResources(this.costs)) {
+        if (this.city.checkAndSpendResources(this.isPractice ? OnePracticeRun : this.costs)) {
             this.initializeGame();
             this.city.updateLastUserActionTime();
             this.game.fullSave();
@@ -447,9 +449,38 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             ]
         }));
 
-        const unaffordable = !this.city.hasResources(this.costs, false);
-        addResourceCosts(startButton, this.costs, 62, 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
+        const costs = this.isPractice ? OnePracticeRun : this.costs;
+        const unaffordable = !this.city.hasResources(costs, false);
+        addResourceCosts(startButton, costs, 110 - 24 * costs.length, 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
         nextY += 176;
+
+        overlay.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "500px",
+            height: "48px",
+            fallbackColor: '#00000000',
+            onClick: () => { this.isPractice = !this.isPractice; },
+            children: [
+                new Drawable({
+                    x: 5,
+                    width: "48px",
+                    height: "48px",
+                    image: new TextureInfo(64, 64, this.isPractice ? "ui/checked" : "ui/unchecked"),
+                }),
+                new Drawable({
+                    anchors: ["right"],
+                    rightAlign: true,
+                    x: 5,
+                    y: 7,
+                    width: "calc(100% - 60px)",
+                    height: "100%",
+                    text: "Practice Run (no rewards)",
+                }),
+            ]
+        }));
+        nextY += 60;
 
         //How to play button
         overlay.addChild(new Drawable({

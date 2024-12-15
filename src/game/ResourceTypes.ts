@@ -155,6 +155,16 @@ export class NepotismNetworkingPlays extends Resource {
     }
 }
 
+export class PracticeRuns extends Resource {
+    constructor(initialCount: number = 3) {
+        super(
+            "practiceruns", "Practice Runs",
+            initialCount, 0, 3, 0,
+            true
+        );
+    }
+}
+
 export class MinigameOptionResearch extends Resource {
     constructor(initialCount: number = 0) {
         super(
@@ -729,7 +739,7 @@ export const RESOURCE_TYPES = <Resource[]>([
     /*Building materials*/ Concrete, Glass, Iron, Bricks, Clay, Lumber, Steel, Stone, Wood,
     /*Fuel and ingredients*/ Coal, Copper, Gemstones, Lithium, Oil, Plastics, Rubber, Sand, Silicon, Textiles, Tritium, Uranium,
     /*Manufactured goods*/ Apps, Batteries, Clothing, Electronics, Furniture, Paper, Pharmaceuticals, Toys,
-    /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays, MinigameOptionResearch,
+    /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays, PracticeRuns, MinigameOptionResearch,
     /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, PowerCosts, DeptOfEnergyBonus, EnvironmentalLabBonus,
     /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Timeslips, Water,
     /*Event-limited*/ BrainBrews, GleeGrenades, TurboTonics

@@ -612,8 +612,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         nextY += 28;
 
         //New buildings generally start at 0% efficiency and therefore 0 power demand, so we get 1 update to warn the player about the increasing demand.
-        const nextDemandIncrease = this.city.buildings.filter(p => p.isNew).reduce((acc, p) => acc + p.getPowerUpkeep(this.city, true) - p.getPowerUpkeep(this.city), 0);
-        if (nextDemandIncrease) {
+        const nextDemandIncrease = this.city.buildings.filter(p => p.isNew).reduce((acc, p) => acc + p.getPowerUpkeep(this.city, true) - p.getPowerUpkeep(this.city)
+            - p.getPowerProduction(this.city) + p.getPowerProduction(this.city, true), 0);
+        if (nextDemandIncrease > 0) {
             infoDrawable.addChild(new Drawable({
                 x: padding,
                 y: nextY,

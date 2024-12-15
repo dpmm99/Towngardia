@@ -1,6 +1,6 @@
 import { City } from "../game/City.js";
 import { UIManager } from "../ui/UIManager.js";
-import { Flunds } from "../game/ResourceTypes.js";
+import { Flunds, PracticeRuns, getResourceType } from "../game/ResourceTypes.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { Drawable } from "../ui/Drawable.js";
 import { addResourceCosts, humanizeFloor } from "../ui/UIUtil.js";
@@ -10,7 +10,7 @@ import { StandardScroller } from "../ui/StandardScroller.js";
 import { inPlaceShuffle } from "../game/MiscFunctions.js";
 import { GameState } from "../game/GameState.js";
 import { drawMinigameOptions } from "../ui/MinigameOptions.js";
-import { progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
+import { OnePracticeRun, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 import { EffectType } from "../game/GridType.js";
 import { Building, BuildingMod, BuildingModEffectType } from "../game/Building.js";
 
@@ -105,6 +105,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     private building: Building | null = null;
     private endReason: string = "";
     private deciding: boolean = false;
+    private isPractice: boolean = false;
 
     // Define room types here
     private readonly SupportPillar: Room = new Room("pillar", "Support Pillar", 1, 0, 0, 0, 0, [], 0, true);
@@ -135,7 +136,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
 
     private getCosts(): { type: string, amount: number }[] {
-        return [{ type: new Flunds().type, amount: Math.min(25000, 1000 + 1000 * this.city.altitectPlays) }];
+        return this.isPractice ? OnePracticeRun : [{ type: getResourceType(Flunds), amount: Math.min(25000, 1000 + 1000 * this.city.altitectPlays) }];
     }
 
     private initializeGame(): void {
@@ -290,6 +291,12 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
 
     private calculateWinnings(): void {
         if (!this.towerState) return;
+
+        this.selectedRoom = null; //or else How To Play will show a highlight square
+        if (this.isPractice) {
+            this.winnings = [];
+            return;
+        }
 
         //Aggregate the effects by type
         const winnings = this.towerState.floors.flatMap(p => p.rooms).flatMap(p => p.effects)
@@ -550,6 +557,34 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         const unaffordable = !this.city.hasResources(this.getCosts(), false);
         addResourceCosts(startButton, this.getCosts(), 82, 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
         nextY += 176;
+
+        overlay.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "500px",
+            height: "48px",
+            fallbackColor: '#00000000',
+            onClick: () => { this.isPractice = !this.isPractice; },
+            children: [
+                new Drawable({
+                    x: 5,
+                    width: "48px",
+                    height: "48px",
+                    image: new TextureInfo(64, 64, this.isPractice ? "ui/checked" : "ui/unchecked"),
+                }),
+                new Drawable({
+                    anchors: ["right"],
+                    rightAlign: true,
+                    x: 5,
+                    y: 7,
+                    width: "calc(100% - 60px)",
+                    height: "100%",
+                    text: "Practice Run (no rewards)",
+                }),
+            ]
+        }));
+        nextY += 60;
 
         // How to play button
         overlay.addChild(new Drawable({

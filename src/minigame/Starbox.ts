@@ -1,7 +1,7 @@
 import { City } from "../game/City.js";
 import { GameState } from "../game/GameState.js";
 import { Resource } from "../game/Resource.js";
-import { Coal, Copper, Electronics, Flunds, Grain, Iron, LeafyGreens, Oil, Research, Silicon, StarboxPlays, Stone, Tritium, Uranium, Wood } from "../game/ResourceTypes.js";
+import { Coal, Copper, Electronics, Grain, Iron, Oil, Research, Silicon, StarboxPlays, Stone, Tritium, Uranium, Wood } from "../game/ResourceTypes.js";
 import { Drawable } from "../ui/Drawable.js";
 import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { IOnResizeEvent } from "../ui/IOnResizeEvent.js";
@@ -10,7 +10,7 @@ import { StandardScroller } from "../ui/StandardScroller.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { UIManager } from "../ui/UIManager.js";
 import { addResourceCosts } from "../ui/UIUtil.js";
-import { filterConvertAwardWinnings, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
+import { OnePracticeRun, filterConvertAwardWinnings, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
 export class Starbox implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
@@ -40,6 +40,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     private preloaded: boolean = false;
     private costs = [{ type: new StarboxPlays().type, amount: 1, reddize: false }];
     private userInputLocked: boolean = false;
+    private isPractice: boolean = false;
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) {
         this.initializeGame();
@@ -124,7 +125,15 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         if (this.timerTimeout) {
             clearTimeout(this.timerTimeout);
         }
+
+        this.calculateWinnings();
+        this.userInputLocked = true;
+        setTimeout(() => { this.gameStarted = false; }, 1000); //Will wait for the user to tap to continue.
+    }
+
+    private calculateWinnings(): void {
         this.winnings = [];
+        if (this.isPractice) return;
         let extraFlunds = 0;
 
         //Note: My score tends to be about 260-280, and I like to think I'm pretty good, so rewards should cap around 220-240.
@@ -157,8 +166,6 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         progressMinigameOptionResearch(this.city, rangeMapLinear(this.totalStarsDestroyed, 0.01, 0.07, 100, 300, 0.001));
         this.city.updateLastUserActionTime();
         this.game.fullSave();
-        this.userInputLocked = true;
-        setTimeout(() => { this.gameStarted = false; }, 1000); //Will wait for the user to tap to continue.
     }
 
     onResize(): void {
@@ -511,7 +518,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     }
 
     private drawControls(parent: Drawable): void {
-        const buttonHeight = 48;
+        const buttonHeight = 72;
 
         const controlsArea = parent.addChild(new Drawable({
             anchors: ['centerX', 'bottom'],
@@ -521,7 +528,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             y: 10,
             width: "min(" + (this.gridWidth * this.tileSize) + "px, 100%)",
             height: (buttonHeight * 2 + 10) + "px",
-            fallbackColor: '#444444',
+            fallbackColor: '#00000000',
             id: "controlsArea"
         }));
 
@@ -530,18 +537,28 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             width: "50%",
             height: buttonHeight + "px",
             biggerOnMobile: true,
-            fallbackColor: '#444444',
+            fallbackColor: '#44444444', //Now transparent, which is slow but doesn't cover the stars
             onClick: () => this.useBlackHole(),
             id: "blackHoleButton",
             children: [
                 new Drawable({
                     anchors: ['centerX'],
-                    y: 5,
                     width: "100%",
                     height: "100%",
-                    text: `Black Hole (${this.blackHoles})`,
+                    image: new TextureInfo(128, 64, "minigame/starblackhole"),
                     centerOnOwnX: true,
                     grayscale: this.blackHoles === 0,
+                    children: [new Drawable({ //Just the count
+                        anchors: ['centerX'],
+                        centerOnOwnX: true,
+                        y: 19,
+                        width: "64px",
+                        height: "48px",
+                        text: this.blackHoles.toString(),
+                        grayscale: this.blackHoles === 0,
+                        biggerOnMobile: true,
+                        scaleYOnMobile: true,
+                    })]
                 })
             ]
         }));
@@ -552,19 +569,17 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             width: "50%",
             height: buttonHeight + "px",
             biggerOnMobile: true,
-            fallbackColor: '#444444',
+            fallbackColor: '#44444444',
             onClick: () => this.dropPiece(),
             id: "dropButton",
             children: [
                 new Drawable({
                     anchors: ['centerX'],
-                    y: 5,
                     width: "100%",
                     height: "100%",
-                    text: "Drop",
+                    image: new TextureInfo(128, 64, "minigame/stardrop"),
                     centerOnOwnX: true,
                     biggerOnMobile: true,
-                    scaleYOnMobile: true,
                 })
             ]
         }));
@@ -572,10 +587,10 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         // Move and rotate buttons
         const smallButtonWidth = (this.gridWidth * this.tileSize) / 4.5;
         const controls = [
-            { text: String.fromCharCode(0x219E), action: () => this.moveLeft() },
-            { text: String.fromCharCode(0x21BA), action: () => this.rotateCounterclockwise() }, //Actually just rotates the tiles of the piece, doesn't rotate the piece to be horizontal
-            { text: String.fromCharCode(0x21BB), action: () => this.rotateClockwise() },
-            { text: String.fromCharCode(0x21A0), action: () => this.moveRight() }
+            { image: "minigame/starleft", action: () => this.moveLeft() },
+            { image: "minigame/starup", action: () => this.rotateCounterclockwise() }, //Actually just rotates the tiles of the piece, doesn't rotate the piece to be horizontal
+            { image: "minigame/stardown", action: () => this.rotateClockwise() },
+            { image: "minigame/starright", action: () => this.moveRight() }
         ];
 
         controls.forEach((control, index) => {
@@ -588,14 +603,14 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
                 scaleYOnMobile: true,
                 width: "22%",
                 height: buttonHeight + "px",
-                fallbackColor: '#444444',
+                fallbackColor: '#44444444',
                 onClick: control.action,
                 children: [
                     new Drawable({
                         anchors: ['centerX'],
                         width: "100%",
                         height: "100%",
-                        text: control.text,
+                        image: new TextureInfo(96, 96, control.image),
                         centerOnOwnX: true
                     })
                 ]
@@ -646,7 +661,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     }
 
     private startGame(): void {
-        if (this.city.checkAndSpendResources(this.costs)) {
+        if (this.city.checkAndSpendResources(this.isPractice ? OnePracticeRun : this.costs)) {
             this.gameStarted = true;
             this.initializeGame();
             this.city.updateLastUserActionTime();
@@ -927,9 +942,38 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         }));
 
         //Play cost (one starbox token)
-        this.costs[0].reddize = !this.city.hasResources(this.costs, false);
-        addResourceCosts(overlay.children[overlay.children.length - 1], this.costs, 86, 58, false, false, false, 48, 10, 32);
+        const costs = this.isPractice ? OnePracticeRun : this.costs;
+        const unaffordable = !this.city.hasResources(costs, false);
+        addResourceCosts(overlay.children[overlay.children.length - 1], costs, 86, 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
         nextY += 170;
+
+        overlay.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "500px",
+            height: "48px",
+            fallbackColor: '#00000000',
+            onClick: () => { this.isPractice = !this.isPractice; },
+            children: [
+                new Drawable({
+                    x: 5,
+                    width: "48px",
+                    height: "48px",
+                    image: new TextureInfo(64, 64, this.isPractice ? "ui/checked" : "ui/unchecked"),
+                }),
+                new Drawable({
+                    anchors: ["right"],
+                    rightAlign: true,
+                    x: 5,
+                    y: 7,
+                    width: "calc(100% - 60px)",
+                    height: "100%",
+                    text: "Practice Run (no rewards)",
+                }),
+            ]
+        }));
+        nextY += 60;
 
         //How to play button
         overlay.addChild(new Drawable({
@@ -1035,6 +1079,12 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             "minigame/star8": "assets/minigame/star8.png",
             "minigame/starcoinslot": "assets/minigame/starcoinslot.png",
             "minigame/stararrowup": "assets/minigame/stararrowup.png",
+            "minigame/stardown": "assets/minigame/stardown.png",
+            "minigame/starup": "assets/minigame/starup.png",
+            "minigame/starblackhole": "assets/minigame/starblackhole.png",
+            "minigame/stardrop": "assets/minigame/stardrop.png", //Not a Stardew Valley reference. :)
+            "minigame/starleft": "assets/minigame/starleft.png",
+            "minigame/starright": "assets/minigame/starright.png",
         };
 
         await this.uiManager.renderer.loadMoreSprites(this.uiManager.game.city!, urls);

@@ -4,7 +4,9 @@ import { MinigameMinilab, getBuildingType } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { Notification } from "../game/Notification.js";
 import { Resource } from "../game/Resource.js";
-import { Flunds, MinigameOptionResearch, Tritium, Uranium, getResourceType } from "../game/ResourceTypes.js";
+import { Flunds, MinigameOptionResearch, PracticeRuns, Tritium, Uranium, getResourceType } from "../game/ResourceTypes.js";
+
+export const OnePracticeRun = [{ type: getResourceType(PracticeRuns), amount: 1 }];
 
 //roundTo should be 0.1 if you want to round to the nearest 0.1, 0.5 if you want to round to the nearest 0.5...pretty clean.
 export function rangeMapLinear(value: number, lowEndOutput: number, highEndOutput: number, rangeLower: number, rangeUpper: number, roundTo: number) {

@@ -14,7 +14,7 @@ import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
 import { Assist } from "../game/Assist.js";
 import { GameState } from "../game/GameState.js";
 import { drawMinigameOptions } from "../ui/MinigameOptions.js";
-import { progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
+import { OnePracticeRun, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
 // Constants
 const GRID_WIDTH = 4;
@@ -74,6 +74,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
     private preloaded: boolean = false;
     private costs = [{ type: new NepotismNetworkingPlays().type, amount: 1 }];
     private userInputLocked: boolean = false;
+    private isPractice: boolean = false;
 
     constructor(private city: City, private friendCity: City, private uiManager: UIManager, private game: GameState) { }
 
@@ -409,7 +410,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
     }
 
     public startGame(): void {
-        if (this.city.checkAndSpendResources(this.costs)) {
+        if (this.city.checkAndSpendResources(this.isPractice ? OnePracticeRun : this.costs)) {
             this.initializeGame();
             this.city.updateLastUserActionTime();
             this.game.fullSave();
@@ -460,6 +461,9 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
 
     private calculateWinnings(): void {
         if (!this.gridState) return;
+        this.winnings = null;
+        if (this.isPractice) return;
+
         // Calculate tourism duration and boost percentage, then add a TourismReward event to the friend city (methodology TBD) and a weaker one to the player's own city
         this.score = this.gridState.tiles.slice(this.gridState.topRow + 1).reduce((acc, row) => acc + row.filter(t => t.connected).length, 0) + 10 * this.gridState.topRow;
         //BaseScore caps around 400, but that's a bit of an absurd score. Let's say 240 is a good score for a perfect game. Apply diminishing returns to the score.
@@ -656,9 +660,38 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
             ]
         }));
 
-        const unaffordable = !this.city.hasResources(this.costs, false);
+        const costs = this.isPractice ? OnePracticeRun : this.costs;
+        const unaffordable = !this.city.hasResources(costs, false);
         addResourceCosts(startButton, this.costs, 82, 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
         nextY += 176;
+
+        overlay.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "500px",
+            height: "48px",
+            fallbackColor: '#00000000',
+            onClick: () => { this.isPractice = !this.isPractice; },
+            children: [
+                new Drawable({
+                    x: 5,
+                    width: "48px",
+                    height: "48px",
+                    image: new TextureInfo(64, 64, this.isPractice ? "ui/checked" : "ui/unchecked"),
+                }),
+                new Drawable({
+                    anchors: ["right"],
+                    rightAlign: true,
+                    x: 5,
+                    y: 7,
+                    width: "calc(100% - 60px)",
+                    height: "100%",
+                    text: "Practice Run (no rewards)",
+                }),
+            ]
+        }));
+        nextY += 60;
 
         //How to play button
         overlay.addChild(new Drawable({

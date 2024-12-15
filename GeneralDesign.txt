@@ -48,7 +48,7 @@ Otherwise, I'm pretty well down to just making buildings, events, techs (though 
 
 
 Coolest open ideas:
-Sort businesses by patron value (or maybe do a fixed sort order for all building types, but need an indicator to show which ones are newly unlocked)
+Sort businesses by patron value (or maybe do a fixed sort order for all building types, but need an indicator to show which ones are newly unlocked). Also, nothing shows the buff sources.
 In medium to large cities (>~15% map coverage), I really need tourism to be more meaningful and taxes to have some diminishing returns--after playing for 1.5 months, I'm earning a surplus of 2k a day but have >1700 citizens with nowhere to shop, not to mention the completely untapped tourists. Current ideas for fixing that:
 	double businesses' customer capacities
 	a "basements" tech to further increase businesses' customer capacities (and value, but not quite proportionally, maybe like 0.5x-0.8x as much)
@@ -70,6 +70,7 @@ In medium to large cities (>~15% map coverage), I really need tourism to be more
 	minigame reward upgrades--spend a lot of flunds for a small increase to the non-flunds rewards from a minigame
 	more services--other than water and trash that I still intended to eventually add, there could be cemeteries, homeless shelters, courthouses, employment offices, intelligence agencies, military, occasional grant requests from colleges, consumer and environment protection agencies, scholarship programs...
 	minigame upgrade: pay flunds to allow using 2 or 3 tokens at once in Monobrynth and make the grid 1 column more narrow per additional token + remove the lowest remaining difficulty level
+Also need to roughly double power and upkeep of Geothermal, Nuclear, and Fusion power plants, because 15 end-game power plants to power the whole city is a bit much (>3.3% of the entire playable map area)
 Advisor button that suggests what your city needs the most--businesses, factories, services, decorations, time, space, spread, research, friends, minigame skill, less road, special unlocks
 new techs:
 	incubators - greatly increases all costs/effects of ranches, fish farms, and carnicultivators
