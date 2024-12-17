@@ -1,9 +1,9 @@
 import { Assist } from "../game/Assist.js";
 import { City } from "../game/City.js";
-import { HappinessReward, ProductionReward, ResearchReward } from "../game/EventTypes.js";
+import { DietReward, HappinessReward, ProductionReward, ResearchReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
 import { GameState } from "../game/GameState.js";
-import { BrainBrews, GIFT_TYPES, GleeGrenades, TurboTonics, getResourceType } from "../game/ResourceTypes.js";
+import { BrainBrews, Chocolate, GIFT_TYPES, GleeGrenades, TurboTonics, getResourceType } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { UIManager } from "./UIManager.js";
@@ -175,6 +175,9 @@ export class FriendGiftWindow implements IHasDrawable {
 
         const turboTonics = this.resourceAmounts.get(getResourceType(TurboTonics))!;
         if (turboTonics) await this.sendAssist(getResourceType(TurboTonics), new ProductionReward(5 * LONG_TICKS_PER_DAY, 0.05 * turboTonics));
+
+        const chocolate = this.resourceAmounts.get(getResourceType(Chocolate))!;
+        if (chocolate) await this.sendAssist(getResourceType(Chocolate), new DietReward(5 * LONG_TICKS_PER_DAY, 0.03 * chocolate));
 
         this.sending = false;
         this.hide();

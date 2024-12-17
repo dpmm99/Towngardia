@@ -732,6 +732,16 @@ export class TurboTonics extends Resource {
     }
 }
 
+export class Chocolate extends Resource {
+    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
+        super(
+            "chocolate", "Chocolate",
+            initialCount, productionRate, capacity, consumptionRate,
+            false, 0, 5
+        );
+    }
+}
+
 //More special resources: cars, self-driving cars, bicycles, buses, drones, snowplows? (or it's just a building's radius effect)
 
 export const RESOURCE_TYPES = <Resource[]>([
@@ -742,13 +752,13 @@ export const RESOURCE_TYPES = <Resource[]>([
     /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays, PracticeRuns, MinigameOptionResearch,
     /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, PowerCosts, DeptOfEnergyBonus, EnvironmentalLabBonus,
     /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Timeslips, Water,
-    /*Event-limited*/ BrainBrews, GleeGrenades, TurboTonics
+    /*Event-limited*/ BrainBrews, GleeGrenades, TurboTonics, Chocolate
 ].map(p => new p()));
 
 //For easy checking if something is a food.
 export const FOOD_TYPES = new Set([Apples, Berries, Dairy, Fish, Grain, LabGrownMeat, LeafyGreens, Legumes, PlantBasedDairy, Poultry, RedMeat, RootVegetables, VitaminB12].map(p => new p().type));
 export const ANIMAL_PRODUCTS = new Set([Dairy, Fish, Poultry, RedMeat].map(p => new p().type)); //No, I'm not counting oil... or people... :) or lab-grown meat because it doesn't require sustained animal farming. Pharmaceuticals are questionable.
-export const GIFT_TYPES = new Set([BrainBrews, GleeGrenades, TurboTonics].map(p => new p().type));
+export const GIFT_TYPES = new Set([BrainBrews, GleeGrenades, TurboTonics, Chocolate].map(p => new p().type));
 
 //This is a cache for the type string of a class. It's used to avoid creating an instance of a class just to get its type. //TODO: Use this everywhere I've used the resource type ID string. Make a wrapper in City to get the city's Resource instance, too, if needed. The point is being able to see where all specific resources are used via CodeLens.
 const resourceTypeCache = new Map<Function, string>(RESOURCE_TYPES.map(p => [p.constructor, p.type]));

@@ -1,5 +1,6 @@
 import { City } from './City.js';
 import { CityFlags } from './CityFlags.js';
+import { DietReward } from './EventTypes.js';
 import { LONG_TICKS_PER_DAY } from './FundamentalConstants.js';
 import { Apples, Berries, Dairy, Fish, FoodHealth, FoodSatisfaction, FoodSufficiency, Grain, Health, LabGrownMeat, LeafyGreens, Legumes, PlantBasedDairy, Poultry, RedMeat, RootVegetables, VitaminB12 } from './ResourceTypes.js';
 import { HydroponicGardens } from './TechTypes.js';
@@ -43,7 +44,8 @@ export class CitizenDietSystem {
     onLongTick(): void {
         const population = this.city.resources.get("population")!.amount;
         const peakPopulation = this.city.peakPopulation;
-        const foodNeeded = population / 100 / LONG_TICKS_PER_DAY; // 1 unit feeds 100 people for a day
+        const eventFoodNeedsReductionFactor = this.city.events.filter(p => p instanceof DietReward).reduce((a, e) => a * (1 - e.getBonus()), 1); //Reduces food needs multiplicatively
+        const foodNeeded = population / 100 / LONG_TICKS_PER_DAY * eventFoodNeedsReductionFactor; // 1 unit feeds 100 people for a day
 
         // Calculate available food
         const availableFood = this.foodTypes.map(type => ({
@@ -122,7 +124,9 @@ export class CitizenDietSystem {
         if (this.city.flags.has(CityFlags.HealthcareMatters)) {
             this.city.resources.get(new FoodHealth().type)!.amount = healthEffect / perfectHealth; //Effect on health (effectiveness of hospitals and such)
         }
-        this.city.resources.get(new FoodSatisfaction().type)!.amount = happinessEffect / perfectHappiness; //Effect on happiness
+
+        const eventGratificationBonus = this.city.events.filter(p => p instanceof DietReward).reduce((a, e) => a + e.getBonus(), 1); //Just additive
+        this.city.resources.get(new FoodSatisfaction().type)!.amount = happinessEffect / perfectHappiness * eventGratificationBonus; //Effect on happiness
         this.city.resources.get(new FoodSufficiency().type)!.amount = foodRatio; //Business value effect
 
         // Consume food (4x a day)

@@ -79,7 +79,6 @@ new events:
 	social events
 	perfect weather (Claude suggested "clear skies week" = solar power + happiness, "perfect growing conditions" = agriculture)
 	food festival (happiness + business)
-	February event: a "chocolate bar" that acts like a Bar but also produces the 'chocolate' resource, luxury flower tower, and a heart monument that directly increases residence spawn chance (Hearty Shack)
 new buildings:
 	I mainly need more high-tier businesses (much greater customer capacities but lower value per customer than Convention Center)
 	maybe a building that can be placed on roads to reduce nearby residential power consumption (and even then, maybe only in summer) - could be a solar panel or just a vegetation trellis or whatever

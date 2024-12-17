@@ -5,7 +5,7 @@ import { Business } from "./Business.js";
 import { City } from "./City.js";
 import { FootprintType } from "./FootprintType.js";
 import { EffectType } from "./GridType.js";
-import { Apples, Apps, BarPlays, Batteries, Berries, BrainBrews, Bricks, CAPACITY_MULTIPLIER, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Electronics, EnvironmentalLabBonus, Fish, Flunds, Furniture, Gemstones, Glass, GleeGrenades, Grain, Happiness, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, MinigameOptionResearch, MonobrynthPlays, NepotismNetworkingPlays, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, PowerCosts, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, SlotsPlays, StarboxPlays, Steel, Stone, Textiles, Tourists, Toys, Tritium, TurboTonics, Uranium, VitaminB12, Wood, getResourceType } from "./ResourceTypes.js";
+import { Apples, Apps, BarPlays, Batteries, Berries, BrainBrews, Bricks, CAPACITY_MULTIPLIER, Chocolate, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Electronics, EnvironmentalLabBonus, Fish, Flunds, Furniture, Gemstones, Glass, GleeGrenades, Grain, Happiness, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, MinigameOptionResearch, MonobrynthPlays, NepotismNetworkingPlays, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, PowerCosts, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, SlotsPlays, StarboxPlays, Steel, Stone, Textiles, Tourists, Toys, Tritium, TurboTonics, Uranium, VitaminB12, Wood, getResourceType } from "./ResourceTypes.js";
 import { Geothermal } from "./TechTypes.js";
 import { Notification } from "./Notification.js";
 import { LONG_TICKS_PER_DAY } from "./FundamentalConstants.js";
@@ -2809,6 +2809,57 @@ export class ConventionCenter extends Building {
     }
 }
 
+//Seasonal businesses
+export class ChocolateBar extends Building {
+    constructor() {
+        super(
+            "chocolatebar", "Chocolate Bar", "This establishment, built entirely of the finest (and most edible) chocolate, is a monument to excess and bad decisions. It's structurally sound, mostly, although a few nibbles here and there are hard to resist. We strongly advise against licking the walls unless you want to end up in a cocoa coma. This place is such a sweet deal that it'll melt away at the end of the month. Produces chocolate, which you can send to a friend to reduce their food consumption and increase their food gratification by 3% for 5 days. Use chocolate via the gift button in the right bar when visiting a friend's city.",
+            BuildingCategory.COMMERCIAL,
+            2, 1, 0,
+            0.4,
+            true
+        );
+        this.setBusinessValue(190, 0.8); //A bit high since it's seasonal
+        this.outputResources.push(new Chocolate(0, 0.25));
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
+        this.areaIndicatorRounded = true;
+        this.isRestaurant = true;
+        this.isEntertainment = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2, "dynamicEffectForBusiness"),
+            new EffectDefinition(EffectType.PettyCrime, 0.1, "dynamicEffectByEfficiency")]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 180 + 1800 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "wood", amount: 20 }, { type: "dairy", amount: 20 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
+}
+
+export class HeartyShack extends Building {
+    constructor() {
+        super(
+            "heartyshack", "Hearty Shack", "A speed-dating site where citizens' romantic hopes go to be processed like a fast-food order. It has all the charm of a dentist's office mixed with the high stakes of a game show. Though it looks like a place to get shacked, it's less \"holy matrimony\" and more \"holy moly, this small talk is awkward.\" It'll cease to exist like my love life at the end of the month.",
+            BuildingCategory.COMMERCIAL,
+            1, 1, 0,
+            0.4,
+            true
+        );
+        this.setBusinessValue(260, 0.75); //A bit high since it's seasonal
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
+        this.areaIndicatorRounded = true;
+        this.isEntertainment = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.15, "dynamicEffectForBusiness")]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 140 + 1400 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "concrete", amount: 15 }, { type: "textiles", amount: 10 }, { type: "glass", amount: 5 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+}
+//End of seasonal businesses
+
 //# Luxury (Recreation/Decorations)
 export class HauntymonthGrave extends Building {
     constructor() {
@@ -2980,6 +3031,27 @@ export class WrappedWonder extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
 
+    override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
+}
+
+export class FlowerTower extends Building {
+    constructor() {
+        super(
+            "flowertower", "Flower Tower", "A pretty pollen palace with petals perched atop, this monument to floral extravagance stands tall; 'tis an oversized, flamboyant reminder that we all like a little eye candy. It'll wilt away at the end of the month.",
+            BuildingCategory.LUXURY,
+            1, 1, 0,
+            0.1,
+            true,
+        );
+        this.needsPower = this.needsRoad = false;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.15)]);
+    }
+    override getCosts(city: City): { type: string, amount: number }[] {
+        //Costs rise for each copy you've already bought.
+        return [{ type: "flunds", amount: 40 + 400 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "stone", amount: 5 }, { type: "plastics", amount: 5 }];
+    }
     override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
 }
 //End of seasonal decorations
@@ -4019,6 +4091,7 @@ export const BLOCKER_TYPES: Map<string, Building> = new Map([
 export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Residential*/ SmallHouse, Quadplex, SmallApartment, Highrise, Skyscraper, Dorm, ShowHome,
     /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, MaidTwoTeas, SauceCode, Casino, CartersCars, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter,
+    /*Seasonal (also commercial)*/ ChocolateBar, HeartyShack,
     /*Industrial*/ MountainIronMine, Quarry, CementMill, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks, SiliconRefinery, CrystalMine, AssemblyHouse, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory, ToyManufacturer, Furnifactory, LithiumMine, MohoMine, Nanogigafactory, PharmaceuticalsLab, SpaceLaunchSite,
     /*Seasonal (also industrial)*/ MiracleWorkshop,
     /*Power*/ StarterSolarPanel, WindTurbine, SolarFarm, OilPowerPlant, OilTruck, GeothermalPowerPlant, CoalPowerPlant, CoalTruck, NuclearPowerPlant, NuclearFuelTruck, FusionPowerPlant, FusionFuelTruck,
@@ -4026,7 +4099,7 @@ export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, TeleportationPod, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, LogisticsCenter, FreeStuffTable, DataCenter, NuclearStorage,
     /*Government*/ CityHall, InformationCenter, PostOffice, DepartmentOfEnergy, EnvironmentalLab, MinigameMinilab,
     /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, Library, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, Observatory, QuantumComputingLab, WeatherControlMachine,
-    /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse, PeppermintPillar, CocoaCupCo, ReindeerRetreat, WrappedWonder,
+    /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse, PeppermintPillar, CocoaCupCo, ReindeerRetreat, WrappedWonder, FlowerTower,
     /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, Playground, UrbanCampDome, FlippinFun, H2Whoa, SesharTower, MuseumOfFutureArts, SandsOfTime,
     ].map(p => new p()).map(p => [p.type, p]));
 export function get(type: string): Building { //Get an UNMODIFIED copy of the building type. (City.buildingTypes can have modified values; this and BUILDING_TYPES do not.)

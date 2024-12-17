@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { CocoaCupCo, ColdStorage, FireBay, FireStation, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HotSpring, HotSpringInn, MiracleWorkshop, PeppermintPillar, ReindeerRetreat, WrappedWonder, getBuildingType } from "./BuildingTypes.js";
+import { ChocolateBar, CocoaCupCo, ColdStorage, FireBay, FireStation, FlowerTower, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HeartyShack, HotSpring, HotSpringInn, MiracleWorkshop, PeppermintPillar, ReindeerRetreat, WrappedWonder, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -79,6 +79,40 @@ export class Merrymonth extends CityEvent {
     }
 }
 
+export class Chocomonth extends CityEvent {
+    constructor() {
+        super("chocomonth", "Chocomonth", 31 * LONG_TICKS_PER_DAY,
+            "It's Chocomonth! The city is filled with the sweet scents of adolescence and chocolate. You can find temporary businesses and decorations in the Commercial and Luxury construction categories respectively. You can gift food bonuses to friends' cities if you build the Chocolate Bar, available in the Commercial category.",
+            "It's the end of the month, and you know what that means--love is dead again, and chocolate is relegated to a delicious dental danger! You'll get your Chocomonth buildings back next year.");
+    }
+
+    override shouldStart(city: City, date: Date): boolean {
+        //Starts on February 1st; ends midnight March 1.
+        return this.checkedStart(date.getMonth() === 1 && !city.events.some(p => p.type === this.type), city, date);
+    }
+
+    override start(city: City, date: Date) { //Same logic as Hauntymonth except the number of days changes
+        super.start(city, date);
+        const daysInFebruary = new Date(date.getFullYear(), 1, 29).getDate() === 29 ? 29 : 28;
+        this.duration = Math.floor((1 + daysInFebruary - date.getDate()) * LONG_TICKS_PER_DAY - Math.floor(date.getHours() * LONG_TICKS_PER_DAY / 24));
+        this.lockUnlockBuildings(city, false);
+    }
+
+    override end(city: City) {
+        super.end(city);
+        this.lockUnlockBuildings(city, true);
+    }
+
+    lockUnlockBuildings(city: City, locked: boolean): void {
+        const buildingTypeIDs = [getBuildingType(ChocolateBar), getBuildingType(HeartyShack), getBuildingType(FlowerTower)];
+        for (const type of buildingTypeIDs) {
+            const buildingTemplate = city.buildingTypes.find(p => p.type === type);
+            if (buildingTemplate) buildingTemplate.isHidden = buildingTemplate.locked = locked;
+            if (locked) for (const building of city.buildings.filter(p => p.type === type)) city.removeBuilding(building);
+        }
+    }
+}
+
 export class TourismReward extends CityEvent {
     constructor(initialDuration = 12, bonusFraction = 0) {
         super("tourismreward", "Tourism Reward", initialDuration, "", "", undefined, EventTickTiming.Tourism);
@@ -115,6 +149,16 @@ export class ProductionReward extends CityEvent { //Applies to physical resource
     }
 
     //No shouldStart because it should never start on its own
+}
+
+export class DietReward extends CityEvent { //Considered in the diet system long tick rather than doing anything directly
+    constructor(initialDuration = 12, bonusFraction = 0) {
+        super("dietreward", "Diet Reward", initialDuration, "", "");
+        if (bonusFraction) this.variables.push(bonusFraction);
+        this.duration = initialDuration;
+    }
+
+    public getBonus(): number { return this.variables[0] ?? 0.05; } //Constant bonus
 }
 
 export class HappinessReward extends CityEvent {
