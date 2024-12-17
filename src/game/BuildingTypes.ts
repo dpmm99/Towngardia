@@ -1038,10 +1038,10 @@ export class GeothermalPowerPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 16 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
+        return [{ type: "flunds", amount: 19 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
-    override getPowerProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery")); }
+    override getPowerProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 450 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery")); }
 }
 
 export class OilPowerPlant extends Building {
@@ -1065,13 +1065,13 @@ export class OilPowerPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 7 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
+        return [{ type: "flunds", amount: 12 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number {
         //Show the unpowered warning if it's going to run out soon. Note: this is called right after the loop that sets powered = true for buildings that have enough power.
         if (!ideal && this.inputResources[0].amount <= 4 && city.getBuildingsInArea(this.x, this.y, this.width, this.height, 0, 0).size === 1) this.powered = false;
-        return (ideal ? 1 : this.lastEfficiency) * 250 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
+        return (ideal ? 1 : this.lastEfficiency) * 300 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
     }
 }
 
@@ -1142,14 +1142,14 @@ export class CoalPowerPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 10 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
+        return [{ type: "flunds", amount: 13 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number {
         //Show the unpowered warning if it's going to run out soon. Note: this is called right after the loop that sets powered = true for buildings that have enough power.
         //The getBuildingsInArea check is a lazy way to check for a fuel truck.
         if (!ideal && this.inputResources[0].amount <= 4 && city.getBuildingsInArea(this.x, this.y, this.width, this.height, 0, 0).size === 1) this.powered = false;
-        return (ideal ? 1 : this.lastEfficiency) * 300 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
+        return (ideal ? 1 : this.lastEfficiency) * 350 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
     } //Realistically, it should be more like 4000 if a wind turbine is 25, but...eh.
 }
 
@@ -1216,13 +1216,13 @@ export class NuclearPowerPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 15 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
+        return [{ type: "flunds", amount: 45 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number {
         //Show the unpowered warning if it's going to run out soon. Note: this is called right after the loop that sets powered = true for buildings that have enough power.
         if (!ideal && this.inputResources[0].amount <= 4 && city.getBuildingsInArea(this.x, this.y, this.width, this.height, 0, 0).size === 1) this.powered = false;
-        return (ideal ? 1 : this.lastEfficiency) * 650 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
+        return (ideal ? 1 : this.lastEfficiency) * 950 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
     }
 }
 
@@ -1285,14 +1285,14 @@ export class FusionPowerPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 30 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
+        return [{ type: "flunds", amount: 84 * (atEfficiency || (this.poweredTimeDuringLongTick * city.resources.get(getResourceType(PowerCosts))!.amount)) }];
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number {
         //Show the unpowered warning if it's going to run out soon. Note: this is called right after the loop that sets powered = true for buildings that have enough power.
         //The getBuildingsInArea check is a lazy way to check for a fuel truck.
         if (!ideal && this.inputResources[0].amount <= 4 && city.getBuildingsInArea(this.x, this.y, this.width, this.height, 0, 0).size === 1) this.powered = false;
-        return (ideal ? 1 : this.lastEfficiency) * 1000 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
+        return (ideal ? 1 : this.lastEfficiency) * 1800 * (1 + 0.2 * city.techManager.getAdoption("thermalrecovery"));
     }
 }
 
@@ -1430,7 +1430,7 @@ export class Ranch extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
-        this.outputResourceOptions = [RedMeat, Poultry, Dairy].map(foodType => new foodType(0, 4));
+        this.outputResourceOptions = [RedMeat, Poultry, Dairy].map(foodType => new foodType(0, 4)); //NOTE: Production rate gets reset in onLongTick
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, 0.1)]);
     }
 
@@ -1451,10 +1451,16 @@ export class Ranch extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: (1.5 + city.techManager.getAdoption('incubators')) * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * (2 + 12 * city.techManager.getAdoption('incubators')); }
+
+    override onLongTick(city: City): void {
+        this.outputResources[0].productionRate = 4 + 2 * city.techManager.getAdoption("incubators");
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
+        super.onLongTick(city);
+    }
 }
 
 export class AlgaeFarm extends Building {
@@ -1496,7 +1502,7 @@ export class FishFarm extends Building {
             3, 3, 0,
             0.1,
         );
-        this.outputResources.push(new Fish(0, 3));
+        this.outputResources.push(new Fish(0, 3)); //NOTE: Production rate gets reset in onLongTick
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, 0.1)]); //Still less than a ranch since the footprint is smaller
@@ -1511,10 +1517,16 @@ export class FishFarm extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 2 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: (2 + 1 * city.techManager.getAdoption('incubators')) * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * (4 + 8 * city.techManager.getAdoption('incubators')); }
+
+    override onLongTick(city: City): void {
+        this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("incubators");
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
+        super.onLongTick(city);
+    }
 }
 
 export class PlantMilkPlant extends Building {
@@ -1604,7 +1616,7 @@ export class Carnicultivator extends Building {
             0.3,
             true,
         );
-        this.outputResources.push(new LabGrownMeat(0, 3));
+        this.outputResources.push(new LabGrownMeat(0, 3)); //NOTE: Production rate gets reset in onLongTick
     }
 
     override getEfficiencyEffectMultiplier(city: City): number {
@@ -1616,10 +1628,16 @@ export class Carnicultivator extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 3 * (atEfficiency || this.poweredTimeDuringLongTick) }];  // Example upkeep: efficiency multiplier if the population is low or the power is off
+        return [{ type: "flunds", amount: (3 + 1.5 * city.techManager.getAdoption('incubators')) * (atEfficiency || this.poweredTimeDuringLongTick) }];  // Example upkeep: efficiency multiplier if the population is low or the power is off
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * (6 + 8 * city.techManager.getAdoption('incubators')); }
+
+    override onLongTick(city: City): void {
+        this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("incubators");
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
+        super.onLongTick(city);
+    }
 }
 
 //# Industrial
@@ -2278,8 +2296,7 @@ export class CornerStore extends Building {
             1, 1, 0,
             0.15,
         );
-        this.businessPatronCap = 40;
-        this.businessValue = 20;
+        this.setBusinessValue(50, 0.55);
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.05, "dynamicEffectForBusiness")]);
@@ -2299,8 +2316,7 @@ export class Junkyard extends Building {
             BuildingCategory.COMMERCIAL,
             3, 3, 0,
         );
-        this.businessPatronCap = 150;
-        this.businessValue = 90;
+        this.setBusinessValue(150, 0.65); //Higher because of the negative luxury effect and greater space requirement
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.1, "dynamicEffectForBusiness"),
@@ -2322,8 +2338,7 @@ export class SuckasCandy extends Building {
             2, 2, 0,
             0.3,
         );
-        this.businessPatronCap = 120;
-        this.businessValue = 90;
+        this.setBusinessValue(140, 0.6);
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.15, "dynamicEffectForBusiness")]);
@@ -2344,8 +2359,7 @@ export class Cafe extends Building {
             2, 2, 0,
             0.4,
         );
-        this.businessPatronCap = 200;
-        this.businessValue = 135;
+        this.setBusinessValue(150, 0.65);
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
@@ -2353,7 +2367,7 @@ export class Cafe extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 120 }, { type: "wood", amount: 25 }];
+        return [{ type: "flunds", amount: 160 }, { type: "wood", amount: 25 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
@@ -2367,8 +2381,7 @@ export class TheLoadedDie extends Building {
             2, 2, -3,
             0.3,
         );
-        this.businessPatronCap = 230;
-        this.businessValue = 150;
+        this.setBusinessValue(260, 0.65);
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
@@ -2376,7 +2389,7 @@ export class TheLoadedDie extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 120 }, { type: "wood", amount: 20 }];
+        return [{ type: "flunds", amount: 320 }, { type: "wood", amount: 20 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
@@ -2390,8 +2403,7 @@ export class Cinema extends Building {
             3, 3, 0,
             0.2,
         );
-        this.businessPatronCap = 410;
-        this.businessValue = 280;
+        this.setBusinessValue(430, 0.68); //Worth less for the space compared to The Loaded Die
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
@@ -2399,7 +2411,7 @@ export class Cinema extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 260 }, { type: "wood", amount: 25 }, { type: "textiles", amount: 10 }];
+        return [{ type: "flunds", amount: 560 }, { type: "wood", amount: 25 }, { type: "textiles", amount: 10 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
@@ -2413,8 +2425,7 @@ export class Whalemart extends Building {
             3, 3, 0,
             0.3,
         );
-        this.businessPatronCap = 350;
-        this.businessValue = 330;
+        this.setBusinessValue(510, 0.65);
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
@@ -2422,7 +2433,7 @@ export class Whalemart extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 340 }, { type: "wood", amount: 35 }, { type: "glass", amount: 10 }];
+        return [{ type: "flunds", amount: 640 }, { type: "wood", amount: 35 }, { type: "glass", amount: 10 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 9; }
@@ -2436,8 +2447,7 @@ export class Bar extends Building {
             2, 2, 0,
             0.4
         );
-        this.businessPatronCap = 250;
-        this.businessValue = 170; //Feeds into sales tax--this is the max value it could be worth per long tick before being multiplied by the sales tax rate (i.e., this is its max sales).
+        this.setBusinessValue(250, 0.68); //A bit higher due to the crime effect
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
@@ -2446,7 +2456,7 @@ export class Bar extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 100 }, { type: "wood", amount: 20 }];
+        return [{ type: "flunds", amount: 140 }, { type: "wood", amount: 20 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
@@ -2460,8 +2470,7 @@ export class PalmNomNom extends Building {
             2, 2, 0,
             0.4,
         );
-        this.businessPatronCap = 180;
-        this.businessValue = 150;
+        this.setBusinessValue(180, 0.7); //Reduced due to the tourism (free patronage)
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
@@ -2485,8 +2494,7 @@ export class GregsGrogBarr extends Building {
             2, 2, 0,
             0.4,
         );
-        this.businessPatronCap = 270;
-        this.businessValue = 240; //Feeds into sales tax--this is the max value it could be worth per long tick before being multiplied by the sales tax rate (i.e., this is its max sales).
+        this.setBusinessValue(270, 0.75);
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
@@ -2510,8 +2518,7 @@ export class IceCreamTruck extends Building {
             1, 1, 0,
             0.1,
         );
-        this.businessPatronCap = 80;
-        this.businessValue = 60;
+        this.setBusinessValue(80, 0.7);
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 9;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
@@ -2519,7 +2526,7 @@ export class IceCreamTruck extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 60 }, { type: "iron", amount: 5 }];
+        return [{ type: "flunds", amount: 100 }, { type: "iron", amount: 5 }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return super.getEfficiencyEffectMultiplier(city) + city.techManager.getAdoption("advrobots") * 0.1; }
@@ -2537,8 +2544,7 @@ export class FurnitureStore extends Building {
             2, 2, 0,
             0.3,
         );
-        this.businessPatronCap = 200;
-        this.businessValue = 220;
+        this.setBusinessValue(200, 0.9); //Higher due to the fact that it requires resources to operate
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.inputResources.push(new Furniture(0, 0, 0.5));
@@ -2560,8 +2566,7 @@ export class MaidTwoTeas extends Building {
             2, 2, 0,
             0.4,
         );
-        this.businessPatronCap = 240;
-        this.businessValue = 300;
+        this.setBusinessValue(240, 0.85);
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
@@ -2583,8 +2588,7 @@ export class SauceCode extends Building {
             2, 2, 0,
             0.4,
         );
-        this.businessPatronCap = 310;
-        this.businessValue = 420;
+        this.setBusinessValue(310, 0.8);
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
@@ -2605,8 +2609,7 @@ export class Casino extends Building {
             3, 3, 0,
             0.4,
         );
-        this.businessPatronCap = 400;
-        this.businessValue = 666;
+        this.setBusinessValue(400, 1.3); //Higher due to the crime effect and size
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
@@ -2616,7 +2619,7 @@ export class Casino extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 390 }, { type: "wood", amount: 35 }, { type: "gemstones", amount: 5 }];
+        return [{ type: "flunds", amount: city.presentBuildingCount.get("casino") ? 890 : 390 }, { type: "wood", amount: 35 }, { type: "gemstones", amount: 10 }]; //Cheaper for the first one just so you can unlock Slots sooner.
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
@@ -2630,15 +2633,14 @@ export class CartersCars extends Building {
             3, 3, 0,
             0.4,
         );
-        this.businessPatronCap = 440;
-        this.businessValue = 650;
+        this.setBusinessValue(440, 0.9);
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.2, "dynamicEffectForBusiness")]);
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 500 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 20 }, { type: "glass", amount: 10 }];
+        return [{ type: "flunds", amount: 700 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 20 }, { type: "glass", amount: 10 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
@@ -2654,7 +2656,7 @@ export class GameDevStudio extends Building {
         );
         this.outputResources.push(new Apps(0, 0.25));
         this.businessPatronCap = -1; //Infinite patron cap. Produces a fraction of the population worth of value with diminishing returns.
-        this.businessValue = 135;
+        this.businessValue = 300; //Increased it because it isn't worth the space otherwise
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.isEntertainment = true;
@@ -2677,7 +2679,7 @@ export class BlankCheckBank extends Building {
             0.3,
         );
         this.businessPatronCap = -1; //Infinite patron cap. Produces a fraction of the population worth of value with diminishing returns.
-        this.businessValue = 170;
+        this.businessValue = 320; //Likely to be built before Game Dev Studio, but this one spreads crime, so I increased the value a bit
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.3, "dynamicEffectForBusiness"),
@@ -2704,8 +2706,7 @@ export class ResortHotel extends Building {
             3, 3, 0,
             0.4,
         );
-        this.businessPatronCap = 650;
-        this.businessValue = 1350;
+        this.setBusinessValue(650, 1.2); //Reduced just a bit compared to the casino due to the tourists and luxury effect
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.outputResources.push(new Tourists(5, 5, 0, 200)); //Brings in 200 tourists per long tick, but it takes 10 days to get up to full steam.
@@ -2715,7 +2716,7 @@ export class ResortHotel extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1000 }, { type: "steel", amount: 25 }, { type: "glass", amount: 15 }];
+        return [{ type: "flunds", amount: 1500 }, { type: "steel", amount: 25 }, { type: "glass", amount: 15 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 35; }
@@ -2729,8 +2730,7 @@ export class HotSpringInn extends Building {
             3, 3, 0,
             0.3,
         );
-        this.businessPatronCap = 350;
-        this.businessValue = 850;
+        this.setBusinessValue(350, 1.5); //Excessively high because you can only build one anyway.
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.outputResources.push(new Tourists(6.25, 6.25, 0, 250)); //Brings in 250 tourists per long tick, but it takes 10 days to get up to full steam. Heheh. Steam.
@@ -2743,7 +2743,7 @@ export class HotSpringInn extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 700 }, { type: "wood", amount: 25 }, { type: "stone", amount: 10 }];
+        return [{ type: "flunds", amount: 1100 }, { type: "wood", amount: 25 }, { type: "stone", amount: 10 }];
     }
 
     override placed(city: City): void {
@@ -2766,8 +2766,7 @@ export class ConventionCenter extends Building {
             3, 3, 0,
             0.4,
         );
-        this.businessPatronCap = 500;
-        this.businessValue = 1050;
+        this.setBusinessValue(1600, 0.7); //Changed to an immense patronage count but lower value as a later-game approach to maximizing income by minimizing space
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.outputResources.push(new Tourists(3.75, 3.75, 0, 300)); //Brings in 300 tourists per long tick, but it takes 20 days to get up to full steam.
@@ -2778,7 +2777,7 @@ export class ConventionCenter extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1650 }, { type: "steel", amount: 30 }, { type: "glass", amount: 20 }];
+        return [{ type: "flunds", amount: 2200 }, { type: "steel", amount: 30 }, { type: "glass", amount: 20 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 22; }
@@ -4030,7 +4029,7 @@ export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse, PeppermintPillar, CocoaCupCo, ReindeerRetreat, WrappedWonder,
     /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, Playground, UrbanCampDome, FlippinFun, H2Whoa, SesharTower, MuseumOfFutureArts, SandsOfTime,
     ].map(p => new p()).map(p => [p.type, p]));
-export function get(type: string): Building {
+export function get(type: string): Building { //Get an UNMODIFIED copy of the building type. (City.buildingTypes can have modified values; this and BUILDING_TYPES do not.)
     return BUILDING_TYPES.get(type)!;
 }
 

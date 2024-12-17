@@ -308,6 +308,22 @@ export class LabGrownMeat extends Tech {
     }
 }
 
+export class Incubators extends Tech {
+    constructor() {
+        super(
+            'incubators',
+            'Incubators',
+            'Equipment and chemicals to increase ranch, fish farm, and carnicultivator output. Raises power usage and upkeep costs.',
+            [{ type: 'research', amount: 70 }, { type: 'steel', amount: 40 }, { type: 'pharmaceuticals', amount: 20 }],
+            0.03, 0.03,
+            1000, 460,
+            [{ id: "labmeat", path: [] }]
+        );
+    }
+
+    //Production rate and capacity changes are handled in the buildings' onLongTick.
+}
+
 export class GMCrops extends Tech {
     constructor() {
         super(
@@ -600,7 +616,7 @@ export class Hydrolox extends Tech {
 export const TECH_TYPES: Tech[] = [
     AIDiagnostics, AILogistics, ARShopping, AdvancedRobotics, AutonomousVehicles, BrainComputerInterface,
     BreederReactor, CarbonCapture, CloudSeeding, CoalPowerScrubbers, DroneDelivery, FoodServiceRobots,
-    FusionPower, GMCrops, Geothermal, GrapheneBatteries, GridBalancer, HeatPumps, Hydrolox, HydroponicGardens, LabGrownMeat,
+    FusionPower, GMCrops, Geothermal, GrapheneBatteries, GridBalancer, HeatPumps, Hydrolox, HydroponicGardens, Incubators, LabGrownMeat,
     NanomedicineResearch, PerovskiteSolarCells, QuantumComputing, RetainingSoil, RooftopSolar, SmartHomeSystems,
     TelemedicineInfra, ThermalRecovery, ThreeDPrinting, VRClassrooms, VacuumInsulatedWindows, VerticalFarming, WindTurbineLattice,
 ].map(p => new p());

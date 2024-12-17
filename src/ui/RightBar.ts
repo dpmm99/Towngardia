@@ -47,11 +47,11 @@ export class RightBar implements IHasDrawable, IOnResizeEvent {
 
         const buttons = <{ id:string, onClick: (() => void), resourceType?: string, resourceAmount?: number }[]>[
             { id: 'friends', onClick: () => this.uiManager.showFriendsMenu() },
-            { id: 'notifications' + (this.hasUnreadNotifications() ? "on" : ""), onClick: () => this.uiManager.showNotifications() },
         ];
         if (this.uiManager.inTutorial()) buttons.shift(); //Drop the friends button during the tutorial.
         if (this.uiManager.isMyCity) {
             buttons.push(
+                { id: 'notifications' + (this.hasUnreadNotifications() ? "on" : ""), onClick: () => this.uiManager.showNotifications() },
                 { id: 'budget', onClick: () => this.uiManager.showBudget() },
                 { id: 'research', onClick: () => this.uiManager.showTechMenu() },
             );

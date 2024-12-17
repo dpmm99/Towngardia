@@ -111,6 +111,11 @@ export class Building implements IHasDrawable {
         return newBuilding;
     }
 
+    setBusinessValue(patronCap: number, valueFraction: number) { //Made this so I can more easily see/adjust how much moolah you can get *per* patron, because my income was way too high mid-game.
+        this.businessPatronCap = patronCap;
+        this.businessValue = Math.round(valueFraction * patronCap);
+    }
+
     public applyMods(city: City, mods?: BuildingMod[], negate: boolean = false, reapply: boolean = false) {
         if (mods) {
             if (this.mods?.length) this.applyMods(city, undefined, true); //Overwrite mods entirely by first negating any existing mods

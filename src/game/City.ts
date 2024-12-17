@@ -26,9 +26,9 @@ import { Resource } from "./Resource.js";
 import * as ResourceTypes from "./ResourceTypes.js";
 import { GIFT_TYPES } from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
-import { SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
+import { ARShopping, FoodServiceRobots, SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
 
-const CITY_DATA_VERSION = 3; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
+const CITY_DATA_VERSION = 4; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
     //Not serialized
     public uiManager: UIManager | null = null;
@@ -221,6 +221,25 @@ export class City {
             }
 
             this.dataVersion = 3;
+        }
+        if (this.dataVersion < 4) {
+            //Update the businessPatronCap and businessValue for every building type by getting an unmodified constructed instance of the building type and copying the values over, then reapplying any upgrades.
+            for (const building of this.buildingTypes.concat(this.buildings).concat(this.unplacedBuildings)) {
+                const newValues = BUILDING_TYPES.get(building.type);
+                if (!newValues) continue; //Nothing to do for natural formations
+                building.businessPatronCap = newValues.businessPatronCap;
+                building.businessValue = newValues.businessValue;
+
+                if (building.isRestaurant && this.techManager.getAdoption(new FoodServiceRobots().id)) {
+                    if (building.businessPatronCap !== -1) building.businessPatronCap *= 1.1;
+                    building.businessValue *= 1.15;
+                } else if (!building.isRestaurant && this.techManager.getAdoption(new ARShopping().id)) {
+                    if (building.businessPatronCap !== -1) building.businessPatronCap *= 1.1;
+                    building.businessValue *= 1.15;
+                }
+            }
+
+            this.dataVersion = 4;
         }
     }
 

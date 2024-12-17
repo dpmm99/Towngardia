@@ -616,6 +616,7 @@ export class UIManager {
     }
 
     async toggleViews() {
+        if (this.cityView instanceof ProvisioningView) this.toggleProvisioning();
         this.cityView = new CityView(this.city, this); //Turn off the special view if there was one; also unhides the buildings.
         this.viewsBar.shown = !this.viewsBar.shown;
         if (this.viewsBar.shown) await this.resourcesBar.hide();
