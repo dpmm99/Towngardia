@@ -1690,14 +1690,6 @@ export class Quarry extends Building {
         }
     }
 
-    override remove(city: City, justMoving: boolean = false): void {
-        for (let resource of this.stores) {
-            const cityResource = city.resources.get(resource.type);
-            if (cityResource) cityResource.capacity -= this.storeAmount;
-        }
-        super.remove(city, justMoving);
-    }
-
     override getCosts(city: City): { type: string, amount: number }[] {
         const costs = [{ type: "flunds", amount: 100 }];
         if (city.presentBuildingCount.get(this.type)) costs.push({ type: "iron", amount: 20 }); //Costs more if you already own one
