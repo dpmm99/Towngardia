@@ -34,7 +34,7 @@ export class FriendVisitWindow implements IHasDrawable {
                 y: nextY,
                 width: "calc(100% - 20px)",
                 height: "32px",
-                text: "Received " + this.techPoints + " research progress toward:",
+                text: "Received " + (Math.round(this.techPoints * 10) / 10) + " research progress toward:",
                 biggerOnMobile: true,
                 scaleXOnMobile: true,
                 scaleYOnMobile: true,

@@ -62,6 +62,10 @@ export class ConstructMenu implements IHasDrawable {
             } else {
                 currentY += step;
             }
+            if (this.copies.length > city.width && this.copies.length > city.height) { //Rare bug case--I had it happen once, and it ran out of memory, so it must have had a non-integer this.x, startX, y, or startY.
+                this.copies.length = 1;
+                break;
+            }
         } while ((isHorizontal && currentX !== this.x + step) || (!isHorizontal && currentY !== this.y + step));
     }
 
@@ -78,8 +82,8 @@ export class ConstructMenu implements IHasDrawable {
     }
 
     setStartPosition(x: number, y: number): void {
-        this.startX = x;
-        this.startY = y;
+        this.startX = Math.max(0, Math.min((this.city?.width ?? 64) - 1, x));
+        this.startY = Math.max(0, Math.min((this.city?.height ?? 64) - 1, y));
     }
 
     getPos(): { x: number, y: number } {

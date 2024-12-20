@@ -266,7 +266,10 @@ export class UIManager {
         }
 
         if (this.checkClickComponent(this.viewsBar, x, y)) return true;
-        if (this.checkClickComponent(this.bottomBar, x, y)) return true;
+        if (this.checkClickComponent(this.bottomBar, x, y)) {
+            if (!this.buildTypeBar.selectedBuilding) this.isConstructionMode = false;
+            return true;
+        }
         if (this.checkClickComponent(this.resourcesBar, x, y)) return true;
 
         if (this.checkClickComponent(this.buildTypeBar, x, y)) {

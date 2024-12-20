@@ -744,7 +744,11 @@ export class City {
 
     removeBuilding(building: Building, demolish: boolean = false, justMoving: boolean = false): void { //Demolition costs go elsewhere.
         const index = this.buildings.indexOf(building);
-        if (index === -1) return; //TODO: Figure out how this happens sometimes; it's a very rare bug, but there SHOULD be no code calling removeBuilding on a building that isn't placed
+        if (index === -1) {
+            console.error("removeBuilding called for absent building. Variables: building, demolish, justMoving", building, demolish, justMoving);
+            debugger;
+            return; //TODO: Figure out how this happens sometimes; it's a very rare bug, but there SHOULD be no code calling removeBuilding on a building that isn't placed
+        }
         this.buildings.splice(index, 1);
         if (!demolish) this.unplacedBuildings.push(building); //Store for later.
         else this.presentBuildingCount.set(building.type, (this.presentBuildingCount.get(building.type) ?? 0) - 1); //Demolish = no longer owned.
