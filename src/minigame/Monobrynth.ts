@@ -16,15 +16,15 @@ import { drawMinigameOptions } from "../ui/MinigameOptions.js";
 import { OnePracticeRun, filterConvertAwardWinnings, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
 const SYMBOL_COUNT = 6;
-const GRID_WIDTH = 5;
-const GRID_HEIGHT = 5;
 const GRID_TILE_SIZE = 96;
 const SYMBOL_BUTTON_SIZE = 128;
 const MEMORIZATION_SEQUENCE_SIZE = 64;
 const HP_ICON_SIZE = 64;
 
+type Difficulty = 'easy' | 'medium' | 'hard';
+
 interface Tile {
-    difficulty: 'easy' | 'medium' | 'hard';
+    difficulty: Difficulty;
     content: ('treasure' | 'monster')[];
     visibility: 'hidden' | 'seen' | 'revealed';
 }
@@ -33,6 +33,46 @@ interface TreasureType {
     type: 'artifact' | 'shield' | 'map';
     value: number;
 }
+
+interface DifficultySettings {
+    gridWidth: number;
+    gridHeight: number;
+    minTreasures: number;
+    memorizationTime: number;
+    playCost: number;
+    rewardMultiplier: number;
+    allowedDifficulties: Difficulty[];
+}
+
+const DIFFICULTY_SETTINGS: Record<Difficulty, DifficultySettings> = {
+    easy: {
+        gridWidth: 5,
+        gridHeight: 5,
+        minTreasures: 7,
+        memorizationTime: 6000,
+        playCost: 1,
+        rewardMultiplier: 1,
+        allowedDifficulties: ['easy', 'medium', 'hard']
+    },
+    medium: {
+        gridWidth: 4,
+        gridHeight: 5,
+        minTreasures: 8,
+        memorizationTime: 5500,
+        playCost: 2,
+        rewardMultiplier: 2, //No direct reward bonus because the score potential is actually higher on medium.
+        allowedDifficulties: ['medium', 'hard']
+    },
+    hard: {
+        gridWidth: 3,
+        gridHeight: 5,
+        minTreasures: 10,
+        memorizationTime: 5000,
+        playCost: 3,
+        rewardMultiplier: 3.1, //A small direct reward bonus because if you're good, you can easily cap out the score-based rewards on hard.
+        allowedDifficulties: ['hard']
+    }
+};
 
 export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
@@ -58,6 +98,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private preloaded: boolean = false;
     private costs = [{ type: new MonobrynthPlays().type, amount: 1 }, { type: new Clothing().type, amount: 0 }];
     private isPractice: boolean = false;
+    private selectedDifficulty: Difficulty = 'easy';
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
 
@@ -76,11 +117,13 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         this.scroller.onResize();
     }
 
+    private get difficulty(): DifficultySettings { return DIFFICULTY_SETTINGS[this.selectedDifficulty]; }
+
     private generateGrid(): Tile[][] {
         const grid: Tile[][] = [];
-        for (let i = 0; i < GRID_HEIGHT; i++) {
+        for (let i = 0; i < this.difficulty.gridHeight; i++) {
             grid[i] = [];
-            for (let j = 0; j < GRID_WIDTH; j++) {
+            for (let j = 0; j < this.difficulty.gridWidth; j++) {
                 grid[i][j] = this.generateTile();
                 if (i === 0) grid[i][j].visibility = 'seen';
             }
@@ -88,9 +131,9 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
         //Ensure there are at least 7 treasures. If not, add more to random tiles without treasure.
         let treasureCount = grid.flat().reduce((acc, tile) => acc + tile.content.filter(p => p === 'treasure').length, 0);
-        while (treasureCount < 7) {
-            const x = Math.floor(Math.random() * GRID_WIDTH);
-            const y = Math.floor(Math.random() * GRID_HEIGHT);
+        while (treasureCount < this.difficulty.minTreasures) {
+            const x = Math.floor(Math.random() * this.difficulty.gridWidth);
+            const y = Math.floor(Math.random() * this.difficulty.gridHeight);
             if (!grid[y][x].content.filter(p => p === 'treasure').length) {
                 grid[y][x].content.push('treasure');
                 treasureCount++;
@@ -101,7 +144,9 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     }
 
     private generateTile(): Tile {
-        const difficulty = Math.random() < 0.4 ? 'easy' : Math.random() < 0.75 ? 'medium' : 'hard';
+        const allowedDifficulties = this.difficulty.allowedDifficulties;
+        const difficulty = allowedDifficulties.length === 3 ? (Math.random() < 0.4 ? allowedDifficulties[0] : Math.random() < 0.75 ? allowedDifficulties[1] : allowedDifficulties[2]) //40-35-25
+            : allowedDifficulties.length === 2 ? (Math.random() < 0.65 ? allowedDifficulties[0] : allowedDifficulties[1]) : allowedDifficulties[0]; //65-35
         const content = this.determineContent(difficulty);
         return { difficulty, content, visibility: "hidden" };
     }
@@ -160,8 +205,8 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         } else if (treasure.type === 'map') {
             //Reveal contents of the surrounding 3x3 tiles
             const [x, y] = this.playerPosition;
-            for (let i = Math.max(0, x - 1); i < Math.min(GRID_WIDTH, x + 2); i++) {
-                for (let j = Math.max(0, y - 1); j < Math.min(GRID_HEIGHT, y + 2); j++) {
+            for (let i = Math.max(0, x - 1); i < Math.min(this.difficulty.gridWidth, x + 2); i++) {
+                for (let j = Math.max(0, y - 1); j < Math.min(this.difficulty.gridHeight, y + 2); j++) {
                     this.grid[j][i].visibility = 'revealed';
                 }
             }
@@ -203,7 +248,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         this.sequenceVisible = true;
         this.collectingTreasures = currentTile.content.filter(p => p === 'treasure').map(p => this.generateTreasure(currentTile.difficulty));
 
-        if (this.playerPosition[1] === GRID_HEIGHT - 1 && !this.reachedEnd) {
+        if (this.playerPosition[1] === this.difficulty.gridHeight - 1 && !this.reachedEnd) {
             this.reachedEnd = true;
             this.score += 7;
         }
@@ -230,7 +275,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         this.userInputLocked = true;
         this.memorizeTimeout = setTimeout(() => {
             this.hideSequence();
-        }, 6000);
+        }, this.difficulty.memorizationTime);
     }
 
     private hideSequence(): void {
@@ -292,11 +337,13 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             this.winnings.push(new Gemstones(rangeMapLinear(this.score, 0.1, 1, 25, 45, 0.1))); //1*9.5=9.5
             this.winnings.push(new Lithium(rangeMapLinear(this.score, 0.1, 4, 30, 40, 0.1))); //4*5=20
             this.winnings.push(new Electronics(rangeMapLinear(this.score, 0.1, 3, 30, 40, 0.1))); //3*8.5=25.5. Total: 153 (but no research)
+            if (this.score > 45) this.winnings[this.winnings.length - 2].amount += rangeMapLinear(this.score, 0, 2, 45, 80, 0.1); //Diminished returns for extreme scores (probably on Hard)
         } else if (this.city.minigameOptions.get("mb-r") === "2") {
             //"Fuel Replicator" reward set--just fuel, equivalent to 100 flunds worth at 50 points, depending on what fuel you're currently using the most (defaults to Coal)
             const rewardType = this.city.resources.get(this.getBestFuelType())?.clone() ?? new Coal();
             rewardType.amount = rangeMapLinear(this.score, 0.1, 100, 15, 50, 0.1) / rewardType.sellPrice; //100 flunds worth at 50 points
             this.winnings.push(new Research(rangeMapLinear(this.score, 0.1, 2, 20, 50, 0.1))); //Making up for the rest with research points
+            if (this.score > 50) this.winnings[this.winnings.length - 1].amount += rangeMapLinear(this.score, 0, 1, 50, 80, 0.1); //Diminished returns for extreme scores (probably on Hard)
             this.winnings.push(rewardType);
         } else {
             //"Artifacts" reward set--mainly valuables
@@ -305,8 +352,11 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             this.winnings.push(new Gemstones(rangeMapLinear(this.score, 0.1, 4, 15, 45, 0.1))); //4*9.5=38
             this.winnings.push(new Tritium(rangeMapLinear(this.score, 0.1, 4, 20, 35, 0.1))); //4*12=48. Total: 148
             this.winnings.push(new Research(rangeMapLinear(this.score, 0.1, 1.5, 25, 50, 0.1))); //A lower limit--research points were way too easy to earn
+            if (this.score > 50) this.winnings[this.winnings.length - 1].amount += rangeMapLinear(this.score, 0, 1, 50, 80, 0.1); //Diminished returns for extreme scores (probably on Hard)
         }
 
+        const multiplier = this.difficulty.rewardMultiplier;
+        this.winnings.forEach(p => p.amount *= multiplier);
         this.winnings = filterConvertAwardWinnings(this.city, this.winnings);
         progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.06, 28, 78, 0.001));
     }
@@ -359,7 +409,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         directions.forEach(([dx, dy]) => {
             const newX = x + dx;
             const newY = y + dy;
-            if (newX >= 0 && newX < GRID_WIDTH && newY >= 0 && newY < GRID_HEIGHT) {
+            if (newX >= 0 && newX < this.difficulty.gridWidth && newY >= 0 && newY < this.difficulty.gridHeight) {
                 if (this.grid[newY][newX].visibility === 'hidden') {
                     this.grid[newY][newX].visibility = 'seen';
                 }
@@ -370,7 +420,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private isReachable(x: number, y: number): boolean {
         //Reachable if any adjacent tile is cleared or if this one is on the top row
         for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
-            if (x + dx < 0 || x + dx >= GRID_WIDTH || y + dy >= GRID_HEIGHT) continue;
+            if (x + dx < 0 || x + dx >= this.difficulty.gridWidth || y + dy >= this.difficulty.gridHeight) continue;
             if (y + dy < 0 || this.grid[y + dy][x + dx].visibility === 'revealed') return true;
         }
         return false;
@@ -427,6 +477,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         nextY += 70;
 
         nextY = this.drawClothingSelector(overlay, nextY);
+        if (this.city.unlockedMinigameOptions.has("mb-s1")) nextY = this.drawDifficultySelector(overlay, nextY);
 
         const startButton = overlay.addChild(new Drawable({
             anchors: ['centerX'],
@@ -618,6 +669,46 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private changeClothing(change: number): void {
         this.clothingToUse = Math.max(0, Math.min(3, this.clothingToUse + change));
         this.costs.find(p => p.type === new Clothing().type)!.amount = this.clothingToUse;
+    }
+
+    private drawDifficultySelector(overlay: Drawable, nextY: number): number {
+        const selector = overlay.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "100%",
+            height: "58px",
+            fallbackColor: '#00000000'
+        }));
+
+        ['easy', 'medium', 'hard'].forEach((difficulty, index) => {
+            const affordable = this.city.hasResources([{ type: new MonobrynthPlays().type, amount: DIFFICULTY_SETTINGS[difficulty as Difficulty].playCost }], false);
+            selector.addChild(new Drawable({
+                anchors: [index === 0 ? 'left' : index === 1 ? 'centerX' : 'right'],
+                centerOnOwnX: index === 1,
+                x: index === 1 ? 0 : 10,
+                width: index === 1 ? "38%" : "28%",
+                height: "58px",
+                fallbackColor: this.selectedDifficulty === difficulty ? '#666666' : '#444444',
+                onClick: () => {
+                    this.selectedDifficulty = difficulty as Difficulty;
+                    this.costs.find(p => p.type === new MonobrynthPlays().type)!.amount = this.difficulty.playCost;
+                },
+                children: [
+                    new Drawable({
+                        anchors: ["centerX"],
+                        y: 11,
+                        width: "calc(100% - 10px)",
+                        height: "90%",
+                        reddize: !affordable,
+                        text: difficulty.charAt(0).toUpperCase() + difficulty.slice(1),
+                        centerOnOwnX: true
+                    })
+                ]
+            }));
+        });
+
+        return nextY + 73;
     }
 
     private drawCloseButton(parent: Drawable): void {
@@ -888,8 +979,8 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             anchors: ['centerX'],
             centerOnOwnX: true,
             y: HP_ICON_SIZE + 80,
-            width: (GRID_WIDTH * GRID_TILE_SIZE) + "px",
-            height: (GRID_HEIGHT * GRID_TILE_SIZE) + "px",
+            width: (this.difficulty.gridWidth * GRID_TILE_SIZE) + "px",
+            height: (this.difficulty.gridHeight * GRID_TILE_SIZE) + "px",
             fallbackColor: '#333333',
             id: "gridArea"
         }));

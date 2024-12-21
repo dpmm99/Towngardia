@@ -719,11 +719,13 @@ export class MinigameMinilab extends Building { //Could make it cost paper or to
     }
 
     public getCurrentResearch(city: City): { id: string, game: string, name: string } | undefined {
+        if (!city.unlockedMinigameOptions.has("mb-s1")) return { id: "mb-s1", game: "Monobrynth", name: "Difficulty" };
         if (!city.unlockedMinigameOptions.has("nn-r1")) return { id: "nn-r1", game: "Nepotism Networking", name: "Power Pals" };
-        if (!city.unlockedMinigameOptions.has("sb-r1")) return { id: "sb-r1", game: "Starbox", name: "Star Fuel" };
+        if (!city.unlockedMinigameOptions.has("sb-s1")) return { id: "sb-s1", game: "Starbox", name: "Difficulty" };
         if (!city.unlockedMinigameOptions.has("mm-r1")) return { id: "mm-r1", game: "Memory Mixology", name: "Napkin Notes" };
-        if (!city.unlockedMinigameOptions.has("sb-r2")) return { id: "sb-r2", game: "Starbox", name: "Fermi Paradox" };
+        if (!city.unlockedMinigameOptions.has("sb-r1")) return { id: "sb-r1", game: "Starbox", name: "Star Fuel" };
         if (!city.unlockedMinigameOptions.has("nn-r2")) return { id: "nn-r2", game: "Nepotism Networking", name: "Industrial Invitees" };
+        if (!city.unlockedMinigameOptions.has("sb-r2")) return { id: "sb-r2", game: "Starbox", name: "Fermi Paradox" };
         if (!city.unlockedMinigameOptions.has("mb-r2")) return { id: "mb-r2", game: "Monobrynth", name: "Fuel Replicator" };
     }
 

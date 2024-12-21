@@ -12,6 +12,24 @@ import { UIManager } from "../ui/UIManager.js";
 import { addResourceCosts } from "../ui/UIUtil.js";
 import { OnePracticeRun, filterConvertAwardWinnings, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 
+type Difficulty = 'easy' | 'medium' | 'hard';
+
+interface DifficultySettings { //Could also feasibly adjust ease of earning black holes and chance of superior pieces
+    gridWidth: number;
+    gridHeight: number;
+    playCost: number;
+    rewardMultiplier: number;
+    normalStarTypes: number;
+    startingStars: number;
+    superiorPieceChance: number;
+}
+
+const DIFFICULTY_SETTINGS: Record<Difficulty, DifficultySettings> = {
+    easy: { gridWidth: 7, gridHeight: 12, playCost: 1, rewardMultiplier: 1, normalStarTypes: 6, startingStars: 35, superiorPieceChance: 0.5 },
+    medium: { gridWidth: 7, gridHeight: 11, playCost: 1, rewardMultiplier: 1.1, normalStarTypes: 6, startingStars: 25, superiorPieceChance: 0.2 }, //10% more rewards but chance of 2 of the same piece is lowered by 30 percentage points
+    hard: { gridWidth: 7, gridHeight: 11, playCost: 1, rewardMultiplier: 1.3, normalStarTypes: 7, startingStars: 15, superiorPieceChance: 0.5 }, //30% more rewards but there's a 7th star type
+};
+
 export class Starbox implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
     private shown: boolean = false;
@@ -20,9 +38,6 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     private gameStarted: boolean = false;
     private winnings: Resource[] = [];
     private tileSize: number = 64;
-    private gridWidth: number = 7;
-    private normalStarTypes: number = 6; //7 is the max, though--I just decided to try to make it a bit easier.
-    private gridHeight: number = 12;
     private nextPieces: number[][] = [[], []];
     private gameBoard: number[][] = [];
     private currentPiece: number[] = [];
@@ -41,6 +56,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     private costs = [{ type: new StarboxPlays().type, amount: 1, reddize: false }];
     private userInputLocked: boolean = false;
     private isPractice: boolean = false;
+    private selectedDifficulty: Difficulty = 'easy';
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) {
         this.initializeGame();
@@ -62,11 +78,13 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         }
     }
 
+    private get difficulty(): DifficultySettings { return DIFFICULTY_SETTINGS[this.selectedDifficulty]; }
+
     private initializeGame(): void {
-        this.gameBoard = Array(this.gridHeight).fill(null).map(() => Array(this.gridWidth).fill(0));
+        this.gameBoard = Array(this.difficulty.gridHeight).fill(null).map(() => Array(this.difficulty.gridWidth).fill(0));
         this.nextPieces = this.nextPieces.map(p => this.generatePiece());
         this.currentPiece = this.generatePiece();
-        this.currentPiecePosition = { x: Math.floor(this.gridWidth / 2) - 1, y: 0 };
+        this.currentPiecePosition = { x: Math.floor(this.difficulty.gridWidth / 2) - 1, y: 0 };
         this.timer = this.maxTime;
         this.blackHoles = 0;
         this.usingBlackHole = false;
@@ -77,23 +95,23 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         this.fallingStars = [];
         this.userInputLocked = false;
 
-        // Distribute initial 35 stars
+        // Distribute initial stars
         let starsPlaced = 0;
-        let placedByX: number[] = Array(this.gridWidth).fill(0);
-        while (starsPlaced < 35) {
-            const x = Math.floor(Math.random() * this.gridWidth);
-            const y = this.gridHeight - 1 - placedByX[x];
+        let placedByX: number[] = Array(this.difficulty.gridWidth).fill(0);
+        while (starsPlaced < this.difficulty.startingStars) {
+            const x = Math.floor(Math.random() * this.difficulty.gridWidth);
+            const y = this.difficulty.gridHeight - 1 - placedByX[x];
             if (y < 4) continue; //Don't stack too high or the player won't even be able to start (give 1 layer of buffer, anyway)
             placedByX[x]++;
 
             //Rotate through the different piece types until you're certain this won't cause a match immediately at game start
             //Due to the placement technique, you only have to check below and then 2 to the left, 1 on either side, and 2 to the right to be sure that it won't cause a match.
-            let chosenPiece = Math.floor(Math.random() * this.normalStarTypes) + 1;
-            while ((y < this.gridHeight - 2 && chosenPiece === this.gameBoard[y + 1][x] && chosenPiece === this.gameBoard[y + 2][x]) ||
+            let chosenPiece = Math.floor(Math.random() * this.difficulty.normalStarTypes) + 1;
+            while ((y < this.difficulty.gridHeight - 2 && chosenPiece === this.gameBoard[y + 1][x] && chosenPiece === this.gameBoard[y + 2][x]) ||
                 (x >= 2 && chosenPiece == this.gameBoard[y][x - 2] && chosenPiece == this.gameBoard[y][x - 1]) ||
-                (x >= 1 && x < this.gridWidth - 1 && chosenPiece == this.gameBoard[y][x - 1] && chosenPiece == this.gameBoard[y][x + 1]) ||
-                (x < this.gridWidth - 2 && chosenPiece == this.gameBoard[y][x + 1] && chosenPiece == this.gameBoard[y][x + 2]))
-                chosenPiece = (chosenPiece % this.normalStarTypes) + 1;
+                (x >= 1 && x < this.difficulty.gridWidth - 1 && chosenPiece == this.gameBoard[y][x - 1] && chosenPiece == this.gameBoard[y][x + 1]) ||
+                (x < this.difficulty.gridWidth - 2 && chosenPiece == this.gameBoard[y][x + 1] && chosenPiece == this.gameBoard[y][x + 2]))
+                chosenPiece = (chosenPiece % this.difficulty.normalStarTypes) + 1;
 
             this.gameBoard[y][x] = chosenPiece;
             starsPlaced++;
@@ -103,8 +121,8 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     }
 
     private generatePiece(): number[] {
-        const ret = Array(3).fill(0).map(() => Math.floor(Math.random() * this.normalStarTypes) + 1);
-        if (Math.random() < 0.5) ret[0] = ret[Math.floor(Math.random() * 2) + 1]; //Be nice: grant a slightly higher chance to get 2 or 3 of the same piece.
+        const ret = Array(3).fill(0).map(() => Math.floor(Math.random() * this.difficulty.normalStarTypes) + 1);
+        if (Math.random() < this.difficulty.superiorPieceChance) ret[0] = ret[Math.floor(Math.random() * 2) + 1]; //Be nice: grant a slightly higher chance to get 2 or 3 of the same piece.
         return ret;
     }
 
@@ -197,7 +215,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
                 mainDrawable.addChild(new Drawable({
                     anchors: ['centerX'],
                     centerOnOwnX: true,
-                    y: 100 + this.gridHeight * this.tileSize / 2 - 32,
+                    y: 100 + this.difficulty.gridHeight * this.tileSize / 2 - 32,
                     width: "300px",
                     height: "64px",
                     fallbackColor: '#444444',
@@ -292,15 +310,15 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         const matches: { x: number, y: number }[] = [];
 
         // Check horizontal matches
-        for (let y = 0; y < this.gridHeight; y++) {
-            for (let x = 0; x < this.gridWidth - 2; x++) {
+        for (let y = 0; y < this.difficulty.gridHeight; y++) {
+            for (let x = 0; x < this.difficulty.gridWidth - 2; x++) {
                 if (this.gameBoard[y][x] !== 0 &&
                     this.gameBoard[y][x] === this.gameBoard[y][x + 1] &&
                     this.gameBoard[y][x] === this.gameBoard[y][x + 2]) {
                     matches.push({ x, y }, { x: x + 1, y }, { x: x + 2, y });
                     // Check for longer matches
                     let nextX = x + 3;
-                    while (nextX < this.gridWidth && this.gameBoard[y][nextX] === this.gameBoard[y][x]) {
+                    while (nextX < this.difficulty.gridWidth && this.gameBoard[y][nextX] === this.gameBoard[y][x]) {
                         matches.push({ x: nextX, y });
                         nextX++;
                     }
@@ -310,15 +328,15 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         }
 
         // Check vertical matches
-        for (let x = 0; x < this.gridWidth; x++) {
-            for (let y = 0; y < this.gridHeight - 2; y++) {
+        for (let x = 0; x < this.difficulty.gridWidth; x++) {
+            for (let y = 0; y < this.difficulty.gridHeight - 2; y++) {
                 if (this.gameBoard[y][x] !== 0 &&
                     this.gameBoard[y][x] === this.gameBoard[y + 1][x] &&
                     this.gameBoard[y][x] === this.gameBoard[y + 2][x]) {
                     matches.push({ x, y }, { x, y: y + 1 }, { x, y: y + 2 });
                     // Check for longer matches
                     let nextY = y + 3;
-                    while (nextY < this.gridHeight && this.gameBoard[nextY][x] === this.gameBoard[y][x]) {
+                    while (nextY < this.difficulty.gridHeight && this.gameBoard[nextY][x] === this.gameBoard[y][x]) {
                         matches.push({ x, y: nextY });
                         nextY++;
                     }
@@ -328,15 +346,15 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         }
 
         //Check for black holes
-        for (let y = 0; y < this.gridHeight; y++) {
-            for (let x = 0; x < this.gridWidth; x++) {
+        for (let y = 0; y < this.difficulty.gridHeight; y++) {
+            for (let x = 0; x < this.difficulty.gridWidth; x++) {
                 if (this.gameBoard[y][x] === 8) {
                     //Black hole
                     matches.push({ x, y });
                     if (x > 0 && this.gameBoard[y][x - 1]) matches.push({ x: x - 1, y });
-                    if (x < this.gridWidth - 1 && this.gameBoard[y][x + 1]) matches.push({ x: x + 1, y });
+                    if (x < this.difficulty.gridWidth - 1 && this.gameBoard[y][x + 1]) matches.push({ x: x + 1, y });
                     if (y > 0 && this.gameBoard[y - 1][x]) matches.push({ x, y: y - 1 });
-                    if (y < this.gridHeight - 1 && this.gameBoard[y + 1][x]) matches.push({ x, y: y + 1 });
+                    if (y < this.difficulty.gridHeight - 1 && this.gameBoard[y + 1][x]) matches.push({ x, y: y + 1 });
                 }
             }
         }
@@ -346,9 +364,9 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
     }
 
     private applyGravity(): void {
-        for (let x = 0; x < this.gridWidth; x++) {
-            let bottomY = this.gridHeight - 1;
-            for (let y = this.gridHeight - 1; y >= 0; y--) {
+        for (let x = 0; x < this.difficulty.gridWidth; x++) {
+            let bottomY = this.difficulty.gridHeight - 1;
+            for (let y = this.difficulty.gridHeight - 1; y >= 0; y--) {
                 if (this.gameBoard[y][x] !== 0) {
                     if (y !== bottomY) {
                         this.fallingStars.push({ x, y, targetY: bottomY, color: this.gameBoard[y][x] });
@@ -369,7 +387,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         this.usingBlackHole = false;
         this.currentPiece = this.nextPieces.shift()!;
         this.nextPieces.push(this.generatePiece());
-        this.currentPiecePosition = { x: Math.floor(this.gridWidth / 2) - 1, y: 0 };
+        this.currentPiecePosition = { x: Math.floor(this.difficulty.gridWidth / 2) - 1, y: 0 };
 
         // Check for game over (no space for new piece)
         if (this.currentPiece.some((color, i) => this.gameBoard[this.currentPiecePosition.y + i][this.currentPiecePosition.x] !== 0)) {
@@ -391,7 +409,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
 
     private moveRight(): void {
         if (this.userInputLocked) return;
-        if (this.currentPiecePosition.x < this.gridWidth - 1 && !this.pieceCollision(1, 0) && this.currentPiece.length > 0) {
+        if (this.currentPiecePosition.x < this.difficulty.gridWidth - 1 && !this.pieceCollision(1, 0) && this.currentPiece.length > 0) {
             this.currentPiecePosition.x++;
         }
     }
@@ -425,7 +443,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         return piece.some((color, i) => {
             const newX = x + dx;
             const newY = y + i + dy;
-            return newX < 0 || newX >= this.gridWidth || newY >= this.gridHeight || (newY >= 0 && this.gameBoard[newY][newX] !== 0);
+            return newX < 0 || newX >= this.difficulty.gridWidth || newY >= this.difficulty.gridHeight || (newY >= 0 && this.gameBoard[newY][newX] !== 0);
         });
     }
 
@@ -467,15 +485,15 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         const gameArea = parent.addChild(new Drawable({
             anchors: ['centerX'],
             y: 100,
-            width: (this.gridWidth * this.tileSize) + "px",
-            height: (this.gridHeight * this.tileSize) + "px",
+            width: (this.difficulty.gridWidth * this.tileSize) + "px",
+            height: (this.difficulty.gridHeight * this.tileSize) + "px",
             fallbackColor: '#333333',
             id: "gameArea",
             centerOnOwnX: true
         }));
 
-        for (let y = 0; y < this.gridHeight; y++) {
-            for (let x = 0; x < this.gridWidth; x++) {
+        for (let y = 0; y < this.difficulty.gridHeight; y++) {
+            for (let x = 0; x < this.difficulty.gridWidth; x++) {
                 const starType = this.gameBoard[y][x];
                 if (starType > 0) {
                     gameArea.addChild(this.drawStar(x, y, starType));
@@ -497,7 +515,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             anchors: ['centerX'],
             centerOnOwnX: true,
             y: 20,
-            width: (this.gridWidth * this.tileSize) + "px",
+            width: (this.difficulty.gridWidth * this.tileSize) + "px",
             height: "48px",
             fallbackColor: '#444444',
             id: "nextPiecesArea"
@@ -526,7 +544,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             biggerOnMobile: true,
             scaleYOnMobile: true,
             y: 10,
-            width: "min(" + (this.gridWidth * this.tileSize) + "px, 100%)",
+            width: "min(" + (this.difficulty.gridWidth * this.tileSize) + "px, 100%)",
             height: (buttonHeight * 2 + 10) + "px",
             fallbackColor: '#00000000',
             id: "controlsArea"
@@ -585,7 +603,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         }));
 
         // Move and rotate buttons
-        const smallButtonWidth = (this.gridWidth * this.tileSize) / 4.5;
+        const smallButtonWidth = (this.difficulty.gridWidth * this.tileSize) / 4.5;
         const controls = [
             { image: "minigame/starleft", action: () => this.moveLeft() },
             { image: "minigame/starup", action: () => this.rotateCounterclockwise() }, //Actually just rotates the tiles of the piece, doesn't rotate the piece to be horizontal
@@ -622,8 +640,8 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         const timerArea = parent.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
-            y: this.gridHeight * this.tileSize + 110,
-            width: (this.gridWidth * this.tileSize) + "px",
+            y: this.difficulty.gridHeight * this.tileSize + 110,
+            width: (this.difficulty.gridWidth * this.tileSize) + "px",
             noXStretch: false,
             height: "30px",
             fallbackColor: '#666666',
@@ -947,6 +965,8 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         addResourceCosts(overlay.children[overlay.children.length - 1], costs, 86, 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
         nextY += 170;
 
+        if (this.city.unlockedMinigameOptions.has("sb-s1")) nextY = this.drawDifficultySelector(overlay, nextY);
+
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
             centerOnOwnX: true,
@@ -1047,6 +1067,46 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
             { group: "sb-r", id: "2", text: "Fermi Paradox (+organics, electronics, research)", icon: "resource/oil" }]);
 
         this.scroller.setChildrenSize(nextY - baseY);
+    }
+
+    private drawDifficultySelector(overlay: Drawable, nextY: number): number {
+        const selector = overlay.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "100%",
+            height: "58px",
+            fallbackColor: '#00000000'
+        }));
+
+        ['easy', 'medium', 'hard'].forEach((difficulty, index) => {
+            const affordable = this.city.hasResources([{ type: new StarboxPlays().type, amount: this.difficulty.playCost }], false);
+            selector.addChild(new Drawable({
+                anchors: [index === 0 ? 'left' : index === 1 ? 'centerX' : 'right'],
+                centerOnOwnX: index === 1,
+                x: index === 1 ? 0 : 10,
+                width: index === 1 ? "38%" : "28%",
+                height: "58px",
+                fallbackColor: this.selectedDifficulty === difficulty ? '#666666' : '#444444',
+                onClick: () => {
+                    this.selectedDifficulty = difficulty as Difficulty;
+                    this.costs.find(p => p.type === new StarboxPlays().type)!.amount = this.difficulty.playCost;
+                },
+                children: [
+                    new Drawable({
+                        anchors: ["centerX"],
+                        y: 11,
+                        width: "calc(100% - 10px)",
+                        height: "90%",
+                        reddize: !affordable,
+                        text: difficulty.charAt(0).toUpperCase() + difficulty.slice(1),
+                        centerOnOwnX: true
+                    })
+                ]
+            }));
+        });
+
+        return nextY + 73;
     }
 
     getLastDrawable(): Drawable | null {
