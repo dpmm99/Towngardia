@@ -129,8 +129,10 @@ export class Building implements IHasDrawable {
                     case "storage": //Apply and reapply are the same for storage because it's not serialized
                         if (negate) this.stores.length = 0;
                         else this.stores.push(...[Wood, Iron, Steel, Glass, Batteries, Clothing, Furniture, Electronics, Paper, Toys].map(p => new p()));
-                        if (isNaN(this.storeAmount)) this.storeAmount = 0; //TODO: Why does that end up as NaN?
-                        this.storeAmount += (negate ? -1 : 1) * mod.magnitude;
+
+                        //storeAmount is saved, but stores is not, so we need to reset storeAmount to that of the template building type before applying this mod (note: assumes there's only one storage mod on any given building)
+                        this.storeAmount = city.buildingTypes.find(p => p.type === this.type)?.storeAmount || 0;
+                        if (!negate) this.storeAmount += mod.magnitude;
                         break;
                     case "population": // Modify existing population resource--unless we're reapplying, in which case there's nothing to do here.
                         if (reapply) continue;
