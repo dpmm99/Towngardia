@@ -36,9 +36,9 @@ export class Road extends Building {
         this.isRoad = true;
         this.maxVariant = 2;
         this.serviceAllocationType = "infrastructure";
-        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.0002, "dynamicEffectByTrafficQuantity"),
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.0002, "dynamicEffectByTrafficQuantity", true, 1, 1),
             new EffectDefinition(EffectType.GreenhouseGases, 0.0001, "dynamicEffectByTrafficQuantity", false, 0, 0),
-            new EffectDefinition(EffectType.Noise, 0.0005, "dynamicEffectByTrafficQuantityAndBudget")]); //Reduced infrastructure budget = noisier roads.
+            new EffectDefinition(EffectType.Noise, 0.0005, "dynamicEffectByTrafficQuantityAndBudget", true, 1, 1)]); //Reduced infrastructure budget = noisier roads.
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
