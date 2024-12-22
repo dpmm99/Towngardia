@@ -358,7 +358,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
         const multiplier = this.difficulty.rewardMultiplier;
         this.winnings.forEach(p => p.amount *= multiplier);
         this.winnings = filterConvertAwardWinnings(this.city, this.winnings);
-        progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.06, 28, 78, 0.001));
+        progressMinigameOptionResearch(this.city, multiplier * rangeMapLinear(this.score, 0.01, 0.06, 28, 78, 0.001));
     }
 
     public startGame(): void {

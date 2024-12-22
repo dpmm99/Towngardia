@@ -181,7 +181,9 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         }
 
         this.winnings = filterConvertAwardWinnings(this.city, this.winnings, extraFlunds);
-        progressMinigameOptionResearch(this.city, rangeMapLinear(this.totalStarsDestroyed, 0.01, 0.07, 100, 300, 0.001));
+        const multiplier = this.difficulty.rewardMultiplier;
+        this.winnings.forEach(p => p.amount *= multiplier);
+        progressMinigameOptionResearch(this.city, multiplier * rangeMapLinear(this.totalStarsDestroyed, 0.01, 0.07, 100, 300, 0.001));
         this.city.updateLastUserActionTime();
         this.game.fullSave();
     }
