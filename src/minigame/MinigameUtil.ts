@@ -9,17 +9,18 @@ import { Flunds, MinigameOptionResearch, PracticeRuns, Tritium, Uranium, getReso
 export const OnePracticeRun = [{ type: getResourceType(PracticeRuns), amount: 1 }];
 
 //roundTo should be 0.1 if you want to round to the nearest 0.1, 0.5 if you want to round to the nearest 0.5...pretty clean.
-export function rangeMapLinear(value: number, lowEndOutput: number, highEndOutput: number, rangeLower: number, rangeUpper: number, roundTo: number) {
+//Added outputMultiplier so you can apply a factor before rounding without writing "multiplier * " twice for every call to one of these functions.
+export function rangeMapLinear(value: number, lowEndOutput: number, highEndOutput: number, rangeLower: number, rangeUpper: number, roundTo: number, outputMultiplier: number = 1) {
     if (value < rangeLower) return 0;
     if (value >= rangeUpper) return highEndOutput;
-    return Math.round((lowEndOutput + (highEndOutput - lowEndOutput) * (value - rangeLower) / (rangeUpper - rangeLower)) / roundTo) * roundTo;
+    return Math.round((lowEndOutput + (highEndOutput - lowEndOutput) * (value - rangeLower) / (rangeUpper - rangeLower)) * outputMultiplier / roundTo) * roundTo;
 }
 
 //Same thing, but with a curve-bending factor (exponent, but the number is 0-1, so if exponent > 1, the output approaches the maximum faster at the lower end).
-export function rangeMapExp(value: number, lowEndOutput: number, highEndOutput: number, rangeLower: number, rangeUpper: number, exponent: number, roundTo: number) {
+export function rangeMapExp(value: number, lowEndOutput: number, highEndOutput: number, rangeLower: number, rangeUpper: number, exponent: number, roundTo: number, outputMultiplier: number = 1) {
     if (value < rangeLower) return 0;
     if (value >= rangeUpper) return highEndOutput;
-    return Math.round((lowEndOutput + (highEndOutput - lowEndOutput) * Math.pow((value - rangeLower) / (rangeUpper - rangeLower), exponent)) / roundTo) * roundTo;
+    return Math.round((lowEndOutput + (highEndOutput - lowEndOutput) * Math.pow((value - rangeLower) / (rangeUpper - rangeLower), exponent)) * outputMultiplier / roundTo) * roundTo;
 }
 
 //Only return the winnings that have a nonzero amount, and convert uranium or tritium to flunds (LESS than the normal sell rate because it'd be early-game, when flunds are much more valuable) if there's nowhere to put them.

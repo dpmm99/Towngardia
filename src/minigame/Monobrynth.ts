@@ -326,39 +326,38 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private calculateWinnings(): void {
         this.winnings = [];
         if (this.isPractice) return;
+        const multiplier = this.difficulty.rewardMultiplier;
 
         //This minigame has a fairly low skill cap, so the rewards aren't too high. Note: minimum possible score is 28 if you play it perfectly and get unlucky with the artifact types.
         if (this.city.minigameOptions.get("mb-r") === "1") {
             //"Scraps" reward set--much more metals, fewer electronics, no research
-            this.winnings.push(new Copper(rangeMapLinear(this.score, 0.1, 6, 5, 20, 0.1))); //6*3=18
-            this.winnings.push(new Silicon(rangeMapLinear(this.score, 0.1, 7, 10, 35, 0.1))); //7*7=49
-            this.winnings.push(new Iron(rangeMapLinear(this.score, 0.1, 8, 15, 35, 0.1))); //8*2=16
-            this.winnings.push(new Steel(rangeMapLinear(this.score, 0.1, 3, 25, 30, 0.1))); //3*5=15
-            this.winnings.push(new Gemstones(rangeMapLinear(this.score, 0.1, 1, 25, 45, 0.1))); //1*9.5=9.5
-            this.winnings.push(new Lithium(rangeMapLinear(this.score, 0.1, 4, 30, 40, 0.1))); //4*5=20
-            this.winnings.push(new Electronics(rangeMapLinear(this.score, 0.1, 3, 30, 40, 0.1))); //3*8.5=25.5. Total: 153 (but no research)
-            if (this.score > 45) this.winnings[this.winnings.length - 2].amount += rangeMapLinear(this.score, 0, 2, 45, 80, 0.1); //Diminished returns for extreme scores (probably on Hard)
+            this.winnings.push(new Copper(rangeMapLinear(this.score, 0.1, 6, 5, 20, 0.1, multiplier))); //6*3=18
+            this.winnings.push(new Silicon(rangeMapLinear(this.score, 0.1, 7, 10, 35, 0.1, multiplier))); //7*7=49
+            this.winnings.push(new Iron(rangeMapLinear(this.score, 0.1, 8, 15, 35, 0.1, multiplier))); //8*2=16
+            this.winnings.push(new Steel(rangeMapLinear(this.score, 0.1, 3, 25, 30, 0.1, multiplier))); //3*5=15
+            this.winnings.push(new Gemstones(rangeMapLinear(this.score, 0.1, 1, 25, 45, 0.1, multiplier))); //1*9.5=9.5
+            this.winnings.push(new Lithium(rangeMapLinear(this.score, 0.1, 4, 30, 40, 0.1, multiplier))); //4*5=20
+            this.winnings.push(new Electronics(rangeMapLinear(this.score, 0.1, 3, 30, 40, 0.1, multiplier))); //3*8.5=25.5. Total: 153 (but no research)
+            if (this.score > 45) this.winnings[this.winnings.length - 2].amount += rangeMapLinear(this.score, 0, 2, 45, 80, 0.1, multiplier); //Diminished returns for extreme scores (probably on Hard)
         } else if (this.city.minigameOptions.get("mb-r") === "2") {
             //"Fuel Replicator" reward set--just fuel, equivalent to 100 flunds worth at 50 points, depending on what fuel you're currently using the most (defaults to Coal)
             const rewardType = this.city.resources.get(this.getBestFuelType())?.clone() ?? new Coal();
-            rewardType.amount = rangeMapLinear(this.score, 0.1, 100, 15, 50, 0.1) / rewardType.sellPrice; //100 flunds worth at 50 points
-            this.winnings.push(new Research(rangeMapLinear(this.score, 0.1, 2, 20, 50, 0.1))); //Making up for the rest with research points
-            if (this.score > 50) this.winnings[this.winnings.length - 1].amount += rangeMapLinear(this.score, 0, 1, 50, 80, 0.1); //Diminished returns for extreme scores (probably on Hard)
+            rewardType.amount = rangeMapLinear(this.score, 0.1, 100, 15, 50, 0.1, multiplier) / rewardType.sellPrice; //100 flunds worth at 50 points
+            this.winnings.push(new Research(rangeMapLinear(this.score, 0.1, 2, 20, 50, 0.1, multiplier))); //Making up for the rest with research points
+            if (this.score > 50) this.winnings[this.winnings.length - 1].amount += rangeMapLinear(this.score, 0, 1, 50, 80, 0.1, multiplier); //Diminished returns for extreme scores (probably on Hard)
             this.winnings.push(rewardType);
         } else {
             //"Artifacts" reward set--mainly valuables
-            this.winnings.push(new Silicon(rangeMapLinear(this.score, 0.1, 4, 5, 20, 0.1))); //4*7=28
-            this.winnings.push(new Electronics(rangeMapLinear(this.score, 0.1, 4, 10, 25, 0.1))); //4*8.5=34
-            this.winnings.push(new Gemstones(rangeMapLinear(this.score, 0.1, 4, 15, 45, 0.1))); //4*9.5=38
-            this.winnings.push(new Tritium(rangeMapLinear(this.score, 0.1, 4, 20, 35, 0.1))); //4*12=48. Total: 148
-            this.winnings.push(new Research(rangeMapLinear(this.score, 0.1, 1.5, 25, 50, 0.1))); //A lower limit--research points were way too easy to earn
-            if (this.score > 50) this.winnings[this.winnings.length - 1].amount += rangeMapLinear(this.score, 0, 1, 50, 80, 0.1); //Diminished returns for extreme scores (probably on Hard)
+            this.winnings.push(new Silicon(rangeMapLinear(this.score, 0.1, 4, 5, 20, 0.1, multiplier))); //4*7=28
+            this.winnings.push(new Electronics(rangeMapLinear(this.score, 0.1, 4, 10, 25, 0.1, multiplier))); //4*8.5=34
+            this.winnings.push(new Gemstones(rangeMapLinear(this.score, 0.1, 4, 15, 45, 0.1, multiplier))); //4*9.5=38
+            this.winnings.push(new Tritium(rangeMapLinear(this.score, 0.1, 4, 20, 35, 0.1, multiplier))); //4*12=48. Total: 148
+            this.winnings.push(new Research(rangeMapLinear(this.score, 0.1, 1.5, 25, 50, 0.1, multiplier))); //A lower limit--research points were way too easy to earn
+            if (this.score > 50) this.winnings[this.winnings.length - 1].amount += rangeMapLinear(this.score, 0, 1, 50, 80, 0.1, multiplier); //Diminished returns for extreme scores (probably on Hard)
         }
 
-        const multiplier = this.difficulty.rewardMultiplier;
-        this.winnings.forEach(p => p.amount *= multiplier);
         this.winnings = filterConvertAwardWinnings(this.city, this.winnings);
-        progressMinigameOptionResearch(this.city, multiplier * rangeMapLinear(this.score, 0.01, 0.06, 28, 78, 0.001));
+        progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.06, 28, 78, 0.001, multiplier));
     }
 
     public startGame(): void {

@@ -6,7 +6,7 @@ import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
 import { GameState } from "../game/GameState.js";
 import { inPlaceShuffle } from "../game/MiscFunctions.js";
 import { Resource } from "../game/Resource.js";
-import { BarPlays, Flunds } from "../game/ResourceTypes.js";
+import { BarPlays, Flunds, Paper } from "../game/ResourceTypes.js";
 import { Drawable } from "../ui/Drawable.js";
 import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { IOnResizeEvent } from "../ui/IOnResizeEvent.js";
@@ -20,6 +20,22 @@ import { OnePracticeRun, progressMinigameOptionResearch, rangeMapLinear } from "
 interface Recipe {
     name: string;
     ingredients: string[];
+}
+
+type Difficulty = 'easy' | 'medium' | 'hard';
+
+interface DifficultySettings { //Could also feasibly adjust ease of earning black holes and chance of superior pieces
+    fourIngredientRecipes: number; //2 for all three difficulties, but could be reduced for harder difficulties, as it's easier if you're guessing randomly.
+    groupByType: boolean; //If true, all ingredients of the same type are grouped together on the board (but the GROUPS are still in a random order). If false, the entire board is shuffled.
+    wildcards: number; //Number of "wildcard" ingredients that get added to the end of the board. They match any ingredient in any recipe and are always revealed.
+    playCost: number;
+    rewardMultiplier: number;
+}
+
+const DIFFICULTY_SETTINGS: Record<Difficulty, DifficultySettings> = {
+    easy: { fourIngredientRecipes: 2, groupByType: true, wildcards: 2, playCost: 1, rewardMultiplier: 1 },
+    medium: { fourIngredientRecipes: 2, groupByType: false, wildcards: 2, playCost: 1, rewardMultiplier: 1.25 }, //The reward multiplier is a bit insensitive since the output is discrete and only up to 8 normally, or I'd make it more like 1.2.
+    hard: { fourIngredientRecipes: 2, groupByType: false, wildcards: 0, playCost: 1, rewardMultiplier: 1.5 }
 }
 
 export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
@@ -61,13 +77,17 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
     private currentRoundMatchedCards: number[] = [];
     private userInputLocked: boolean = true;
     private preloaded: boolean = false;
-    private costs = [{ type: new BarPlays().type, amount: 1, reddize: false }];
+    private paperToUse: number = 0;
+    private costs = [{ type: new BarPlays().type, amount: 1, reddize: false }, { type: new Paper().type, amount: 0 }];
     private isPractice: boolean = false;
+    private selectedDifficulty: Difficulty = 'easy';
 
     private readonly countdownSteps = [8, 7, 6, 5, 4, 3, 2, 1, "GO"];
     private countdownStep = 0;
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
+
+    private get difficulty(): DifficultySettings { return DIFFICULTY_SETTINGS[this.selectedDifficulty]; }
 
     public isPlaying(): boolean { return this.shown && this.gameStarted; }
 
@@ -79,10 +99,35 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         this.userInputLocked = true;
         //Select a set of DISTINCT recipes--two with 4 ingredients and two with 3 ingredients--then select ingredients for those. That leaves 4 cards on the board at the end.
         this.upcomingRecipes = [];
-        this.addInitialRecipe(4); this.addInitialRecipe(4); this.addInitialRecipe(3); this.addInitialRecipe(3);
+        for (let i = 0; i < this.difficulty.fourIngredientRecipes; i++) this.addInitialRecipe(4);
+        for (let i = 0; i < 4 - this.difficulty.fourIngredientRecipes; i++) this.addInitialRecipe(3); //Always init to 4 total recipes
         this.board = this.upcomingRecipes.flatMap(p => p.ingredients); //Start with those required ingredients on the board, then add the rest at random
         while (this.board.length < 18) this.board.push(this.ingredients[Math.floor(Math.random() * this.ingredients.length)]);
         inPlaceShuffle(this.board);
+        if (this.difficulty.groupByType) {
+            //Group by type, but shuffle the groups. Track the index of the first appearance of each ingredient and move the later matching ingredients to that index, increasing later indices along the way as you normally would with a move-element-within-array algorithm.
+            //TODO: Consider grid-width awareness, so grouping might put two at the far right and then another one or two at the far right of the next row to keep them together.
+            const ingredientIndices: Record<string, number> = {};
+            for (let index = 0; index < this.board.length; index++) {
+                const ingredient = this.board[index];
+                if (ingredientIndices[ingredient] === undefined) ingredientIndices[ingredient] = index;
+                else {
+                    let i = index;
+                    while (i > ingredientIndices[ingredient]) {
+                        this.board[i] = this.board[i - 1];
+                        i--;
+                    }
+                    this.board[ingredientIndices[ingredient]] = ingredient;
+                    //EVERY entry of ingredientIndices needs to be updated to reflect the move, not just the one for the current ingredient.
+                    Object.keys(ingredientIndices).forEach(p => {
+                        if (ingredientIndices[p] >= ingredientIndices[ingredient]) {
+                            ingredientIndices[p]++;
+                        }
+                    });
+                }
+            }
+        }
+        for (let i = 0; i < this.difficulty.wildcards; i++) this.board.push("wildcard");
         this.currentRecipe = this.getNextRecipe();
 
         this.startCountdown();
@@ -108,10 +153,19 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
 
     private getValidRemainingRecipes() {
         const remainingIngredients = this.board.filter((_, i) => !this.matchedCards.includes(i));
-        return this.recipes.filter(recipe =>
+        const remainingWildcards = this.board.filter((ingredient, i) => ingredient === "wildcard" && !this.matchedCards.includes(i)).length;
+        //Get recipes you can complete with the current exact ingredients
+        let bestRecipeOptions = this.recipes.filter(recipe =>
             recipe.ingredients.length < 4 && //Don't give the player any easy recipes as they near the end
             recipe.ingredients.every(ingredient => remainingIngredients.includes(ingredient))
         );
+        if (!bestRecipeOptions.length) { //Same logic except allow for wildcards to fill in the gaps
+            bestRecipeOptions = this.recipes.filter(recipe =>
+                recipe.ingredients.length < 4 &&
+                recipe.ingredients.filter(ingredient => remainingIngredients.includes(ingredient)).length >= recipe.ingredients.length - remainingWildcards
+            );
+        }
+        return bestRecipeOptions;
     }
 
     onResize(): void {
@@ -142,18 +196,20 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
     }
 
     private hideIngredients(): void {
-        this.flippedCards = [];
+        this.flippedCards = this.flippedCards.filter(p => this.board[p] !== "wildcard" && !this.matchedCards.includes(p)).slice(0, this.paperToUse) //Keep the first paperToUse cards flipped as long as needed
+            .concat(this.board.map((p, i) => p === "wildcard" ? i : -1).filter(p => p !== -1)); //Always reveal wildcards
         this.uiManager.frameRequested = true;
     }
 
     private handleCardClick(index: number): void {
-        if (this.userInputLocked || this.flippedCards.includes(index) || this.matchedCards.includes(index)) {
+        if (this.userInputLocked || this.matchedCards.includes(index)) { //Now allows flipped cards to be clicked, because some are allowed to be flipped permanently.
             return;
         }
 
-        this.flippedCards.push(index);
+        if (!this.flippedCards.includes(index)) this.flippedCards.push(index); //Don't put it in the list a second time if it's already there, e.g., for wildcards and the "take notes" ability.
 
-        if (this.currentRecipe!.ingredients.includes(this.board[index]) && !this.currentRoundMatchedCards.some(p => this.board[p] === this.board[index])) { //is a match AND not already matched this round
+        if ((this.currentRecipe!.ingredients.includes(this.board[index]) && !this.currentRoundMatchedCards.some(p => this.board[p] === this.board[index])) //is a match AND not already matched this round
+            || this.board[index] === "wildcard") { //or a wildcard always matches something
             this.matchedCards.push(index);
             this.currentRoundMatchedCards.push(index);
             if (this.currentRoundMatchedCards.length === this.currentRecipe!.ingredients.length) this.completeRound();
@@ -192,7 +248,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             //A little harsh because there's no timer and they could just look at all the ingredients again otherwise.
             this.score -= 3;
         }
-        this.flippedCards = [];
+        this.hideIngredients();
         if (this.isGameOver()) this.endGame();
         else this.switchRecipe();
     }
@@ -227,19 +283,20 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         if (this.score >= 50) this.winnings[0].amount += 20;
         this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
 
+        const multiplier = this.difficulty.rewardMultiplier;
         this.wonTourismTicks = this.wonProductionTicks = 0;
         if (this.city.minigameOptions.get("mm-r") === "1" || !this.city.flags.has(CityFlags.UnlockedTourism)) { //Default reward before tourism is unlocked, but also selectable later on
-            this.wonProductionTicks = rangeMapLinear(this.score, 1, LONG_TICKS_PER_DAY * 2, 5, 50, 1);
+            this.wonProductionTicks = rangeMapLinear(this.score, 1, LONG_TICKS_PER_DAY * 2, 5, 50, 1, multiplier);
             if (this.wonProductionTicks) this.city.events.push(new ProductionReward(this.wonProductionTicks, 0.05));
         } else {
-            this.wonTourismTicks = rangeMapLinear(this.score, 1, LONG_TICKS_PER_DAY * 2, 5, 50, 1); //Up to 2 days worth of a tourism boost
+            this.wonTourismTicks = rangeMapLinear(this.score, 1, LONG_TICKS_PER_DAY * 2, 5, 50, 1, multiplier); //Up to 2 days worth of a tourism boost
             if (this.wonTourismTicks) {
                 this.city.events.push(new TourismReward(this.wonTourismTicks, 0.05));
                 this.city.checkAndAwardTitle(TitleTypes.SmartCityShowcase.id);
             }
         }
 
-        progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.05, 25, 50, 0.001));
+        progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.05, 25, 50, 0.001, multiplier));
     }
 
     asDrawable(): Drawable {
@@ -334,6 +391,26 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
                 }));
             }
         });
+        
+        //Draw mini "barwildcard" images according to how many matchedIngredients are "wildcard"
+        const wildcardCount = matchedIngredients.filter(p => p === "wildcard").length;
+        for (let i = 0; i < wildcardCount; i++) {
+            const ingredientDrawable = recipeArea.addChild(new Drawable({
+                anchors: ['right'],
+                x: 10,
+                y: 60 + i * 40,
+                width: `${ingredientWidth * 0.5}px`,
+                height: "40px",
+                noXStretch: true,
+                image: new TextureInfo(0, 0, `minigame/barwildcard`),
+            }));
+            ingredientDrawable.addChild(new Drawable({
+                anchors: ['right'],
+                width: "24px",
+                height: "24px",
+                image: new TextureInfo(32, 32, "ui/ok"),
+            }));
+        }
 
         recipeArea.addChild(new Drawable({
             y: 150,
@@ -467,6 +544,9 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             text: "Memory Mixology",
         }));
         nextY += 70;
+
+        if (this.city.resources.get(new Paper().type)?.capacity) nextY = this.drawPaperSelector(overlay, nextY);
+        nextY = this.drawDifficultySelector(overlay, nextY);
 
         overlay.addChild(new Drawable({
             anchors: ['centerX'],
@@ -669,6 +749,110 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
         this.scroller.setChildrenSize(nextY - baseY);
     }
 
+    private drawPaperSelector(parent: Drawable, nextY: number): number {
+        const selector = parent.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "360px",
+            height: "48px",
+            fallbackColor: '#00000000',
+        }));
+
+        selector.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: 9,
+            width: "240px",
+            height: "38px",
+            text: "Paper (+reveal)",
+        }));
+
+        if (this.paperToUse > 0)
+            selector.addChild(new Drawable({
+                width: "48px",
+                height: "48px",
+                fallbackColor: '#444444',
+                onClick: () => this.changePaper(-1),
+                children: [
+                    new Drawable({
+                        anchors: ['centerX'],
+                        centerOnOwnX: true,
+                        y: 9,
+                        width: "32px",
+                        height: "38px",
+                        text: "-",
+                    })
+                ]
+            }));
+
+        if (this.paperToUse < 5)
+            selector.addChild(new Drawable({
+                anchors: ['right'],
+                width: "48px",
+                height: "48px",
+                fallbackColor: '#444444',
+                onClick: () => this.changePaper(1),
+                children: [
+                    new Drawable({
+                        anchors: ['centerX'],
+                        centerOnOwnX: true,
+                        y: 9,
+                        width: "32px",
+                        height: "38px",
+                        text: "+",
+                    })
+                ]
+            }));
+
+        return nextY + 64;
+    }
+
+    private changePaper(change: number): void {
+        this.paperToUse = Math.max(0, Math.min(5, this.paperToUse + change));
+        this.costs.find(p => p.type === new Paper().type)!.amount = this.paperToUse;
+    }
+
+    private drawDifficultySelector(overlay: Drawable, nextY: number): number {
+        const selector = overlay.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "100%",
+            height: "58px",
+            fallbackColor: '#00000000'
+        }));
+
+        ['easy', 'medium', 'hard'].forEach((difficulty, index) => {
+            const affordable = this.city.hasResources([{ type: new BarPlays().type, amount: DIFFICULTY_SETTINGS[difficulty as Difficulty].playCost }], false);
+            selector.addChild(new Drawable({
+                anchors: [index === 0 ? 'left' : index === 1 ? 'centerX' : 'right'],
+                centerOnOwnX: index === 1,
+                x: index === 1 ? 0 : 10,
+                width: index === 1 ? "38%" : "28%",
+                height: "58px",
+                fallbackColor: this.selectedDifficulty === difficulty ? '#666666' : '#444444',
+                onClick: () => {
+                    this.selectedDifficulty = difficulty as Difficulty;
+                    this.costs.find(p => p.type === new BarPlays().type)!.amount = this.difficulty.playCost;
+                },
+                children: [
+                    new Drawable({
+                        anchors: ["centerX"],
+                        y: 11,
+                        width: "calc(100% - 10px)",
+                        height: "90%",
+                        reddize: !affordable,
+                        text: difficulty.charAt(0).toUpperCase() + difficulty.slice(1),
+                        centerOnOwnX: true
+                    })
+                ]
+            }));
+        });
+
+        return nextY + 73;
+    }
+
     private toggleRules(): void {
         this.howToPlayShown = !this.howToPlayShown;
         if (this.howToPlayShown) {
@@ -761,6 +945,16 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             keepParentWidth: true,
             text: "The game stops if you make a mistake or complete a recipe and either there are no more possible recipes or fewer than 6 cards remain.",
         }));
+        parent = parent.addChild(new Drawable({
+            anchors: ['bottom'],
+            y: -50,
+            width: "calc(100% - 40px)",
+            height: "40px",
+            wordWrap: true,
+            keepParentWidth: true,
+            text: this.city.resources.get(new Paper().type)?.capacity ? "Before playing, you can spend a number of Paper units to keep that same number of cards revealed."
+                : "Once you unlock Paper, you can spend some before starting the game to keep that number of cards revealed.",
+        }));
 
         parent.addChild(new Drawable({
             anchors: ['bottom', 'centerX'],
@@ -811,7 +1005,26 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
                 nextY -= 150;
             }
         }
-        this.scroller.setChildrenSize(1400);
+        //Draw the wildcard last in the center
+        parent.addChild(new Drawable({
+            anchors: ['centerX', 'bottom'],
+            centerOnOwnX: true,
+            x: -20,
+            y: nextY,
+            width: "96px",
+            height: "96px",
+            image: new TextureInfo(64, 64, `minigame/barwildcard`),
+        }));
+        parent.addChild(new Drawable({
+            anchors: ['centerX', 'bottom'],
+            centerOnOwnX: true,
+            x: -20,
+            y: nextY - 30,
+            width: "calc(100% - 20px)",
+            height: "32px",
+            text: "Bag of airplane bottles (wildcard)",
+        }));
+        this.scroller.setChildrenSize(1650);
     }
 
     getLastDrawable(): Drawable | null {
@@ -847,6 +1060,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             "minigame/bartequila": "assets/minigame/bartequila.png",
             "minigame/bartriplesec": "assets/minigame/bartriplesec.png",
             "minigame/barvodka": "assets/minigame/barvodka.png",
+            "minigame/barwildcard": "assets/minigame/barwildcard.png",
             "minigame/bartipjar": "assets/minigame/bartipjar.png",
             "minigame/bararrowdown": "assets/minigame/bararrowdown.png",
         };

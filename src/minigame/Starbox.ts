@@ -153,37 +153,36 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
         this.winnings = [];
         if (this.isPractice) return;
         let extraFlunds = 0;
+        const multiplier = this.difficulty.rewardMultiplier;
 
         //Note: My score tends to be about 260-280, and I like to think I'm pretty good, so rewards should cap around 220-240.
         //This minigame has a higher skill cap than most of them, so the rewards are much more meaningful than the others.
         if (this.city.minigameOptions.get("sb-r") === "1") {
             //"Star Fuel" reward set--higher minimum, just nuclear fuel, lower total flunds value
-            this.winnings.push(new Uranium(rangeMapLinear(this.totalStarsDestroyed, 0.5, 6, 70, 220, 0.1))); //6*9=54
-            this.winnings.push(new Tritium(rangeMapLinear(this.totalStarsDestroyed, 0.5, 6, 110, 240, 0.1))); //6*12=72. Sum of all: 126 flunds
+            this.winnings.push(new Uranium(rangeMapLinear(this.totalStarsDestroyed, 0.5, 6, 70, 220, 0.1, multiplier))); //6*9=54
+            this.winnings.push(new Tritium(rangeMapLinear(this.totalStarsDestroyed, 0.5, 6, 110, 240, 0.1, multiplier))); //6*12=72. Sum of all: 126 flunds
         } else if (this.city.minigameOptions.get("sb-r") === "2") {
             //"Fermi Paradox" reward set: silicon, a few plants, coal, oil, electronics, research points
-            this.winnings.push(new Silicon(rangeMapLinear(this.totalStarsDestroyed, 0.1, 5, 30, 100, 0.1))); //5*7=35
-            this.winnings.push(new Grain(rangeMapLinear(this.totalStarsDestroyed, 0.1, 16, 40, 180, 0.1))); //16*1=16
-            this.winnings.push(new Wood(rangeMapLinear(this.totalStarsDestroyed, 0.1, 20, 80, 260, 0.1))); //20*1=20
-            this.winnings.push(new Coal(rangeMapLinear(this.totalStarsDestroyed, 0.1, 6, 100, 220, 0.1))); //4*6=24
-            this.winnings.push(new Oil(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 120, 240, 0.1))); //4*5=20
-            this.winnings.push(new Electronics(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 140, 280, 0.1))); //4*8.5=34. Sum of all: 149 flunds
-            this.winnings.push(new Research(rangeMapLinear(this.totalStarsDestroyed, 0.1, 2, 160, 280, 0.1))); //A lower limit--research points were way too easy to earn
+            this.winnings.push(new Silicon(rangeMapLinear(this.totalStarsDestroyed, 0.1, 5, 30, 100, 0.1, multiplier))); //5*7=35
+            this.winnings.push(new Grain(rangeMapLinear(this.totalStarsDestroyed, 0.1, 16, 40, 180, 0.1, multiplier))); //16*1=16
+            this.winnings.push(new Wood(rangeMapLinear(this.totalStarsDestroyed, 0.1, 20, 80, 260, 0.1, multiplier))); //20*1=20
+            this.winnings.push(new Coal(rangeMapLinear(this.totalStarsDestroyed, 0.1, 6, 100, 220, 0.1, multiplier))); //4*6=24
+            this.winnings.push(new Oil(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 120, 240, 0.1, multiplier))); //4*5=20
+            this.winnings.push(new Electronics(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 140, 280, 0.1, multiplier))); //4*8.5=34. Sum of all: 149 flunds
+            this.winnings.push(new Research(rangeMapLinear(this.totalStarsDestroyed, 0.1, 2, 160, 280, 0.1, multiplier))); //A lower limit--research points were way too easy to earn
         } else {
             //"Elements" reward set
-            this.winnings.push(new Silicon(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 30, 80, 0.1))); //4*7=28
-            this.winnings.push(new Stone(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 40, 110, 0.1))); //4*3=12
-            this.winnings.push(new Iron(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 60, 140, 0.1))); //4*2=8
-            this.winnings.push(new Copper(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 100, 160, 0.1))); //4*3=12
-            this.winnings.push(new Research(rangeMapLinear(this.totalStarsDestroyed, 0.1, 2, 120, 280, 0.1))); //A lower limit--research points were way too easy to earn
-            this.winnings.push(new Uranium(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 150, 220, 0.1))); //4*9=36
-            this.winnings.push(new Tritium(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 170, 240, 0.1))); //4*12=48. Sum of all: 144 flunds
+            this.winnings.push(new Silicon(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 30, 80, 0.1, multiplier))); //4*7=28
+            this.winnings.push(new Stone(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 40, 110, 0.1, multiplier))); //4*3=12
+            this.winnings.push(new Iron(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 60, 140, 0.1, multiplier))); //4*2=8
+            this.winnings.push(new Copper(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 100, 160, 0.1, multiplier))); //4*3=12
+            this.winnings.push(new Research(rangeMapLinear(this.totalStarsDestroyed, 0.1, 2, 120, 280, 0.1, multiplier))); //A lower limit--research points were way too easy to earn
+            this.winnings.push(new Uranium(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 150, 220, 0.1, multiplier))); //4*9=36
+            this.winnings.push(new Tritium(rangeMapLinear(this.totalStarsDestroyed, 0.1, 4, 170, 240, 0.1, multiplier))); //4*12=48. Sum of all: 144 flunds
         }
 
         this.winnings = filterConvertAwardWinnings(this.city, this.winnings, extraFlunds);
-        const multiplier = this.difficulty.rewardMultiplier;
-        this.winnings.forEach(p => p.amount *= multiplier);
-        progressMinigameOptionResearch(this.city, multiplier * rangeMapLinear(this.totalStarsDestroyed, 0.01, 0.07, 100, 300, 0.001));
+        progressMinigameOptionResearch(this.city, rangeMapLinear(this.totalStarsDestroyed, 0.01, 0.07, 100, 300, 0.001, multiplier));
         this.city.updateLastUserActionTime();
         this.game.fullSave();
     }
