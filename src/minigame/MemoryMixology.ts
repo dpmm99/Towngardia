@@ -276,14 +276,15 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
     private calculateWinnings(): void {
         this.winnings = [];
         if (this.isPractice) return;
+        const multiplier = this.difficulty.rewardMultiplier;
 
         //Early game, you just get a tiny bit of flunds. Once you unlock tourism, it gives you a temporary tourism boost.
         if (this.score >= 10) this.winnings.push(new Flunds(this.score)); //Theoretical max score with the game rules: 2 * 15 (four-ingredient recipes) + 2 * 10 (three-ingredient recipes) = 50. If you mess up on one of the 4-ingredient ones, 15 + 3 * 10 = 45. Mess up both and you can score 50 again, though... 5 * 10 = 50 because it'd leave 6 cards at the end.
         if (this.score >= 30) this.winnings[0].amount += 10;
         if (this.score >= 50) this.winnings[0].amount += 20;
+        this.winnings[0].amount *= multiplier;
         this.city.transferResourcesFrom(this.winnings.map(p => p.clone()), "earn");
 
-        const multiplier = this.difficulty.rewardMultiplier;
         this.wonTourismTicks = this.wonProductionTicks = 0;
         if (this.city.minigameOptions.get("mm-r") === "1" || !this.city.flags.has(CityFlags.UnlockedTourism)) { //Default reward before tourism is unlocked, but also selectable later on
             this.wonProductionTicks = rangeMapLinear(this.score, 1, LONG_TICKS_PER_DAY * 2, 5, 50, 1, multiplier);
