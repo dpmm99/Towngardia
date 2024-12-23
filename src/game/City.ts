@@ -1572,10 +1572,14 @@ export class City {
         let value = Array.from(infinibusinessTypes.values()).reduce(formula, 0);
 
         //If we're looking for a theoretical number for building one more copy, we recalculate the same thing but with +1 to efficiencySum, and get the difference between that and the original value.
-        if (theoretical) value = Array.from(infinibusinessTypes.values()).map(p => ({ typeValue: p.typeValue, efficiencySum: p.efficiencySum + 1 })).reduce(formula, 0) - value;
+        if (theoretical) {
+            //If there are no placed buildings, we have to look up the value, because infinibusinessTypes will be empty.
+            if (type && !infinibusinessTypes.has(type)) infinibusinessTypes.set(type, { efficiencySum: 0, typeValue: this.buildingTypes.find(p => p.type === type)!.businessValue });
+            value = Array.from(infinibusinessTypes.values()).map(p => ({ typeValue: p.typeValue, efficiencySum: p.efficiencySum + 1 })).reduce(formula, 0) - value;
+        }
 
         //If we want the value of just one copy, divide by efficiency sum. This is used for the info view for placed copies only.
-        if (each) value /= Array.from(infinibusinessTypes.values()).reduce((sum, type) => sum + type.efficiencySum, 0.0000001);
+        if (each && !theoretical) value /= Array.from(infinibusinessTypes.values()).reduce((sum, type) => sum + type.efficiencySum, 0.0000001);
 
         return value * this.getPostOfficeBonus();
     }

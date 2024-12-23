@@ -41,11 +41,15 @@ export class CitizenDietSystem {
         this.perfectHappiness = optimumDiet.reduce((sum, effect) => sum + Math.max(0, effect.happiness), 0);
     }
 
-    onLongTick(): void {
+    public getFoodNeeded(ignoreBonus: boolean): number {
         const population = this.city.resources.get("population")!.amount;
+        const eventFoodNeedsReductionFactor = ignoreBonus ? 1 : this.city.events.filter(p => p instanceof DietReward).reduce((a, e) => a * (1 - e.getBonus()), 1); //Reduces food needs multiplicatively
+        return population / 100 / LONG_TICKS_PER_DAY * eventFoodNeedsReductionFactor; // 1 unit feeds 100 people for a day
+    }
+
+    onLongTick(): void {
         const peakPopulation = this.city.peakPopulation;
-        const eventFoodNeedsReductionFactor = this.city.events.filter(p => p instanceof DietReward).reduce((a, e) => a * (1 - e.getBonus()), 1); //Reduces food needs multiplicatively
-        const foodNeeded = population / 100 / LONG_TICKS_PER_DAY * eventFoodNeedsReductionFactor; // 1 unit feeds 100 people for a day
+        const foodNeeded = this.getFoodNeeded(false);
 
         // Calculate available food
         const availableFood = this.foodTypes.map(type => ({

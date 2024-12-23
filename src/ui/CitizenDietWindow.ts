@@ -1,4 +1,5 @@
 import { City } from "../game/City.js";
+import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
 import { FoodHealth, FoodSatisfaction, FoodSufficiency, RESOURCE_TYPES } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
@@ -6,6 +7,7 @@ import { IOnResizeEvent } from "./IOnResizeEvent.js";
 import { StandardScroller } from "./StandardScroller.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { UIManager } from "./UIManager.js";
+import { humanizeCeil } from "./UIUtil.js";
 
 export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
@@ -64,6 +66,15 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
 
         let nextY = 90 - this.scroller.getScroll();
         const baseY = nextY;
+
+        windowDrawable.addChild(new Drawable({
+            x: 10,
+            y: nextY,
+            text: `Food consumption: ${humanizeCeil(this.city.citizenDietSystem.getFoodNeeded(true) * LONG_TICKS_PER_DAY)}/day`,
+            width: "450px",
+            height: "24px"
+        }));
+        nextY += 34;
 
         // Food Sufficiency bar
         this.addProgressBar(windowDrawable, nextY, "Sufficiency", this.city.resources.get(new FoodSufficiency().type)!.amount, "ui/foodsufficiency");

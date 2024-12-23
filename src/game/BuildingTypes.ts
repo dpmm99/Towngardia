@@ -3518,7 +3518,7 @@ export class Clinic extends Building {
         return [{
             type: "flunds", amount: 8 * (atEfficiency || this.poweredTimeDuringLongTick)
                 * city.budget.serviceAllocations[this.serviceAllocationType] * Math.max(1, this.affectingBuildingCount) / 10 //I realized after a looong time that I meant for this to be Math.min...but now I kinda like how the costs scale up so much.
-                * (city.techManager.techs.get("aidiagnostics")?.researched ? 0.75 : 1)
+                * (1 - city.techManager.getAdoption("aidiagnostics") * 0.25)
         }];
     }
 
