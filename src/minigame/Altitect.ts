@@ -240,7 +240,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     public startGame(): void {
         if (this.building && this.building.x !== -1 && this.city.checkAndSpendResources(this.getCosts())) {
             this.initializeGame();
-            this.city.altitectPlays++;
+            if (!this.isPractice) this.city.altitectPlays++;
             this.city.updateLastUserActionTime();
             this.game.fullSave();
         }
