@@ -124,6 +124,7 @@ export class TourismReward extends CityEvent {
         const touristsResource = city.resources.get("tourists");
 
         if (!this.variables.length) this.variables.push(0.05); //Default 5% bonus
+        if (!this.maxDuration) this.maxDuration = 1;
         if (touristsResource?.capacity) touristsResource.amount *= 1 + (this.variables[0] * this.duration / this.maxDuration); //Bonus goes down over time
 
         return super.onLongTick(city);
@@ -585,12 +586,16 @@ export class Epidemic extends CityEvent {
     constructor() {
         super("epidemic", "Epidemic", 7 * LONG_TICKS_PER_DAY,
             "People are clueless about how to take care of their own bodies, and your healthcare coverage is underwhelming. An epidemic has spread and is causing economic havoc.",
-            "They got better--the coughers are back to breaking their backs to fill your coffers.", "healthcare", EventTickTiming.Population);
+            "They got better--the coughers are back to breaking their backs to fill your coffers.", "epidemic", EventTickTiming.Population);
     }
 
     override shouldStart(city: City, date: Date): boolean {
-        //No chance unless health coverage is subpar; if the city has >1200 people and it hasn't happened in at least 25 days, and at 0.5 coverage, it's a 2.5% chance. At 0 coverage, it's 5%.
-        return this.checkedStart(city.peakPopulation > 1200 && this.skippedStarts > 25 * LONG_TICKS_PER_DAY && Math.random() < 0.005 * (10 - Math.round(10 * this.getAverageHealth(city))), city, date);
+        //No chance unless health coverage is subpar; if the city has enough people and it hasn't happened in at least 25 days, and at 0.5 coverage, it's a 2.5% chance. At 0 coverage, it's 5%.
+        return city.flags.has(CityFlags.HealthcareMatters) && this.checkedStart(this.skippedStarts > 25 * LONG_TICKS_PER_DAY && Math.random() < this.getEpidemicChance(city), city, date);
+    }
+
+    public getEpidemicChance(city: City): number {
+        return 0.005 * (10 - Math.round(10 * this.getAverageHealth(city)));
     }
 
     private getAverageHealth(city: City): number {
@@ -651,6 +656,7 @@ export class Spoilage extends CityEvent {
         let anyUnpowered = false;
         let maxBusinessFailureCounter = 0;
         const coldStorages = city.buildings.filter(p => p.type === getBuildingType(ColdStorage));
+        if (!coldStorages.length) return false;
         coldStorages.forEach(p => {
             if (p.lastEfficiency < 0.8) {
                 if (++p.businessFailureCounter >= LONG_TICKS_PER_DAY) {

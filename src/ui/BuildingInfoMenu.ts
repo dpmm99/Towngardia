@@ -4,11 +4,11 @@ import { CityHall, DepartmentOfEnergy, EnvironmentalLab, FreeStuffTable, Informa
 import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
 import { Effect } from "../game/Effect.js";
-import { TourismReward } from "../game/EventTypes.js";
+import { Epidemic, TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICKS_PER_LONG_TICK } from "../game/FundamentalConstants.js";
 import { EffectType } from "../game/GridType.js";
 import { HIGH_TECH_UNLOCK_EDU } from "../game/HappinessCalculator.js";
-import { MinigameOptionResearch, Timeslips, getResourceType } from "../game/ResourceTypes.js";
+import { Health, MinigameOptionResearch, Timeslips, getResourceType } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -135,7 +135,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             }));
             nextY += 24 + 5;
 
+            let firstFlundsCost: boolean = true;
             for (const cost of upkeepCosts) {
+                const displayFactor = building.upkeepScales && cost.type === "flunds" && building.x === -1 ? (firstFlundsCost ? 10 : 1000) : 1; //per-building/citizen costs are too small to display normally
                 infoDrawable.addChild(new Drawable({
                     x: padding,
                     y: nextY,
@@ -149,21 +151,28 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                     y: nextY + 8,
                     width: (barWidth - padding * 2 - iconSize - 5) + "px",
                     height: iconSize + "px",
-                    text: cost.type === 'power' ? humanizePowerCeil(cost.amount) : `${humanizeCeil(cost.amount * LONG_TICKS_PER_DAY)} ${cost.type}/day`, //"5 MW" or "5 food/day"
+                    text: cost.type === 'power' ? humanizePowerCeil(cost.amount) : `${humanizeCeil(cost.amount * LONG_TICKS_PER_DAY * displayFactor)} ${cost.type}/day`, //"5 MW" or "5 food/day"
                     id: `${infoDrawable.id}.upkeep.${cost.type}.text`,
                 }));
                 nextY += iconSize + 5;
+                //If unplaced, show "...per covered building" after the first flunds cost and "...per covered citizen" after the next one.
+                //Otherwise, show "...from <affectingBuildingCount> buildings" and "...from <affectingCitizenCount> citizens" instead.
+                if (building.upkeepScales && cost.type === "flunds") {
+                    infoDrawable.addChild(new Drawable({
+                        x: padding,
+                        y: nextY,
+                        width: (barWidth - padding * 2) + "px",
+                        height: "24px",
+                        text: building.x === -1 ?
+                            (firstFlundsCost ? "...per 10 covered buildings" : "...per 1k covered citizens") :
+                            (firstFlundsCost ? `...from ${building.affectingBuildingCount} building${building.affectingBuildingCount === 1 ? "" : "s"}`
+                                : `...from ${building.affectingCitizenCount} citizen${building.affectingCitizenCount === 1 ? "" : "s"}`),
+                    }));
+                    firstFlundsCost = false;
+                    nextY += 24 + 5;
+                }
             }
-            if (building.x === -1 && building.upkeepScales) {
-                infoDrawable.addChild(new Drawable({
-                    x: padding,
-                    y: nextY,
-                    width: (barWidth - padding * 2) + "px",
-                    height: "24px",
-                    text: "...per covered building",
-                }));
-                nextY += 24 + 5;
-            }
+
             nextY += padding - 5;
         }
 
@@ -334,7 +343,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
                 //Show expected increase in time spent in weather events as caused by greenhouse gases.
                 //I labeled it "rate" for brevity, but it's actually "increase in the fraction of time that the city spends with this event active".
-                const droughtFraction = increasedEventTimeFraction(0.03, 40, 100, gas.amount); //Numbers copied from the event definitions
+                const droughtFraction = increasedEventTimeFraction(0.03, 40, 100, gas.amount) || 0; //Numbers copied from the event definitions
                 infoDrawable.addChild(new Drawable({
                     x: padding,
                     y: nextY,
@@ -343,7 +352,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                     text: ` Drought rate +${Math.round(droughtFraction * 1000) / 10}%`,
                 }));
                 nextY += 24 + 5;
-                const heatwaveFraction = increasedEventTimeFraction(0.05, 20, 80, gas.amount);
+                const heatwaveFraction = increasedEventTimeFraction(0.05, 20, 80, gas.amount) || 0;
                 const isHeatwave = new Date().getMonth() > 3 && new Date().getMonth() < 9;
                 infoDrawable.addChild(new Drawable({
                     x: padding,
@@ -404,6 +413,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             else if (building instanceof EnvironmentalLab) nextY = this.addEnvironmentalLabInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
             else if (building instanceof SandsOfTime) nextY = this.addSandsOfTimeInfo(infoDrawable, padding, nextY, iconSize, barWidth);
             else if (building instanceof MinigameMinilab) nextY = this.addMinigameMinilabInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
+            else if (building.effects?.effects.some(p => p.type === EffectType.Healthcare)) nextY = this.addHealthInfo(infoDrawable, padding, nextY, iconSize, barWidth);
 
             //Patronage
             if (building.businessPatronCap && (building.roadConnected || !building.needsRoad)) {
@@ -411,7 +421,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             }
 
             //Warnings
-            const warnings: {icon: string, text: string}[] = [];
+            const warnings: { icon: string, text: string }[] = [];
             if (building.fireHazard > building.getHighestEffect(this.city, EffectType.FireProtection)) warnings.push({ icon: "fire", text: "At risk of fires" });
             if (building.needsRoad && !building.roadConnected) warnings.push({ icon: "noroad", text: "No road access" });
             if (!building.powerConnected && building.needsPower) warnings.push({ icon: "nopower", text: "No power connection" });
@@ -441,8 +451,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 }
                 nextY += padding - 5;
             }
-        } else if (building.businessPatronCap) { //Building isn't placed yet, but we still want the player to know about its business stats (patronage cap)
-            nextY = this.addBusinessStats(infoDrawable, padding, nextY, building, barWidth, false);
+        } else { //Unplaced buildings
+            if (building.businessPatronCap) nextY = this.addBusinessStats(infoDrawable, padding, nextY, building, barWidth, false);
+            if (building instanceof PostOffice) nextY = this.addPostOfficeInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
         }
 
         //Description
@@ -782,7 +793,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             let totalEffect = 1;
             for (const event of tourismEvents) {
                 const reward = event as TourismReward;
-                const effect = (reward.variables[0] ?? 0.05) * reward.duration / reward.maxDuration;
+                const effect = (reward.variables[0] ?? 0.05) * reward.duration / (reward.maxDuration || 1);
                 totalEffect *= 1 + effect;
                 infoDrawable.addChild(new Drawable({
                     x: padding,
@@ -978,6 +989,26 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             nextY += 30 + padding;
         }
 
+        return nextY;
+    }
+
+    private addHealthInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, barWidth: number): number {
+        const epidemicChance = 1 - Math.pow(1 - Math.min(1, new Epidemic().getEpidemicChance(this.city)), LONG_TICKS_PER_DAY);
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: iconSize + "px",
+            height: iconSize + "px",
+            image: new TextureInfo(iconSize, iconSize, `ui/epidemic`),
+        }));
+        infoDrawable.addChild(new Drawable({
+            x: padding + iconSize + 5,
+            y: nextY + 8,
+            width: (barWidth - padding * 2 - iconSize - 5) + "px",
+            height: iconSize + "px",
+            text: "Epidemic chance: " + humanizeFloor(epidemicChance * 100) + "%/day",
+        }));
+        nextY += iconSize + padding;
         return nextY;
     }
 

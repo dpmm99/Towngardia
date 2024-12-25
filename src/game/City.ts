@@ -28,7 +28,7 @@ import { GIFT_TYPES } from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
 import { ARShopping, FoodServiceRobots, SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
 
-const CITY_DATA_VERSION = 4; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
+const CITY_DATA_VERSION = 5; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
     //Not serialized
     public uiManager: UIManager | null = null;
@@ -240,6 +240,14 @@ export class City {
             }
 
             this.dataVersion = 4;
+        }
+        if (this.dataVersion < 5) {
+            //building.affectingCitizenCount didn't exist until this update
+            for (const building of this.buildings) {
+                if (building.upkeepScales) building.recalculateAffectingBuildings(this);
+            }
+
+            this.dataVersion = 5;
         }
     }
 
@@ -875,6 +883,7 @@ export class City {
                             const effect = this.effectGrid[building.y + y][building.x + x][i];
                             if (effect.building && !affectedByBuildingSet.has(effect.building)) {
                                 effect.building.affectingBuildingCount++;
+                                if (building.isResidence) effect.building.affectingCitizenCount += building.outputResources.find(p => p instanceof ResourceTypes.Population)?.capacity ?? 0;
                                 affectedByBuildingSet.add(effect.building);
                             }
                         }
@@ -935,6 +944,25 @@ export class City {
         tiles.forEach(tile => this.effectGrid[tile.y][tile.x] = this.effectGrid[tile.y][tile.x].filter(p => p.building !== building));
     }
 
+    changedPopulation(building: Building, difference: number): void { //Split from removeFromGrid for use with applying population mods to buildings.
+        const affectedByBuildingSet = new Set<Building>();
+        affectedByBuildingSet.add(building); //So it doesn't count toward affecting itself
+        for (let y = 0; y < building.height; y++) {
+            for (let x = 0; x < building.width; x++) {
+                //Need to check that this building's stamp footprint is at least not empty at this location, for irregularly shaped buildings. Can't use the same "this building is at that grid location" as in removeFromGrid since others could be built on top of it.
+                if (building.stampFootprint[y][x] === FootprintType.EMPTY) continue;
+
+                //Adjust numbers for any building that's affecting *this tile*
+                for (let effect of this.effectGrid[building.y + y][building.x + x]) {
+                    if (effect.building && !affectedByBuildingSet.has(effect.building)) {
+                        effect.building.affectingCitizenCount += difference;
+                        affectedByBuildingSet.add(effect.building);
+                    }
+                }
+            }
+        }
+    }
+
     removeFromGrid(building: Building): void {
         const affectedByBuildingSet = new Set<Building>();
         affectedByBuildingSet.add(building); //So it doesn't count toward affecting itself
@@ -958,6 +986,7 @@ export class City {
                             const effect = this.effectGrid[building.y + y][building.x + x][i];
                             if (effect.building && !affectedByBuildingSet.has(effect.building)) {
                                 effect.building.affectingBuildingCount--;
+                                if (building.isResidence) effect.building.affectingCitizenCount -= building.outputResources.find(p => p instanceof ResourceTypes.Population)?.capacity ?? 0;
                                 affectedByBuildingSet.add(effect.building);
                             }
                         }
@@ -1212,6 +1241,7 @@ export class City {
         while (surplus > 0 && powerPlants.length) {
             const powerPlant = powerPlants.shift()!; //Pick the most expensive power producer by upkeep per watts
             //Refund its upkeep proportionally to the excess power
+            if (!powerPlant.powerProduction) continue;
             const powerToRefundFor = Math.min(surplus, powerPlant.powerProduction);
             const refund = powerToRefundFor * (powerPlant.upkeep / powerPlant.powerProduction) * adoption;
             this.flunds.amount += refund;
@@ -1313,7 +1343,7 @@ export class City {
         const research = this.resources.get("research")!;
         const innovatorBonus = this.titles.get(TitleTypes.CityOfInnovators.id)?.attained ? 1.1 : 1;
         const eventBonus = this.events.filter(p => p instanceof ResearchReward).reduce((a, b) => a + (b as ResearchReward).getBonus(), 1); //Add bonus from events
-        research.produce(Math.max(1, Math.min(research.productionRate, Math.log10(this.resources.get("population")!.amount) * this.getCityAverageEducation())) * innovatorBonus * eventBonus / LONG_TICKS_PER_DAY);
+        research.produce(Math.max(1, Math.min(research.productionRate, Math.log10(Math.max(1, this.resources.get("population")!.amount)) * this.getCityAverageEducation())) * innovatorBonus * eventBonus / LONG_TICKS_PER_DAY);
 
         //Cap the auto-buy amounts
         this.resources.forEach(resource => resource.buyableAmount = Math.min(resource.buyableAmount, resource.buyCapacity));
@@ -1554,7 +1584,7 @@ export class City {
     getInfinibusinessRevenue(type?: string, each?: boolean, theoretical?: boolean): number {
         const populationResource = this.resources.get("population");
         if (!populationResource) return 0;
-        const population = populationResource.amount;
+        const population = Math.max(1, populationResource.amount);
 
         const infinibusinessTypes = new Map<string, { efficiencySum: number, typeValue: number }>();
         let infinibusinesses = this.buildings
@@ -1706,8 +1736,13 @@ export class City {
             this.flags.add(CityFlags.FoodMatters);
             this.uiManager?.updateTutorialSteps();
         }
-        if (this.peakPopulation >= 600 && !this.flags.has(CityFlags.EducationMatters)) {
-            this.notify(new Notification("(Smart) Help Wanted", "You've reached a population of 600! You can now build schools to provide education to your citizens. They'll be unhappy without it in a town of this size, anyway. Plus, if they're smart enough, they might help you research a bit faster. Most importantly, you need to thoroughly educate your population before you can build higher-tech facilities. See Tutorials in the main menu for more info.", "education"));
+        if (this.peakPopulation >= 650 && !this.flags.has(CityFlags.UnlockedPost)) {
+            this.notify(new Notification("Mail Call", "You've reached a population of 650! You can now build a post office to help with business correspondence and package deliveries. Keep it running for a small citywide boost to sales tax revenue.", "infrastructure"));
+            this.unlock(getBuildingType(PostOffice));
+            this.flags.add(CityFlags.UnlockedPost);
+        }
+        if (this.peakPopulation >= 800 && !this.flags.has(CityFlags.EducationMatters)) {
+            this.notify(new Notification("(Smart) Help Wanted", "You've reached a population of 800! You can now build schools to provide education to your citizens. They'll be unhappy without it in a town of this size, anyway. Plus, if they're smart enough, they might help you research a bit faster. Most importantly, you need to thoroughly educate your population before you can build higher-tech facilities. See Tutorials in the main menu for more info.", "education"));
             this.unlock(getBuildingType(Library));
             this.unlock(getBuildingType(ElementarySchool));
             this.unlock(getBuildingType(HighSchool));
@@ -1717,40 +1752,35 @@ export class City {
             this.flags.add(CityFlags.EducationMatters);
             this.uiManager?.updateTutorialSteps();
         }
-        if (this.peakPopulation >= 750 && !this.flags.has(CityFlags.UnlockedPost)) {
-            this.notify(new Notification("Mail Call", "You've reached a population of 750! You can now build a post office to help with business correspondence and package deliveries. Keep it running for a small citywide boost to sales tax revenue.", "infrastructure"));
-            this.unlock(getBuildingType(PostOffice));
-            this.flags.add(CityFlags.UnlockedPost);
+        if (this.peakPopulation >= 1000 && !this.flags.has(CityFlags.UnlockedLogisticsCenter)) {
+            this.notify(new Notification("Logistics Center", "You've reached a population of 1000! You can now build a logistics center. Placing this building unlocks the ability to collect all resources across the city with one click. But even more interestingly, you can build a few 'free stuff' tables on the empty part of its lot and hand out your extra manufactured goods for a small happiness bonus.", "logistics"));
+            this.unlock(getBuildingType(LogisticsCenter));
+            this.unlock(getBuildingType(FreeStuffTable));
+            this.flags.add(CityFlags.UnlockedLogisticsCenter);
         }
-        if (this.peakPopulation >= 900 && !this.flags.has(CityFlags.HealthcareMatters)) {
-            this.notify(new Notification("Cough, cough", "You've reached a population of 900! You can now build healthcare facilities to keep your citizens happy and productive. Diet also affects healthcare effectiveness, so farm wisely! See Tutorials in the main menu for more info.", "healthcare"));
+        if (this.peakPopulation >= 1400 && !this.flags.has(CityFlags.HealthcareMatters)) {
+            this.notify(new Notification("Cough, cough", "You've reached a population of 1400! You can now build healthcare facilities to keep your citizens happy and productive. Diet also affects healthcare effectiveness, so farm wisely! See Tutorials in the main menu for more info.", "healthcare"));
             this.unlock(getBuildingType(Clinic));
             this.unlock(getBuildingType(Hospital));
             this.flags.add(CityFlags.HealthcareMatters);
             this.uiManager?.updateTutorialSteps();
         }
-        if (this.peakPopulation >= 1200 && !this.flags.has(CityFlags.B12Matters)) {
-            this.notify(new Notification("Vitamin B12", "You've reached a population of 1200 and unlocked the Algae Farm, which produces Vitamin B12! Your citizens' health will suffer if animal products comprise less than 10% of their diet. But now you can prevent a nutritional deficiency by making just 4% of their diet Vitamin B12! By the way, they want at least 6 distinct types of food now. Reminder: you can view Tutorials in the main menu for more info about food and diet.", "diet"));
+        if (this.peakPopulation >= 1800 && !this.flags.has(CityFlags.B12Matters)) {
+            this.notify(new Notification("Vitamin B12", "You've reached a population of 1800 and unlocked the Algae Farm, which produces Vitamin B12! Your citizens' health will suffer if animal products comprise less than 10% of their diet. But now you can prevent a nutritional deficiency by making just 4% of their diet Vitamin B12! By the way, they want at least 6 distinct types of food now. Reminder: you can view Tutorials in the main menu for more info about food and diet.", "diet"));
             this.unlock(getBuildingType(AlgaeFarm));
             this.flags.add(CityFlags.B12Matters);
         }
-        if (this.peakPopulation >= 1500 && !this.flags.has(CityFlags.UnlockedLogisticsCenter)) {
-            this.notify(new Notification("Logistics Center", "You've reached a population of 1500! You can now build a logistics center. Placing this building unlocks the ability to collect all resources across the city with one click. But even more interestingly, you can build a few 'free stuff' tables on the empty part of its lot and hand out your extra manufactured goods for a small happiness bonus.", "logistics"));
-            this.unlock(getBuildingType(LogisticsCenter));
-            this.unlock(getBuildingType(FreeStuffTable));
-            this.flags.add(CityFlags.UnlockedLogisticsCenter);
-        }
-        if (this.peakPopulation >= 1800 && !this.flags.has(CityFlags.CitizenDietFullSwing)) {
-            this.notify(new Notification("Dietary Diversity", "You've reached a population of 1800, and they're hungrier than ever. Until now, they've been happy with just six types of food...but now they want them all. Reminder: you can view Tutorials in the main menu for more info about food and diet.", "diet"));
-            this.flags.add(CityFlags.CitizenDietFullSwing);
-            this.uiManager?.updateTutorialSteps();
-        }
-        if (this.peakPopulation >= 2100 && !this.flags.has(CityFlags.UnlockedMinigameLab)) {
-            this.notify(new Notification("Minigame Minilab", "You've reached a population of 2100! You can now build a Minigame Minilab to unlock different reward sets in most of the minigames. It also produces extra tokens for the minigames at random, so it pays for itself pretty quickly--unless you're terrible at the minigames!", "minigames"));
+        if (this.peakPopulation >= 2000 && !this.flags.has(CityFlags.UnlockedMinigameLab)) {
+            this.notify(new Notification("Minigame Minilab", "You've reached a population of 2000! You can now build a Minigame Minilab to unlock different reward sets in most of the minigames. It also produces extra tokens for the minigames at random, so it pays for itself pretty quickly--unless you're terrible at the minigames!", "minigames"));
             this.unlock(getBuildingType(MinigameMinilab));
             this.flags.add(CityFlags.UnlockedMinigameLab);
         }
-        if (this.peakPopulation >= 2400 && !this.flags.has(CityFlags.UnlockedAltitect) && this.flunds.amount > 1000 && (this.presentBuildingCount.get(getBuildingType(Skyscraper)) ?? 0) > 3) {
+        if (this.peakPopulation >= 2500 && !this.flags.has(CityFlags.CitizenDietFullSwing)) {
+            this.notify(new Notification("Dietary Diversity", "You've reached a population of 2500, and they're hungrier than ever. Until now, they've been happy with just six types of food...but now they want them all. Reminder: you can view Tutorials in the main menu for more info about food and diet.", "diet"));
+            this.flags.add(CityFlags.CitizenDietFullSwing);
+            this.uiManager?.updateTutorialSteps();
+        }
+        if (this.peakPopulation >= 3000 && !this.flags.has(CityFlags.UnlockedAltitect) && this.flunds.amount > 1000 && (this.presentBuildingCount.get(getBuildingType(Skyscraper)) ?? 0) > 3) {
             this.notify(new Notification("Altitect", "Reach for the sky! You can now play the Altitect minigame, though it costs a pretty penny. You can access the minigame by long-tapping or right-clicking a Skyscraper in your city. Playing Altitect changes your selected skyscraper's stats permanently depending on your actions in the minigame. You can play it as many times as you like on each skyscraper, but the cost keeps increasing.", "minigames"));
             this.flags.add(CityFlags.UnlockedAltitect);
         }

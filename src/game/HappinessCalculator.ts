@@ -68,6 +68,7 @@ export class HappinessCalculator {
                 }
             }
         }
+        if (!this.relevantTileCount) this.relevantTileCount = 1; //Avoid division by zero the easy way
     }
 
     private isRelevantBuilding(building: Building): boolean {

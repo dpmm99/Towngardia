@@ -270,7 +270,6 @@ export class UIManager {
             if (!this.buildTypeBar.selectedBuilding) this.isConstructionMode = false;
             return true;
         }
-        if (this.checkClickComponent(this.resourcesBar, x, y)) return true;
 
         if (this.checkClickComponent(this.buildTypeBar, x, y)) {
             if (this.buildTypeBar.selectedBuilding) {
@@ -278,6 +277,7 @@ export class UIManager {
             } else this.exitConstructionMode();
             return true;
         }
+        if (this.checkClickComponent(this.resourcesBar, x, y)) return true;
 
         if (this.checkClickComponent(this.topBar, x, y)) return true;
 

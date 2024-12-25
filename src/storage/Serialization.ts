@@ -202,6 +202,7 @@ export class CitySerializer {
                     x: o.x,
                     y: o.y,
                     ab: o.affectingBuildingCount, //could just recalculate by calling addBuilding during load
+                    ac: o.affectingCitizenCount, //same
                     po: o.powered ? undefined : false, //I only want to store these if they're false, for storage efficiency reasons.
                     pc: o.powerConnected ? undefined : false,
                     rc: o.roadConnected ? undefined : false,
@@ -437,6 +438,7 @@ export class CityDeserializer {
                 r.x = o.x;
                 r.y = o.y;
                 r.affectingBuildingCount = o.ab;
+                r.affectingCitizenCount = o.ac ?? 0;
                 r.powered = o.po ?? true; //Only stored if false, or if it's an old version of the data, so undefined -> true.
                 r.powerConnected = o.pc ?? true;
                 r.roadConnected = o.rc ?? true;

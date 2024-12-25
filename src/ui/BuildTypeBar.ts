@@ -294,7 +294,7 @@ export class BuildTypeBar implements IHasDrawable, IOnResizeEvent {
                 text: "Importable: " + humanizePowerFloor(this.city.desiredPower * 0.5 + Math.min(0, powerSurplus)), //positive powerSurplus doesn't affect this calculation
                 biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
             }));
-            nextX += 250 + this.buildingPadding;
+            nextX += 250 + this.buildingPadding * 2; //Was a bit too close to the right edge of the screen without the * 2
         }
 
         this.scroller.setChildrenSize(nextX - baseX);

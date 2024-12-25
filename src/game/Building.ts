@@ -50,6 +50,7 @@ export class Building implements IHasDrawable {
     patronageEfficiency: number = 1; //Stays 1 if it's not a business.
 
     affectingBuildingCount: number = 0; //For services, mainly, so it can be calculated in place() and remove() instead of repeated for every service on every long tick.
+    affectingCitizenCount: number = 0; //Same idea as above, but for housing--theoretical max for surrounding residences, used for scaling service upkeep costs "more intuitively".
     upkeepScales: boolean = false; //affectingBuildingCount will only be recalculated on placement or radius-upgrade if this is true.
 
     //Drawable radius when placing the building
@@ -138,11 +139,14 @@ export class Building implements IHasDrawable {
                         if (reapply) continue;
                         const populationResource = this.outputResources.find(res => res instanceof Population) as Population;
                         if (populationResource) {
-                            populationResource.capacity = Math.max(0, populationResource.capacity + (negate ? -1 : 1) * mod.magnitude);
+                            const difference = (negate ? -1 : 1) * mod.magnitude;
+                            if (difference) city.changedPopulation(this, difference); //Ensure appropriate adjustments are made to service building upkeep costs when mods are applied
+                            populationResource.capacity = Math.max(0, populationResource.capacity + difference);
                             if (populationResource.capacity === 0) this.outputResources = this.outputResources.filter(p => p !== populationResource); //Would only happen if (negate).
                         } else if (!negate) {
                             //Add new population resource if there isn't one already
                             this.outputResources.push(new Population(0, mod.magnitude))
+                            city.changedPopulation(this, mod.magnitude);
                         }
                         break;
                     case "research": //Same code as population but for Research
@@ -249,6 +253,7 @@ export class Building implements IHasDrawable {
             this.y = -1;
         }
         this.affectingBuildingCount = 0;
+        this.affectingCitizenCount = 0;
         this.builtOn.clear();
         if (!justMoving && this.businessPatronCap > 0) this.patronageEfficiency = 0;
 
@@ -270,7 +275,9 @@ export class Building implements IHasDrawable {
 
     recalculateAffectingBuildings(city: City) {
         const radiusBonus = this.getRadiusUpgradeAmount(city);
-        this.affectingBuildingCount = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX + radiusBonus, this.areaIndicatorRadiusY + radiusBonus, this.areaIndicatorRounded, true).size;
+        const buildings = city.getBuildingsInArea(this.x, this.y, this.width, this.height, this.areaIndicatorRadiusX + radiusBonus, this.areaIndicatorRadiusY + radiusBonus, this.areaIndicatorRounded, true);
+        this.affectingBuildingCount = buildings.size;
+        this.affectingCitizenCount = [...buildings].filter(p => p.isResidence).reduce((a, b) => a + (b.outputResources.find(p => p instanceof Population)?.capacity ?? 0), 0);
     }
 
     addStorage(city: City, amount: number) {
@@ -532,7 +539,7 @@ export class Building implements IHasDrawable {
     //Show icons for when buildings are low on input resources as well. If they don't have enough for the next <view-provided number> long ticks, then the "feed me" icon should appear.
     //Of course, that doesn't apply to every resource. Resources that are needed by MOST or ALL buildings, like power and perhaps water, should not require tapping.
     provisioningAsDrawable(city: City, view: CityView): Drawable | null {
-        if (this.inputResources.length === 0) return this.lastProvisioningDrawable = null;
+        if (this.inputResources.length === 0 || (!view.showProvisioning && this.outputResources.some(p => p.amount > 0 && !p.isSpecial))) return this.lastProvisioningDrawable = null;
 
         //The minimum amount for showing this drawable depends on the view's settings.
         if (this.getProvisionedFraction(CAPACITY_MULTIPLIER) >= view.provisionHideAtTicks || this.inputResources.every(p => p.amount === p.capacity)) return this.lastProvisioningDrawable = null;
@@ -573,7 +580,7 @@ export class Building implements IHasDrawable {
     getLastDrawable(): Drawable | null {
         const ret = new Drawable();
         if (this.lastCollectibleDrawable) ret.addChild(this.lastCollectibleDrawable);
-        if (this.lastProvisioningDrawable) ret.addChild(this.lastProvisioningDrawable);
+        else if (this.lastProvisioningDrawable) ret.addChild(this.lastProvisioningDrawable);
         return ret;
     }
 }

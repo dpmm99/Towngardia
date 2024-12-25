@@ -70,7 +70,7 @@ export class FriendGiftWindow implements IHasDrawable {
             }));
 
             // Resource icon/amount
-            let nextRY = addResourceCosts(selector, [resource], selectorWidth / 2 - 32, 10, false, false, false, 64, 10, 32);
+            let nextRY = addResourceCosts(selector, [resource], selectorWidth / 2 - 32, 10, false, false, false, 64, 10, 32, undefined, undefined, undefined, undefined, true);
 
             // Resource name
             selector.addChild(new Drawable({

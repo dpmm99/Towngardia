@@ -5,6 +5,7 @@ import { Tech } from "./game/Tech.js";
 
 let cheatTypingBuffer = '';
 let cheatLastKeyTime = Date.now();
+let timeCheatKeyAdded = false;
 const cheatResetDelay = 1000;
 document.addEventListener('keydown', function (event) {
     const currentTime = Date.now();
@@ -61,6 +62,10 @@ function timeCheat() {
     console.log("Cheetah!");
     globalThis.game.city!.lastShortTick -= LONG_TICK_TIME;
     globalThis.game.city!.lastLongTick -= LONG_TICK_TIME;
+    if (!timeCheatKeyAdded) {
+        window.addEventListener("keydown", (event) => { if (event.key === "ArrowRight") timeCheat(); })
+        timeCheatKeyAdded = true;
+    }
 }
 
 function techEditCheat() {

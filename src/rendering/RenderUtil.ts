@@ -86,7 +86,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
         /*BudgetMenu*/ 'incometax', 'propertytax', 'salestax', 'budgetok', "fireprotection", "policeprotection", "healthcare", "education", "environment", "infrastructure", //Services might be resources, dunno
         /*TechTreeMenu*/ 'completeresearch', 'progressresearch', 'cannotresearch', 'adoptionrate',
         /*NotificationsMenu*/ 'unread', 'notice', 'advisor', 'logistics', 'minigames',
-        /*Events (could be automatic/generic)*/ 'coldsnap', 'blackout',
+        /*Events (could be automatic/generic)*/ 'coldsnap', 'blackout', 'epidemic',
         /*Views bar*/ 'residentialdesirability', 'landvalue', 'luxury', 'businesspresence', 'pettycrime', 'organizedcrime', 'noise', 'particulatepollution', 'greenhousegases', 'placementgrid', 'efficiencyview', 'hidebuildings', 'fadebuildings', 'businessvalue', //Others Copilot spat out, some of which I likely do want: 'firehazard', 'healthhazard', 'unemployment', 'traffic', 'infrastructure', 'happiness', 'population'
         /*errors and view-specific icons on any building*/ 'noroad', 'nopower', 'outage', 'fire', 'provision', 'cannotprovision', 'reopen', 'errorbackdrop', 'warningbackdrop', 'collectionbackdrop', 'resourceborder', 'willupgrade', 'publictransport',
         /*Multiple minigames*/ 'checked', 'unchecked',

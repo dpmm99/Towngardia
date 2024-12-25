@@ -3,7 +3,14 @@
     <!--Command to run on project build-->
     <BuildCommand>npm run build</BuildCommand>
     <!--Command to run on project clean-->
-    <CleanCommand> </CleanCommand>
+    <CleanCommand>
+    </CleanCommand>
     <StartupCommand>npm run start</StartupCommand>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="bin\**" />
+    <None Remove="dist\**" />
+    <TypeScriptConfiguration Remove="bin\**" />
+    <TypeScriptConfiguration Remove="dist\**" />
+  </ItemGroup>
 </Project>

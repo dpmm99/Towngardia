@@ -44,11 +44,10 @@ export class CitizenDietSystem {
     public getFoodNeeded(ignoreBonus: boolean): number {
         const population = this.city.resources.get("population")!.amount;
         const eventFoodNeedsReductionFactor = ignoreBonus ? 1 : this.city.events.filter(p => p instanceof DietReward).reduce((a, e) => a * (1 - e.getBonus()), 1); //Reduces food needs multiplicatively
-        return population / 100 / LONG_TICKS_PER_DAY * eventFoodNeedsReductionFactor; // 1 unit feeds 100 people for a day
+        return Math.max(1, population) / 100 / LONG_TICKS_PER_DAY * eventFoodNeedsReductionFactor; // 1 unit feeds 100 people for a day
     }
 
     onLongTick(): void {
-        const peakPopulation = this.city.peakPopulation;
         const foodNeeded = this.getFoodNeeded(false);
 
         // Calculate available food
@@ -97,15 +96,15 @@ export class CitizenDietSystem {
         let systemActivation = 1;
         let perfectHappiness = this.perfectHappiness;
         let perfectHealth = this.perfectHealth;
-        if (peakPopulation < 500) {
+        if (!this.city.flags.has(CityFlags.FoodMatters)) {
             systemActivation = 0.1; // 90% of the effect of a perfect diet is free
-        } else if (peakPopulation < 1200) {
+        } else if (!this.city.flags.has(CityFlags.B12Matters)) {
             systemActivation = 0.4;
             //Pick the top <=4 foods and base the "perfectHappiness" number on just those. (Note: this will ALWAYS end up with 4 entries, even if the player doesn't have 4 food types.)
             const best = dietComposition.sort((a, b) => b.ratio - a.ratio).slice(0, 4);
             perfectHappiness = best.reduce((sum, food) => sum + this.foodEffects.get(food.type)!.happiness, 0);
             perfectHealth = best.reduce((sum, food) => sum + this.foodEffects.get(food.type)!.health, 0);
-        } else if (peakPopulation < 1800) {
+        } else if (!this.city.flags.has(CityFlags.CitizenDietFullSwing)) {
             systemActivation = 0.7;
             const best = dietComposition.sort((a, b) => b.ratio - a.ratio).slice(0, 6);
             perfectHappiness = best.reduce((sum, food) => sum + this.foodEffects.get(food.type)!.happiness, 0);
@@ -114,8 +113,8 @@ export class CitizenDietSystem {
         happinessEffect = systemActivation * happinessEffect + (1 - systemActivation) * perfectHappiness;
         healthEffect = systemActivation * healthEffect + (1 - systemActivation) * perfectHealth;
 
-        // Apply B12 penalty, starting at 1200 population
-        if (peakPopulation >= 1200) {
+        // Apply B12 penalty
+        if (this.city.flags.has(CityFlags.B12Matters)) {
             const meatFishDairyRatio = dietComposition
                 .filter(food => ["redmeat", "poultry", "fish", "dairy", "labgrownmeat"].includes(food.type))
                 .reduce((sum, food) => sum + food.effectiveness, 0);

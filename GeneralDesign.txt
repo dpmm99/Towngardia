@@ -141,19 +141,19 @@ For the record, the unlocks in the game are:
 information center (500 flunds): tourism and Nepotism Networking minigame
 demolish mysterious rubble (350 flunds): Monobrynth minigame
 500 population: higher food diversity requirements
-600 population: education, elementary school, high school, college, dorm, playground
+650 population: post office
+800 population: education, elementary school, high school, college, dorm, playground
 average education >= 0.9 (basically requires a college or 2 schools covering most residences): 13 high-tech buildings
 high-tech unlocked and then played a perfect game of Monobrynth: Teleportation Pod
 keep a Quantum Computing Lab running for a few days after unlocking Teleportation Pod: Museum of Future Arts
 keep a Museum of Future Arts running for several days: Sands of Time
-750 population: post office
-900 population: healthcare, clinic, hospital
-1200 population: algae farm and more food requirements
-1500 population: logistics center and Free Stuff Tables
-1800 population: maximum food requirements
-2100 population: Minigame Minilab
+1000 population: logistics center and Free Stuff Tables
+1400 population: algae farm and more food requirements
+1800 population: healthcare, clinic, hospital
+2000 population: Minigame Minilab
+2500 population: maximum food requirements
 minigame minilab + playing the minigames: alternative reward sets as options for the minigames
-2400 population + >=4 skyscrapers + >=1k flunds: Altitect minigame
+3000 population + >=4 skyscrapers + >=1k flunds: Altitect minigame
 earthquake: geothermal tech and a hot spring inn
 8000 population: greenhouse gases begin to affect happiness and weather event chances
 and techs unlock 11 buildings
