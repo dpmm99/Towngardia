@@ -156,18 +156,42 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
             const tile = initialState[y][x];
             const possibleConnections = tile.connections.filter(c => c).length;
             if (possibleConnections === 4) continue; //Nothing we can do about those.
-            let connectedCount = 0;
-            for (let connection of CONNECTIONS) {
-                const newX = x + connection.dx;
-                const newY = y + connection.dy;
-                if (newX >= 0 && newX < GRID_WIDTH && newY >= 0 && newY < initialState.length) {
-                    const neighbor = initialState[newY][newX];
-                    if (neighbor.connections[connection.toIdx]) connectedCount++;
+
+            // Try all 4 possible rotations and keep track of the best one
+            let minConnections = possibleConnections;
+            let bestRotation = 0;
+
+            for (let rotation = 0; rotation < 4; rotation++) {
+                let connectedCount = 0;
+                for (let connection of CONNECTIONS) {
+                    const newX = x + connection.dx;
+                    const newY = y + connection.dy;
+                    if (newX >= 0 && newX < GRID_WIDTH && newY >= 0 && newY < initialState.length) {
+                        const neighbor = initialState[newY][newX];
+                        // Check if this tile's connection matches the neighbor's connection
+                        // accounting for the current test rotation
+                        const rotatedIdx = (connection.fromIdx + rotation) % 4;
+                        if (tile.connections[rotatedIdx] && neighbor.connections[connection.toIdx]) {
+                            connectedCount++;
+                        }
+                    }
                 }
+
+                if (connectedCount < minConnections) {
+                    minConnections = connectedCount;
+                    bestRotation = rotation;
+                }
+
+                // Early exit if we found a rotation with no connections
+                if (minConnections === 0) break;
             }
-            //Rotate the tile to break at least one connection (unless all four surrounding tiles just happen to be pointing to it)
-            if (connectedCount === possibleConnections) tile.connections.unshift(tile.connections.pop()!);
+
+            // Apply the best rotation found
+            for (let i = 0; i < bestRotation; i++) {
+                tile.connections.unshift(tile.connections.pop()!);
+            }
         }
+
 
         // Ensure source tile is correctly oriented
         initialState[0][SOURCE_X] = {
@@ -261,6 +285,51 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
                         }
                     }
                 }
+            }
+        }
+
+        //Guarantee solvability within the sliding window by starting a fresh traversal from each row's downward-connected tiles and adding new connections if the traversal doesn't fill the window. Do not check connections past the end of the window.
+        for (let y = 1; y < solution.length - GRID_HEIGHT; y++) {
+            const visited = new Set<string>();
+            const stack: Position[] = solution[y - 1].map((t, i) => ({ x: i, y: y - 1, connected: t.connections[2] && t.connected })).filter(p => p.connected);
+            let solved = false;
+            while (!solved) {
+                while (stack.length > 0) { //Just BFS to detect what tiles are connected.
+                    const pos = stack.pop()!;
+                    const key = `${pos.x},${pos.y}`;
+                    if (visited.has(key)) continue;
+                    visited.add(key);
+                    const tile = solution[pos.y][pos.x];
+                    for (const dir of CONNECTIONS) {
+                        const newX = pos.x + dir.dx;
+                        const newY = pos.y + dir.dy;
+                        if (newX >= 0 && newX < GRID_WIDTH && newY >= y && newY < y + GRID_HEIGHT) { //Stay strictly within the window (y is the top).
+                            const nextTile = solution[newY][newX];
+                            if (tile.connections[dir.fromIdx] && nextTile.connections[dir.toIdx]) {
+                                stack.push({ x: newX, y: newY });
+                            }
+                        }
+                    }
+                }
+
+                //Find all disconnected tiles that are adjacent to a connected one, pick one, connect it to the connected one, then add the previously-disconnected tile to the stack for further traversal.
+                const slidingWindow = solution.slice(y, y + GRID_HEIGHT);
+                const candidates: { connected: Position, disconnected: Position }[] = [];
+                for (let i = 0; i < GRID_WIDTH; i++) {
+                    for (let j = y; j < y + GRID_HEIGHT; j++) {
+                        if (visited.has(`${i},${j}`)) continue; //Looking for any disconnected tiles, not connected ones.
+                        const neighbors = this.getValidNeighbors({ x: i, y: j - y }, slidingWindow); //Only check within the window--but for that, we have to adjust the input and output positions by y
+                        const connected = neighbors.map(c => ({ x: c.x, y: c.y + y })).filter(c => visited.has(`${c.x},${c.y}`)); //Has to have a connected neighbor to be a candidate for making the window solvable.
+                        candidates.push(...connected.map(c => ({ connected: c, disconnected: { x: i, y: j } })));
+                    }
+                }
+                if (candidates.length) {
+                    //Pick a random candidate, then pick a random connected neighbor to connect it to--it's guaranteed to have at least one usable neighbor by the above 'candidates' loop.
+                    const candidate = candidates[Math.floor(Math.random() * candidates.length)];
+                    this.connectTiles(solution, candidate.connected, candidate.disconnected);
+                    stack.push(candidate.disconnected);
+                }
+                solved = stack.length === 0;
             }
         }
 
@@ -480,8 +549,10 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         } else {
             event = new TourismReward(ticks + durationBonus, quantity + quantityBonus);
         }
-        this.sendAssist(event);
-        this.city.events.push(event);
+        if (event.maxDuration) { //Don't turn tourism into NaN due to division by zero if the reward was zero ticks
+            this.sendAssist(event);
+            this.city.events.push(event);
+        }
         this.winnings = event;
         progressMinigameOptionResearch(this.city, rangeMapLinear(this.score, 0.01, 0.1, 100, 1000, 0.001));
     }
