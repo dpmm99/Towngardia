@@ -292,7 +292,7 @@ export class Building implements IHasDrawable {
 
     canStow(city: City): boolean { return this.owned && this.canStowInInventory; }
 
-    canMove(city: City): boolean { return ((this.owned && !this.isResidence) || city.canBuildResources) && this.movable; }
+    canMove(city: City): boolean { return ((this.owned && (!this.isResidence || this.mods.length !== 0)) || city.canBuildResources) && this.movable; }
 
     //Buildings can be moved, stowed, or demolished (I'm not checking that, though) while they have something else built on top of them as long as you stow the on-top ones first.
     getBuildingsOnTop(city: City) {

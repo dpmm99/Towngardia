@@ -148,8 +148,8 @@ high-tech unlocked and then played a perfect game of Monobrynth: Teleportation P
 keep a Quantum Computing Lab running for a few days after unlocking Teleportation Pod: Museum of Future Arts
 keep a Museum of Future Arts running for several days: Sands of Time
 1000 population: logistics center and Free Stuff Tables
-1400 population: algae farm and more food requirements
-1800 population: healthcare, clinic, hospital
+1400 population: healthcare, clinic, hospital
+1800 population: algae farm and more food requirements
 2000 population: Minigame Minilab
 2500 population: maximum food requirements
 minigame minilab + playing the minigames: alternative reward sets as options for the minigames

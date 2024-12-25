@@ -47,6 +47,8 @@ Waste Not, Want Not: Maintain 90% recycling rate for a week in a city with at le
 Achievements for absurd collections, like...
 Brain Freeze: have 20+ ice cream trucks
 Guess We'll Just Mutate, Then: very high pollution
+Xenocide: Clear every space in Monobrynth on Hard despite finding some scanner goggles and revealing that some of them don't have rewards
+Fuuusion...Ha!: obliterate 300 stars in Starbox on Hard
 
 --Titles:
 Vegan Retreat: Within 7 days, collect at least 250 food and avoid producing any animal products. Reward: efficiency bonus for farms and vertical farms.

@@ -1,5 +1,5 @@
 import { TitleTypes } from "./AchievementTypes.js";
-import { Building } from "./Building.js";
+import { Building, BuildingMod } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
 import { Business } from "./Business.js";
 import { City } from "./City.js";
@@ -887,6 +887,11 @@ export class Skyscraper extends Building {
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number { return 8 * city.techManager.getAdoption('rooftopsolar'); }
+
+    override applyMods(city: City, mods?: BuildingMod[], negate: boolean = false, reapply: boolean = false): void {
+        super.applyMods(city, mods, negate, reapply);
+        this.movable = true; //You're allowed to move Skyscrapers around, but only after you've played Altitect on them.
+    }
 }
 
 export class Dorm extends Building {
@@ -3358,7 +3363,7 @@ export class PoliceBox extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick);
         return [{ type: "flunds", amount: 0.12 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.003 * budgetAndEfficiency * this.affectingCitizenCount }];
+            { type: "flunds", amount: 0.003 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     //Includes the city police budget allocation; the effect is squared so 80% budget is only 64% effectiveness and 90% budget is 81% effectiveness.
@@ -3388,7 +3393,7 @@ export class PoliceStation extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick);
         return [{ type: "flunds", amount: 0.2 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.008 * budgetAndEfficiency * this.affectingCitizenCount }];
+            { type: "flunds", amount: 0.008 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     //Includes the city police budget allocation; the effect is squared so 80% budget is only 64% effectiveness and 90% budget is 81% effectiveness.
@@ -3419,7 +3424,7 @@ export class PoliceUAVHub extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick);
         return [{ type: "flunds", amount: 0.22 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.006 * budgetAndEfficiency * this.affectingCitizenCount }];
+            { type: "flunds", amount: 0.006 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     //Includes the city police budget allocation; the effect is squared so 80% budget is only 64% effectiveness and 90% budget is 81% effectiveness.
@@ -3451,7 +3456,7 @@ export class FireBay extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick);
         return [{ type: "flunds", amount: 0.15 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.001 * budgetAndEfficiency * this.affectingCitizenCount }];
+            { type: "flunds", amount: 0.001 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     //Affected by fire protection budget (deficit squared) AND drought (30% debuff).
@@ -3481,7 +3486,7 @@ export class FireStation extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick);
         return [{ type: "flunds", amount: 0.35 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-        { type: "flunds", amount: 0.002 * budgetAndEfficiency * this.affectingCitizenCount }];
+        { type: "flunds", amount: 0.002 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 - (city.events.some(p => p.type === 'drought') ? 0.3 : 0); }
@@ -3511,7 +3516,7 @@ export class Clinic extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick) * (1 - 0.25 * city.techManager.getAdoption("aidiagnostics"));
         return [{ type: "flunds", amount: 0.1 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.008 * budgetAndEfficiency * this.affectingCitizenCount }];
+            { type: "flunds", amount: 0.008 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     //Affected by healthcare budget (deficit squared) AND food health (75% of perfect diet = no effect, up to +10% effect, but can easily be a debuff)
@@ -3542,7 +3547,7 @@ export class Hospital extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick) * (1 - 0.2 * city.techManager.getAdoption("aidiagnostics"));
         return [{ type: "flunds", amount: 0.4 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.025 * budgetAndEfficiency * this.affectingCitizenCount }];
+            { type: "flunds", amount: 0.025 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 + 0.4 * (city.resources.get("foodhealth")!.amount - 0.75); }
@@ -3575,7 +3580,7 @@ export class Library extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick);
         return [{ type: "flunds", amount: 0.03 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.002 * budgetAndEfficiency * this.affectingCitizenCount }];
+            { type: "flunds", amount: 0.002 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
@@ -3608,7 +3613,7 @@ export class ElementarySchool extends Building { //TODO: Strongly consider split
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick);
         return [{ type: "flunds", amount: 0.04 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.004 * budgetAndEfficiency * this.affectingCitizenCount }];
+            { type: "flunds", amount: 0.004 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
@@ -3641,7 +3646,7 @@ export class HighSchool extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick);
         return [{ type: "flunds", amount: 0.05 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.005 * budgetAndEfficiency * this.affectingCitizenCount }];
+            { type: "flunds", amount: 0.005 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
@@ -3678,7 +3683,7 @@ export class College extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick);
         return [{ type: "flunds", amount: 0.08 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.006 * budgetAndEfficiency * this.affectingCitizenCount }];
+            { type: "flunds", amount: 0.006 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
