@@ -1202,7 +1202,7 @@ export class City {
 
     produce(resourceType: string, amount: number) { //Mainly for buildings to call when they output an autoCollect resource. Generally, stick to transferResourcesFrom.
         const resource = this.resources.get(resourceType)!;
-        this.applyReceiptBonus(resource);
+        this.applyReceiptBonus({ type: resource.type, amount: amount });
         resource.produce(amount);
         this.resourceEvents.push({ type: resourceType, event: "produce", amount: amount });
 
@@ -1212,7 +1212,7 @@ export class City {
 
     earn(resourceType: string, amount: number) { //Mainly for minigames to call when the player completes something, but I ended up using transferResourcesFrom for that. Other than the resource event type, same as produce().
         const resource = this.resources.get(resourceType)!;
-        this.applyReceiptBonus(resource);
+        this.applyReceiptBonus({ type: resourceType, amount: amount });
         resource.produce(amount);
         this.resourceEvents.push({ type: resourceType, event: "earn", amount: amount });
     }
