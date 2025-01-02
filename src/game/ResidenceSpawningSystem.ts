@@ -67,7 +67,8 @@ export class ResidenceSpawningSystem {
         this.city.dfs(p => p.isRoad, this.city.networkRoot.x, this.city.networkRoot.y, visited); //Now visited = the road tiles; let's loop through those and check tiles adjacent to the road. If those are null, we can build.
 
         //Max tiles to spawn on. The logarithmic population factor starts being a tiny bonus around 1000, about 40% at 15,000, 70% at 125,000, and 100% at 1,000,000.
-        const calculatedMaxSpawnCount = Math.ceil(this.globalSpawnChance * 5 * Math.max(1, Math.min(2, Math.log10(this.city.peakPopulation) / 3)));
+        const regionFactor = this.city.regionID === "volcanic" ? 0.7 : 1; //Who wants to live in a volcanic region--I mean, really?
+        const calculatedMaxSpawnCount = Math.ceil(this.globalSpawnChance * 5 * Math.max(1, Math.min(2, Math.log10(this.city.peakPopulation) / 3)) * regionFactor);
         const bestTiles: { x: number, y: number, desirability: number }[] = [];
         const checked = new Set<number>();
         for (const roadTile of visited) {
@@ -97,7 +98,8 @@ export class ResidenceSpawningSystem {
 
     private upgradeResidences() {
         //Pick a random house and see if it can upgrade to an apartment. Has a minimum happiness requirement, and the chance increases as happiness increases, but limited to 1 per long tick.
-        if (this.globalSpawnChance > MIN_GLOBAL_CHANCE_FOR_UPGRADE && Math.random() < this.globalSpawnChance) {
+        const regionFactor = this.city.regionID === "volcanic" ? 0.85 : 1; //Less impactful region factor compared to the residence spawn count's region factor
+        if (this.globalSpawnChance > MIN_GLOBAL_CHANCE_FOR_UPGRADE && Math.random() < this.globalSpawnChance * regionFactor) {
             const houses = this.city.buildings.filter(p => p.isResidence && p.lastEfficiency && !p.residenceLevel && this.city.getBusinessDensity(p.x, p.y) >= MIN_DENSITY_FOR_UPGRADE); //Higher minimum density than normal apartment spawning
             const house = houses[Math.floor(Math.random() * houses.length)];
             if (house) {

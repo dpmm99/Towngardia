@@ -192,7 +192,10 @@ export class CanvasRenderer implements IRenderer {
 
     private drawBackgroundTile(city: City, tileX: number, tileY: number): void {
         const { x, y } = worldToScreenCoordinates(city, tileX, tileY, BACKGROUND_TILE_WIDTH, BACKGROUND_TILE_WIDTH, 0, true);
-        const image = this.sprites.get("background/grass" + ((tileX + tileY) % 2 + 1)); //TODO: put in the city but shorten to just one or two digits for minimal waste, orrr store in the *regions*.
+        //TODO: put background tiles in the city but shorten to just one or two digits for minimal waste, orrr store them in the *regions*. Though alternating through the tiles doesn't look so bad.
+        let bgID = "background/grass" + ((tileX + tileY) % 2 + 1);
+        if (city.regionID === "volcanic") bgID = "background/rock" + ((tileX + tileY) % 5 + 1);
+        const image = this.sprites.get(bgID);
         if (!image) return;
         const height = BACKGROUND_TILE_WIDTH * TILE_HEIGHT;
 
@@ -268,7 +271,7 @@ export class CanvasRenderer implements IRenderer {
             });
             this.postTileDrawables.push({ x: x, y: y - height, width, height, drawable: willUpgradeIcon});
         }
-        if (view.drawFireCoverage && building.owned && building.fireHazard > building.getHighestEffect(city, EffectType.FireProtection)) {
+        if (view.drawFireCoverage && building.owned && building.getFireHazard(city) > building.getHighestEffect(city, EffectType.FireProtection)) {
             const dangerIcon = new Drawable({
                 anchors: ['bottom'],
                 x: width / 2 - 16,

@@ -4,10 +4,11 @@ import { Achievement } from "./Achievement.js";
 import { Building } from "./Building.js";
 import * as ResourceTypes from "./ResourceTypes.js";
 import { AIDiagnostics, AILogistics, ARShopping, AdvancedRobotics, AutonomousVehicles, BrainComputerInterface, CoalPowerScrubbers, DroneDelivery, FoodServiceRobots, GMCrops, GrapheneBatteries, Hydrolox, HydroponicGardens, NanomedicineResearch, PerovskiteSolarCells, RetainingSoil, RooftopSolar, SmartHomeSystems, ThermalRecovery, ThreeDPrinting, VRClassrooms, VacuumInsulatedWindows, VerticalFarming, WindTurbineLattice } from "./TechTypes.js";
-import { Bar, Casino, College, ElementarySchool, Farm, FishFarm, GregsGrogBarr, Ranch, TreeFarm, VerticalFarm, getBuildingType } from "./BuildingTypes.js";
+import { Bar, Casino, College, ElementarySchool, Farm, FishFarm, GregsGrogBarr, MuseumOfFutureArts, Portal, Ranch, TreeFarm, VerticalFarm, getBuildingType } from "./BuildingTypes.js";
 import { EffectType } from "./GridType.js";
 import { LONG_TICKS_PER_DAY } from "./FundamentalConstants.js";
 import { GREENHOUSE_GASES_MIN_POPULATION } from "./GameplayConstants.js";
+import { CityFlags } from "./CityFlags.js";
 
 const AchievementTypes =
 {
@@ -69,6 +70,13 @@ const AchievementTypes =
         if (homes === 0) return 0;
         const entertainment = city.buildings.filter(p => p.isEntertainment && p.roadConnected && p.powerConnected && p.powered).length;
         return Math.min(1, homes / 10) * 0.667 + 0.334 * Math.min(1, entertainment / 5);
+    }),
+    PlainsAndAstralPlanes: new Achievement("plainsandastralplanes", "Plains and Astral Planes", "An end-goal for your first city. A large, well-educated population is bound to make incredible discoveries, especially with a Museum of Future Arts at hand. Unlock regions and realms by building a Portal in your city. Requires a population of 50,000 and four Colleges.", (me: Achievement, player: Player, city: City): number => {
+        const populationPart = Math.min(1, city.resources.get("population")!.amount / 50000);
+        const collegePart = Math.min(4, city.presentBuildingCount.get(getBuildingType(College)) ?? 0);
+        const museumPart = Math.min(1, city.presentBuildingCount.get(getBuildingType(MuseumOfFutureArts)) ?? 0);
+        const portalPart = city.presentBuildingCount.get(getBuildingType(Portal)) ? Math.min(1, city.buildings.find(p => p.type === getBuildingType(Portal))?.lastEfficiency ?? 0) : 0;
+        return (populationPart * 4 + collegePart + museumPart + portalPart) / 10;
     }),
     ResourceTycoon: new Achievement("resourcetycoon", "Resource Tycoon", "Collect and sell 30 types of resource in a single day.", (me: Achievement, player: Player, city: City): number => {
         if (!me.dataPoints) me.dataPoints = [];
@@ -236,6 +244,10 @@ const TitleTypes = {
         }
         return progress;
     }, "increases adoption rate of high-tech upgrades"),
+    TheGreatFilter: new Achievement("thegreatfilter", "The Great Filter", "No, I'm not talking about the Fermi Paradox explanation of the same name. Well, I mean, I could be. It IS pretty dumb of the species to live in an area of extreme volcanic activity like this. But anyway... Attain this by building enough Carbon Capture Plants to reduce accumulated greenhouse gases to zero.", (me: Achievement, player: Player, city: City): number => {
+        //Progress only starts displaying once you get under 0.2 accumulated greenhouse gases.
+        return city.regionID === "volcanic" && city.flags.has(CityFlags.GreenhouseGasesMatter) ? Math.max(0, 1 - 5 * Math.min(0.2, city.resources.get(ResourceTypes.getResourceType(ResourceTypes.GreenhouseGases))!.amount)) : 0;
+    }, "efficiency bonus for Carbon Capture Plants"),
     VeganRetreat: new Achievement("veganretreat", "Vegan Retreat", "The citizens are furiously debating whether honey and yeast are vegan. Within 7 days, collect at least 250 food and avoid producing any animal products.", (me: Achievement, player: Player, city: City): number => {
         //Is only checked once per long tick.
         if (city.resourceEvents.some(p => ResourceTypes.ANIMAL_PRODUCTS.has(p.type) && p.event === "produce")) {

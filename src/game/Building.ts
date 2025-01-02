@@ -25,6 +25,8 @@ export class Building implements IHasDrawable {
     needsRoad = true;
     isRoad = false;
 
+    onlyAllowInRegions: string[] = []; //TODO: Implement. Should fail to unlock if the city is not in one of these regions, even if it's in TutorialUnlocks or whatever.
+
     isNew = true; //Just so buildings don't show 'unpowered' right away when you place them, which seems a bit odd as a player
     isHidden = false; //Just for seasonal buildings. Don't want to show them year-round when they're unusable.
 
@@ -110,6 +112,18 @@ export class Building implements IHasDrawable {
 
         newBuilding.id = id || 0; //Never retain the ID when cloning; City will reassign if needed.
         return newBuilding;
+    }
+
+    //Should be idempotent; is called when the city is loaded and (just in case) also in Building.placed().
+    setInfoRegion(regionID: string) { }
+
+    getFireHazard(city: City): number {
+        if (city.regionID === "volcanic") {
+            if (this.fireHazard < 0.1) return this.fireHazard;
+            if (this.fireHazard < 0.2) return this.fireHazard + 0.05;
+            return this.fireHazard + 0.1;
+        }
+        return this.fireHazard;
     }
 
     setBusinessValue(patronCap: number, valueFraction: number) { //Made this so I can more easily see/adjust how much moolah you can get *per* patron, because my income was way too high mid-game.
@@ -243,7 +257,9 @@ export class Building implements IHasDrawable {
     }
 
     //Called after adding to the city grid
-    placed(city: City) { }
+    placed(city: City) {
+        this.setInfoRegion(city.regionID!);
+    }
 
     //Call City.removeBuilding instead of this (except in City, of course). This happens after removeFromGrid, so we clear builtOn here.
     remove(city: City, justMoving: boolean = false): void {

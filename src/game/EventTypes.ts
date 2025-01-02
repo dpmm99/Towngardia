@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { ChocolateBar, CocoaCupCo, ColdStorage, FireBay, FireStation, FlowerTower, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HeartyShack, HotSpring, HotSpringInn, MiracleWorkshop, PeppermintPillar, ReindeerRetreat, WrappedWonder, getBuildingType } from "./BuildingTypes.js";
+import { ActiveVolcano, ChocolateBar, CocoaCupCo, ColdStorage, FireBay, FireStation, FlowerTower, GemBoulder, Geolab, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HazmatStorage, HeartyShack, HotSpring, HotSpringInn, Ignimbrite, MiracleWorkshop, PeppermintPillar, ReindeerRetreat, SmallBoulder, WrappedWonder, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -8,7 +8,7 @@ import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICK_TIME } from "./Fundament
 import { EffectType } from "./GridType.js";
 import { inPlaceShuffle } from "./MiscFunctions.js";
 import { Notification } from "./Notification.js";
-import { GreenhouseGases, PowerCosts, ProductionEfficiency, getResourceType } from "./ResourceTypes.js";
+import { Dynamite, GreenhouseGases, PowerCosts, ProductionEfficiency, getResourceType } from "./ResourceTypes.js";
 
 export class Hauntymonth extends CityEvent {
     constructor() {
@@ -81,7 +81,7 @@ export class Merrymonth extends CityEvent {
 
 export class Chocomonth extends CityEvent {
     constructor() {
-        super("chocomonth", "Chocomonth", 31 * LONG_TICKS_PER_DAY,
+        super("chocomonth", "Chocomonth", 29 * LONG_TICKS_PER_DAY,
             "It's Chocomonth! The city is filled with the sweet scents of adolescence and chocolate. You can find temporary businesses and decorations in the Commercial and Luxury construction categories respectively. You can gift food bonuses to friends' cities if you build the Chocolate Bar, available in the Commercial category.",
             "It's the end of the month, and you know what that means--love is dead again, and chocolate is relegated to a delicious dental danger! You'll get your Chocomonth buildings back next year.");
     }
@@ -239,8 +239,9 @@ export class ColdSnap extends CityEvent {
     }
 
     override shouldStart(city: City, date: Date): boolean {
-        //Same frequency and such as heatwave, but only in the winter
-        return this.checkedStart((date.getMonth() <= 3 || date.getMonth() >= 9) && city.peakPopulation >= 1500
+        //Same frequency and such as heatwave, but only in the winter, and never in the volcanic region
+        return city.regionID !== "volcanic" &&
+            this.checkedStart((date.getMonth() <= 3 || date.getMonth() >= 9) && city.peakPopulation >= 1500
             && this.skippedStarts > this.maxDuration + 20 * LONG_TICKS_PER_DAY * Math.max(0, 1 - city.resources.get(new GreenhouseGases().type)!.amount)
             && Math.random() < 0.05 * (city.resources.get(new GreenhouseGases().type)!.amount ** 2 + 0.1) && !city.events.some(p => p.type === this.type), city, date);
     }
@@ -368,41 +369,46 @@ export class Earthquake extends CityEvent {
 
     override shouldStart(city: City, date: Date): boolean {
         //4% chance if the city has >800 people and it hasn't happened in at least 25 days (plus an extra safe day for each time it's happened before) //TODO: Should be partly based on SOMETHING the user can control.
-        return this.checkedStart(city.peakPopulation > 800 && this.skippedStarts > (25 + this.activations) * LONG_TICKS_PER_DAY && Math.random() < 0.04, city, date);
+        //In the volcanic zone, the safe days and minimum population are halved.
+        return this.checkedStart(city.peakPopulation > 800 * (city.regionID === "volcanic" ? 0.5 : 1) && this.skippedStarts > (25 + this.activations) * (city.regionID === "volcanic" ? 0.5 : 1) * LONG_TICKS_PER_DAY &&
+            Math.random() < 0.04, city, date);
     }
 
     override start(city: City, date: Date): void {
         super.start(city, date);
         this.startMessage = new Earthquake().startMessage;
-        //If you didn't start with a geothermal vent, the first earthquake should create one. Otherwise, a diminishing chance for each vent you have. 0 -> 100%, 1 -> 33%, 2 -> 20%, 3 -> 14%, 4 -> 11%, 5 -> 9%...
-        if (Math.random() < 1 / ((city.presentBuildingCount.get(getBuildingType(GeothermalVent)) ?? 0) * 2 + 1)) {
-            //Select random coordinates and try to find a spot without a building there
-            let x: number;
-            let y: number;
-            let tries: number = 20;
-            do {
-                x = 1 + Math.floor((city.width - 2) * Math.random()); //Can't be on any edge of the map because it wouldn't be accessible.
-                y = 1 + Math.floor((city.height - 2) * Math.random());
-            } while (--tries > 0 && city.getBuildingsInArea(x, y, 1, 1, 1, 1).size); //Also don't place adjacent to any immovable object or it'll be unusable. But I opted to just check that there are no buildings nearby of any type.
-            if (!city.grid[y][x]) {
-                city.addBuilding(new GeothermalVent(), x, y);
-                this.startMessage += " The earthquake formed a new geothermal vent in the region, which could be a source of cheap, reliable, eco-friendly power.";
-            }
-        }
 
-        //Also produce a hot spring on the first earthquake, no random factor and no second hot spring. Will not spawn within 8 tiles of the map edges.
-        if ((city.presentBuildingCount.get(getBuildingType(HotSpring)) ?? 0) === 0) {
-            let x: number;
-            let y: number;
-            let tries: number = 30;
-            do {
-                x = 8 + Math.floor((city.width - 10) * Math.random());
-                y = 8 + Math.floor((city.height - 10) * Math.random());
-            } while (--tries > 0 && city.getBuildingsInArea(x, y, 2, 2, 0, 0).size);
-            if (!city.grid[y][x]) {
-                city.addBuilding(new HotSpring(), x, y);
-                city.unlock(getBuildingType(HotSpringInn));
-                this.startMessage += " It also formed a hot spring, which we can turn into a tourist trap--Hot Spring Inn is now available.";
+        //If you didn't start with a geothermal vent, the first earthquake should create one. Otherwise, a diminishing chance for each vent you have. 0 -> 100%, 1 -> 33%, 2 -> 20%, 3 -> 14%, 4 -> 11%, 5 -> 9%...
+        if (city.regionID !== "volcanic") {
+            if (Math.random() < 1 / ((city.presentBuildingCount.get(getBuildingType(GeothermalVent)) ?? 0) * 2 + 1)) {
+                //Select random coordinates and try to find a spot without a building there
+                let x: number;
+                let y: number;
+                let tries: number = 20;
+                do {
+                    x = 1 + Math.floor((city.width - 2) * Math.random()); //Can't be on any edge of the map because it wouldn't be accessible.
+                    y = 1 + Math.floor((city.height - 2) * Math.random());
+                } while (--tries > 0 && city.getBuildingsInArea(x, y, 1, 1, 1, 1).size); //Also don't place adjacent to any immovable object or it'll be unusable. But I opted to just check that there are no buildings nearby of any type.
+                if (!city.grid[y][x]) {
+                    city.addBuilding(new GeothermalVent(), x, y);
+                    this.startMessage += " The earthquake formed a new geothermal vent in the region, which could be a source of cheap, reliable, eco-friendly power.";
+                }
+            }
+
+            //Also produce a hot spring on the first earthquake, no random factor and no second hot spring. Will not spawn within 8 tiles of the map edges.
+            if ((city.presentBuildingCount.get(getBuildingType(HotSpring)) ?? 0) === 0) {
+                let x: number;
+                let y: number;
+                let tries: number = 30;
+                do {
+                    x = 8 + Math.floor((city.width - 10) * Math.random());
+                    y = 8 + Math.floor((city.height - 10) * Math.random());
+                } while (--tries > 0 && city.getBuildingsInArea(x, y, 2, 2, 0, 0).size);
+                if (!city.grid[y][x]) {
+                    city.addBuilding(new HotSpring(), x, y);
+                    city.unlock(getBuildingType(HotSpringInn));
+                    this.startMessage += " It also formed a hot spring, which we can turn into a tourist trap--Hot Spring Inn is now available.";
+                }
             }
         }
 
@@ -411,9 +417,15 @@ export class Earthquake extends CityEvent {
         const epicenterY = 3 + Math.floor((city.height - 6) * Math.random());
         let buildingsToDamage = Math.ceil(Math.log(city.peakPopulation)) - 1;
         const potentiallyDamaged = city.getBuildingsInArea(epicenterX, epicenterY, 1, 1, 6, 6, true, true);
+        //Reduce damage by up to 50% if the player has a Geolab, based on the highest lastEfficiency, or 100% for fully-adopted Seismic Dampers tech
+        const damageFactor = 1 - 0.5 * city.buildings.filter(p => p.type === getBuildingType(Geolab)).reduce((acc, p) => Math.max(acc, p.lastEfficiency), 0) - city.techManager.getAdoption("seismicdampers");
+        if (damageFactor <= 0) { //Short-circuit and indicate that no damage was done
+            this.startMessage = "An earthquake has struck the city. Fortunately, the city's Seismic Dampers tech prevented any damage.";
+            return;
+        } else if (damageFactor < 0.95) this.startMessage += " Fortunately, early warning from the city's active Geolabs helped reduce the damage done to our buildings.";
         for (const building of potentiallyDamaged) {
             if (!building.owned) continue; //Don't touch unowned buildings (boulders and mountains and such)
-            building.damagedEfficiency = Math.max(0, building.damagedEfficiency - Math.random() * 0.25 - 0.1);
+            building.damagedEfficiency = Math.max(0, building.damagedEfficiency - damageFactor * (0.1 + Math.random() * 0.25));
             if (--buildingsToDamage === 0) break;
         }
     }
@@ -427,7 +439,7 @@ export class Fire extends CityEvent {
     }
 
     private getAtRiskBuildings(city: City): Building[] {
-        return city.buildings.filter(p => p.owned && !p.isRoad && p.fireHazard * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) > p.getHighestEffect(city, EffectType.FireProtection));
+        return city.buildings.filter(p => p.owned && !p.isRoad && p.getFireHazard(city) * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) > p.getHighestEffect(city, EffectType.FireProtection));
     }
 
     private getFireEpicenter(city: City): Building | undefined {
@@ -453,10 +465,10 @@ export class Fire extends CityEvent {
         const epicenter = this.getFireEpicenter(city);
         if (!epicenter) return; //Shouldn't have started the fire in the first place
 
-        let intensity = epicenter.fireHazard * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) + 0.3 * Math.random();
+        let intensity = epicenter.getFireHazard(city) * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) + 0.3 * Math.random();
         epicenter.damagedEfficiency = Math.max(0, epicenter.damagedEfficiency - intensity);
         intensity *= 0.9;
-
+        
         //Generally do the most damage to the closest buildings, but not roads, fire stations, or already-very-damaged buildings. More damage but fewer buildings affected than an Earthquake.
         let buildingsToDamage = Math.ceil(Math.log10(city.peakPopulation));
         const potentiallyDamaged = [...city.getBuildingsInArea(epicenter.x, epicenter.y, epicenter.width, epicenter.height, 5, 5, false, true)];
@@ -467,6 +479,35 @@ export class Fire extends CityEvent {
             building.damagedEfficiency = Math.max(0, building.damagedEfficiency - (0.8 + Math.random() * 0.2) * intensity * (1.1 - coverage));
             intensity *= 0.9;
             if (--buildingsToDamage === 0) break;
+        }
+
+        //Second pass: if any of the damaged buildings is a HazmatStorage, cause an explosion--extra damage to all buildings around it
+        const hazmatStorage = potentiallyDamaged.find(p => p.type === getBuildingType(HazmatStorage));
+        if (hazmatStorage) {
+            //Hazmat damage is affected by how full your Dynamite storage is
+            const dynamite = city.resources.get(getResourceType(Dynamite))!;
+            const dynamiteFactor = dynamite.amount / dynamite.capacity;
+            if (dynamiteFactor < 0.05) return;
+            const buildings = city.getBuildingsInArea(hazmatStorage.x, hazmatStorage.y, hazmatStorage.width, hazmatStorage.height, 3, 3, true, true);
+            for (const building of buildings) {
+                if (!building.owned) continue;
+                building.damagedEfficiency = Math.max(0, building.damagedEfficiency - dynamiteFactor * (0.5 + Math.random() * 0.6));
+            }
+
+            //Also consume some of the dynamite (no more than the building COULD store)
+            dynamite.consume(0.8 * hazmatStorage.storeAmount * dynamiteFactor);
+            let amountWord: string, causePhrase: string;
+            if (dynamiteFactor > 0.7) {
+                amountWord = "massive";
+                causePhrase = "because it was nearly full of dynamite";
+            } else if (dynamiteFactor > 0.4) {
+                amountWord = "significant";
+                causePhrase = "because it contained quite a bit of dynamite";
+            } else {
+                amountWord = "minor";
+                causePhrase = "because it had some dynamite in it";
+            }
+            this.startMessage += ` Oh, on top of that, a Hazmat Storage caught on fire and exploded, causing ${amountWord} damage to itself and nearby buildings ${causePhrase}.`;
         }
     }
 }
@@ -683,14 +724,129 @@ export class Spoilage extends CityEvent {
     }
 }
 
+//Volcanic region
+export class DryLightning extends CityEvent {
+    constructor() {
+        super("drylightning", "Dry Lightning", 0, // Instant event
+            "A dry lightning strike has hit one of your buildings, causing significant damage.",
+            "", "fire");
+    }
+
+    override shouldStart(city: City, date: Date): boolean {
+        // 3.5% chance per tick, about a 63% chance in a week, increasing with greenhouse gases
+        return city.regionID === "volcanic" && this.checkedStart(Math.random() < 0.035 * (1 + city.resources.get(new GreenhouseGases().type)!.amount), city, date);
+    }
+
+    override start(city: City, date: Date): void {
+        super.start(city, date);
+        const buildings = city.buildings.filter(p => p.owned && !p.isRoad);
+        const targetBuilding = buildings[Math.floor(buildings.length * Math.random())];
+        if (targetBuilding) {
+            targetBuilding.damagedEfficiency = Math.max(0, targetBuilding.damagedEfficiency - 0.2 - targetBuilding.getFireHazard(city) * 0.6 * Math.random()); // about 20%-50% damage, lower for low-fire-hazard buildings
+        }
+    }
+}
+
+export class StrombolianEruption extends CityEvent {
+    constructor() {
+        super("strombolianeruption", "Strombolian Eruption", 0, // Instant event
+            "A Strombolian eruption has occurred. These eruptions can produce fresh patches of Ignimbrite or damage buildings near the volcano.",
+            "");
+    }
+
+    override shouldStart(city: City, date: Date): boolean {
+        // 2% chance per tick with a guaranteed week off, so roughly once every 2.78 weeks
+        return city.regionID === "volcanic" && this.checkedStart(this.skippedStarts > 7 * LONG_TICKS_PER_DAY && Math.random() < 0.02, city, date);
+    }
+
+    override start(city: City, date: Date): void {
+        super.start(city, date);
+        const volcano = city.buildings.find(p => p.type === getBuildingType(ActiveVolcano));
+        if (!volcano) return;
+
+        //Determine the adjacent tiles to the volcano by effectively drawing four lines around it--using getTilesInArea to exclude out-of-bounds tiles.
+        const adjacentTiles: { x: number, y: number }[] = [];
+        adjacentTiles.push(...city.getTilesInArea(volcano.x - 1, volcano.y, 1, volcano.height, 1, 1));
+        adjacentTiles.push(...city.getTilesInArea(volcano.x + volcano.width, volcano.y, 1, volcano.height, 1, 1));
+        adjacentTiles.push(...city.getTilesInArea(volcano.x, volcano.y - 1, volcano.width, 1, 1, 1));
+        adjacentTiles.push(...city.getTilesInArea(volcano.x, volcano.y + volcano.height, volcano.width, 1, 1, 1));
+
+        const targetTile = adjacentTiles[Math.floor(adjacentTiles.length * Math.random())];
+        if (!targetTile) return; //Can't trigger the event if there are no tiles... but that should be impossible.
+
+        //Ignimbrite is 3x3, so you can't place directly at that tile; try putting each corner on that tile and see if any of those work.
+        const ignimbrite = new Ignimbrite();
+        const possibleOffsets = [[0, 0], [0, ignimbrite.height - 1], [ignimbrite.width - 1, 0], [ignimbrite.width - 1, ignimbrite.height - 1]];
+        for (const offset of possibleOffsets) {
+            if (ignimbrite.canPlace(city, targetTile.x - offset[0], targetTile.y - offset[1], true)) {
+                city.addBuilding(ignimbrite, targetTile.x - offset[0], targetTile.y - offset[1]);
+                return;
+            }
+        }
+
+        //If none of those offsets were possible, damage buildings in the area instead (treating targetTile as the center of the ignimbrite).
+        const buildingsToDamage = city.getBuildingsInArea(Math.ceil(targetTile.x - ignimbrite.width / 2), Math.ceil(targetTile.y - ignimbrite.height / 2), ignimbrite.width * 2 - 1, ignimbrite.height * 2 - 1, 0, 0, false, true);
+        for (const building of buildingsToDamage) {
+            if (!building.owned || building.isRoad) continue;
+            building.damagedEfficiency = Math.max(0, building.damagedEfficiency - 0.4 - Math.random() * 0.3); // 40%-70% damage
+        }
+    }
+}
+
+export class VulcanianEruption extends CityEvent {
+    constructor() {
+        super("vulcanianeruption", "Vulcanian Eruption", 0, // Instant event
+            "A Vulcanian eruption has occurred, producing fresh boulders or damaging buildings far from the volcano.",
+            "");
+    }
+
+    override shouldStart(city: City, date: Date): boolean {
+        // 1% chance per tick with two guaranteed weeks off, so roughly once every 5.57 weeks
+        return city.regionID === "volcanic" && this.checkedStart(this.skippedStarts > 14 * LONG_TICKS_PER_DAY && Math.random() < 0.01, city, date);
+    }
+
+    override start(city: City, date: Date): void {
+        super.start(city, date);
+        const volcano = city.buildings.find(p => p.type === getBuildingType(GeothermalVent));
+        if (!volcano) return;
+
+        //Randomize until they're inside the map, giving up after 20 tries
+        let targetX: number, targetY: number;
+        let tries = 20;
+        do {
+            const angle = Math.random() * 2 * Math.PI;
+            const magnitude = 2 + Math.random() * 6;
+            targetX = Math.round(volcano.x + volcano.width / 2 + magnitude * Math.cos(angle));
+            targetY = Math.round(volcano.y + volcano.height / 2 + magnitude * Math.sin(angle));
+        } while (--tries > 0 && (targetX < 0 || targetX >= city.width || targetY < 0 || targetY >= city.height));
+
+        const boulder = Math.random() < 0.05 ? new GemBoulder() : new SmallBoulder();
+        if (city.grid[targetY] && boulder.canPlace(city, targetX, targetY, true)) {
+            city.addBuilding(boulder, targetX, targetY);
+        } else {
+            const buildingsToDamage = city.getBuildingsInArea(targetX, targetY, boulder.width, boulder.height, 0, 0, false, true);
+            for (const building of buildingsToDamage) {
+                if (!building.owned || building.isRoad) continue;
+                building.damagedEfficiency = Math.max(0, building.damagedEfficiency - 0.4 - Math.random() * 0.3); // 40%-70% damage
+            }
+        }
+
+        city.resources.get(new GreenhouseGases().type)!.amount += 0.03;
+    }
+}
+
+
+
+
 //Dropped idea (since I made the Alien Monolith): Alien structure spawn event. +land value and organized crime and it produces a unique resource.
 //TODO: Close call - fission power plant has to shut down for a day to repair after the safety triggered
 
 export const EVENT_TYPES = <CityEvent[]>([
-    /*Fixed seasonal events*/ Hauntymonth, Merrymonth,
+    /*Fixed seasonal events*/ Hauntymonth, Merrymonth, Chocomonth,
     /*Minigame-triggered events*/ TourismReward, ProductionReward, PowerReward, HappinessReward, ResearchReward, //TODO: Others could be a temporary construction cost reduction and a temporary market buy price reduction
     /*Random negative events*/ Drought, Heatwave, ColdSnap, PowerOutage, Burglary, Heist, Epidemic, Fire, Earthquake, Riot, Spoilage,
     //...but Earthquake has positive effects, too: spawns a cheap geothermal power source sometimes, and spawns a hot spring the first time.
     /*Random positive events*/ EconomicBoom,
     /*Less random events*/ EmergencyPowerAid, UrbanRenewalGrant,
+    /*Volcanic region*/ DryLightning, StrombolianEruption, VulcanianEruption,
 ].map(p => new p()));

@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, ElementarySchool, FireBay, FireStation, FreeStuffTable, GregsGrogBarr, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GregsGrogBarr, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -77,8 +77,8 @@ export class City {
         public player: Player,
         public id: string,
         public name: string,
-        public width: number, //Should probably solely depend on region. //TODO: Regions are not implemented.
-        public height: number,
+        public width: number = 8, //Should probably solely depend on region.
+        public height: number = 8,
         public buildingTypes: Building[] = [],
         resources: Resource[] = [],
         public unplacedBuildings: Building[] = [],
@@ -140,6 +140,10 @@ export class City {
         this.cityHall = this.buildings.find(p => p instanceof CityHall) as CityHall;
         this.postOffice = this.buildings.find(p => p instanceof PostOffice) as PostOffice;
         region?.apply(this);
+        if (this.regionID !== "volcanic") {
+            this.titles.delete(TitleTypes.TheGreatFilter.id); //This title is only available in the Volcanic region
+        }
+        this.buildingTypes.forEach(p => p.setInfoRegion(this.regionID!)); //Set the region for all building types--may adjust what they store or their variant image or whatever
 
         //Calculate present building counts so they don't need stored
         for (const building of this.buildings.concat(this.unplacedBuildings)) {
@@ -163,7 +167,7 @@ export class City {
     }
 
     private ensureNewerUnlocks() {
-        if (this.player.finishedTutorial) this.buildingTypes.filter(p => TUTORIAL_COMPLETION_BUILDING_UNLOCKS.has(p.type)).forEach(p => p.locked = false);
+        if (this.player.finishedTutorial) this.buildingTypes.filter(p => TUTORIAL_COMPLETION_BUILDING_UNLOCKS.has(p.type)).forEach(p => this.unlock(p.type));
         if (this.flags.has(CityFlags.UnlockedTourism)) this.unlock(getBuildingType(ConventionCenter));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Library));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(HighSchool));
@@ -257,6 +261,7 @@ export class City {
         if (missingBuildingTypes.length) {
             this.buildingTypes.push(...missingBuildingTypes);
             for (const buildingType of missingBuildingTypes) {
+                buildingType.isHidden = buildingType.locked = false;
                 if (!this.buildingTypesByCategory.has(buildingType.category)) {
                     this.buildingTypesByCategory.set(buildingType.category, []);
                 }
@@ -289,9 +294,6 @@ export class City {
         this.addBuilding(new StarterSolarPanel().clone(), 3, 0); //Free power for the first few houses
         this.addBuilding(new StarterSolarPanel().clone(), 3, 1);
         this.addBuilding(new StarterSolarPanel().clone(), 4, 0);
-        this.addBuilding(new ObstructingGrove().clone(), 0, 4); //Very in-the-way. Very intended. :) Has these exact coordinates in getDemolitionCosts, so be careful if you change them.
-        this.addBuilding(new Mountain().clone(), 7, 0); //Also kinda in-the-way, but it's important to have!
-        this.addBuilding(new SandBar().clone(), 0, 10); //Ditto
 
         this.flunds.amount = 70; //Low flunds. Must provide more during tutorial.
         this.resources.get("population")!.amount = 1;
@@ -305,6 +307,10 @@ export class City {
         this.resources.get("wood")!.buyableAmount = 10;
         this.buildings.forEach(building => building.powerConnected = building.roadConnected = building.powered = true);
         this.spreadEffect(new Effect(EffectType.LandValue, 0.5), 5, 5, true, 2, 2); //Some higher land value in the starting corner or it'll be too hard for players to pick up momentum.
+
+        if (this.regionID === "volcanic") {
+            this.notify(new Notification("Region Specifics", "Welcome to the Volcanic Desert! You'll unsurprisingly find that not everything is the same here as it was back in the Towngardian Plains. You can view Tutorials in the main menu for more info about what makes this region unique.", "landvalue"));
+        }
 
         this.lastLongTick = Date.now();
         this.lastShortTick = Date.now();
@@ -325,7 +331,8 @@ export class City {
     }
 
     private calculatePowerUsageMultiplier(): void {
-        this.powerUsageMultiplier = 1 - this.powerUsageReductionFormula(this.resources.get(new ResourceTypes.DeptOfEnergyBonus().type)!.amount);
+        this.powerUsageMultiplier = 1 - this.powerUsageReductionFormula(this.resources.get(new ResourceTypes.DeptOfEnergyBonus().type)!.amount)
+            + (this.events.find(p => p.type === "heatwave") ? this.regionID === "volcanic" ? 0.05 : 0.03 : 0); //Heat waves increase power usage by 3%, or 5% in the Volcanic region
     }
 
     //It's gonna be a positive number or 0. It's only affected by Department of Energy reducing the power usage multiplier.
@@ -511,7 +518,7 @@ export class City {
 
     unlock(buildingTypeId: string): void {
         const buildingType = this.buildingTypes.find(bt => bt.type === buildingTypeId);
-        if (buildingType) {
+        if (buildingType && (!buildingType.onlyAllowInRegions.length || (this.regionID && buildingType.onlyAllowInRegions.includes(this.regionID)))) {
             buildingType.locked = false;
         }
     }
@@ -1202,9 +1209,10 @@ export class City {
 
     produce(resourceType: string, amount: number) { //Mainly for buildings to call when they output an autoCollect resource. Generally, stick to transferResourcesFrom.
         const resource = this.resources.get(resourceType)!;
-        this.applyReceiptBonus({ type: resource.type, amount: amount });
-        resource.produce(amount);
-        this.resourceEvents.push({ type: resourceType, event: "produce", amount: amount });
+        const toProduce = { type: resource.type, amount: amount };
+        this.applyReceiptBonus(toProduce);
+        resource.produce(toProduce.amount);
+        this.resourceEvents.push({ type: resourceType, event: "produce", amount: toProduce.amount });
 
         //Resource Tycoon requires both producing AND selling, so check it both places
         this.checkAndAwardAchievement(AchievementTypes.ResourceTycoon.id);
@@ -1212,9 +1220,10 @@ export class City {
 
     earn(resourceType: string, amount: number) { //Mainly for minigames to call when the player completes something, but I ended up using transferResourcesFrom for that. Other than the resource event type, same as produce().
         const resource = this.resources.get(resourceType)!;
-        this.applyReceiptBonus({ type: resourceType, amount: amount });
-        resource.produce(amount);
-        this.resourceEvents.push({ type: resourceType, event: "earn", amount: amount });
+        const toEarn = { type: resourceType, amount: amount };
+        this.applyReceiptBonus(toEarn);
+        resource.produce(toEarn.amount);
+        this.resourceEvents.push({ type: resourceType, event: "earn", amount: toEarn.amount });
     }
 
     hasGifts() {
@@ -1364,7 +1373,7 @@ export class City {
         }
 
         //Affect the greenhouse gases pseudo-resource
-        if (this.peakPopulation >= GREENHOUSE_GASES_MIN_POPULATION) {
+        if (this.flags.has(CityFlags.GreenhouseGasesMatter)) {
             const greenhouseGases = this.resources.get(new ResourceTypes.GreenhouseGases().type)!;
             greenhouseGases.productionRate = this.getCityAverageGreenhouseGases() * 0.01;
             greenhouseGases.amount = Math.max(0, greenhouseGases.amount + greenhouseGases.productionRate);
@@ -1376,6 +1385,7 @@ export class City {
 
         this.checkAndAwardTitle(TitleTypes.Carnivorism.id);
         this.checkAndAwardTitle(TitleTypes.VeganRetreat.id);
+        this.checkAndAwardTitle(TitleTypes.TheGreatFilter.id);
         this.checkAndAwardAchievement(AchievementTypes.SelfSufficiencity.id);
         this.checkAndAwardAchievement(AchievementTypes.CarbonNation.id);
         this.checkAndAwardAchievement(AchievementTypes.CrimeIsOutlawed.id);
@@ -1649,15 +1659,20 @@ export class City {
         populationResource.consumptionRate = populationChange < 0 ? -populationChange : 0;
     }
 
+    getTouristsRegionFactor(): number {
+        return this.regionID === "volcanic" ? 0.75 : 1;
+    }
+
     updateTourists() {
         const touristsResource = this.resources.get("tourists");
         if (!touristsResource?.capacity) return;
 
+        const regionFactor = this.getTouristsRegionFactor();
         touristsResource.amount = 0; //Full recalculation
         this.buildings.forEach(building => {
             const tourists = building.outputResources.find(r => r.type === touristsResource.type);
             if (!tourists) return; //Could've used filter() and then forEach or aggregate or whatever, but it's just less efficient to use filter().
-            touristsResource.amount += tourists.amount * building.lastEfficiency;
+            touristsResource.amount += tourists.amount * building.lastEfficiency * regionFactor;
             //DO NOT reduce/reset tourists.amount in the buildings; those numbers increase over time until tourist traps reach max tourism draw.
         });
 
@@ -1708,6 +1723,7 @@ export class City {
             this.notify(new Notification("I Am the Law", "You've reached a population of 100! You can now build a police station to fight crime. I say 'can', but you really must, because your people will no longer be content without police coverage. I can already hear the grumblings... See Tutorials in the main menu for more info.", "policeprotection"));
             this.unlock(getBuildingType(PoliceBox));
             this.unlock(getBuildingType(PoliceStation));
+            this.unlock(getBuildingType(PoliceRovers)); //Volcanic region
             this.flags.add(CityFlags.PoliceProtectionMatters);
             this.uiManager?.updateTutorialSteps();
         }
@@ -1715,6 +1731,7 @@ export class City {
             this.notify(new Notification("Yowza! Fiya!", "You've reached a population of 250! You can now build fire stations to fight fires. Don't let the fire win, unless we're talking about the fiery passion in your heart to keep your citizens safe. See Tutorials in the main menu for more info.", "fireprotection"));
             this.unlock(getBuildingType(FireBay));
             this.unlock(getBuildingType(FireStation));
+            this.unlock(getBuildingType(DroneFireControl)); //Volcanic region
             this.flags.add(CityFlags.FireProtectionMatters);
             this.uiManager?.updateTutorialSteps();
         }
@@ -1762,6 +1779,7 @@ export class City {
             this.notify(new Notification("Cough, cough", "You've reached a population of 1400! You can now build healthcare facilities to keep your citizens happy and productive. Diet also affects healthcare effectiveness, so farm wisely! See Tutorials in the main menu for more info.", "healthcare"));
             this.unlock(getBuildingType(Clinic));
             this.unlock(getBuildingType(Hospital));
+            this.unlock(getBuildingType(DroneDoc)); //Volcanic region
             this.flags.add(CityFlags.HealthcareMatters);
             this.uiManager?.updateTutorialSteps();
         }
@@ -1784,7 +1802,7 @@ export class City {
             this.notify(new Notification("Altitect", "Reach for the sky! You can now play the Altitect minigame, though it costs a pretty penny. You can access the minigame by long-tapping or right-clicking a Skyscraper in your city. Playing Altitect changes your selected skyscraper's stats permanently depending on your actions in the minigame. You can play it as many times as you like on each skyscraper, but the cost keeps increasing.", "minigames"));
             this.flags.add(CityFlags.UnlockedAltitect);
         }
-        if (this.peakPopulation >= GREENHOUSE_GASES_MIN_POPULATION && !this.flags.has(CityFlags.GreenhouseGasesMatter)) {
+        if (this.peakPopulation >= GREENHOUSE_GASES_MIN_POPULATION * (this.regionID === "volcanic" ? 0.5 : 1) && !this.flags.has(CityFlags.GreenhouseGasesMatter)) {
             this.notify(new Notification("Disastrous Change", "As our population rises, so does the concern that unchecked pollution will harm our environment and lead to more frequent severe weather. We should choose the cleaner, greener option when we have a choice, and for when we don't, we should look into technologies that can undo our damage. See Tutorials in the main menu for more info.", "greenhousegases"));
             this.flags.add(CityFlags.GreenhouseGasesMatter);
             this.uiManager?.updateTutorialSteps();

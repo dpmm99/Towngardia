@@ -50,7 +50,7 @@ export class TechManager {
     }
 
     canResearchTech(city: City, tech: Tech): boolean {
-        if (tech.researched || tech.isUnavailable(city) || !this.prereqsAreResearched(tech)) return false;
+        if (tech.researched || tech.isUnavailable(city) || !tech.canBecomeAvailableInRegion(city.regionID!) || !this.prereqsAreResearched(tech)) return false;
         return true;
     }
 
@@ -69,7 +69,7 @@ export class TechManager {
 
         //Pick a tech
         const friendResearchedTechsSet = new Set([...otherCity.techManager.techs.values()].filter(p => p.researched).map(p => p.id)); //Techs they have researched
-        const researchableTechs = Array.from(city.techManager.techs.values()).filter(tech => friendResearchedTechsSet.has(tech.id) && !tech.researched && city.techManager.prereqsAreResearched(tech)); //Tentative rules. Techs you don't have but COULD be researching now.
+        const researchableTechs = Array.from(city.techManager.techs.values()).filter(tech => friendResearchedTechsSet.has(tech.id) && !tech.researched && city.techManager.prereqsAreResearched(tech) && tech.canBecomeAvailableInRegion(city.regionID!)); //Tentative rules. Techs you don't have but COULD be researching now.
         if (!researchableTechs.length) return [null, false];
         inPlaceShuffle(researchableTechs);
         const tech = researchableTechs[0];
@@ -87,7 +87,7 @@ export class TechManager {
     }
 
     randomFreeResearch(city: City, fractionToGrant: number): Tech | null {
-        const researchableTechs = Array.from(this.techs.values()).filter(tech => !tech.researched && this.prereqsAreResearched(tech));
+        const researchableTechs = Array.from(this.techs.values()).filter(tech => !tech.researched && this.prereqsAreResearched(tech) && tech.canBecomeAvailableInRegion(city.regionID!));
         if (!researchableTechs.length) return null;
         inPlaceShuffle(researchableTechs);
         const tech = researchableTechs[0];

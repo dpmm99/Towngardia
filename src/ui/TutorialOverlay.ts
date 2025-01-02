@@ -4,7 +4,7 @@ import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { Player } from "../game/Player.js";
 import { Grain } from "../game/ResourceTypes.js";
-import { CementMill, CornerStore, Farm, MountainIronMine, ObstructingGrove, Quadplex, Quarry, Road, SmallHouse, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TreeFarm, WindTurbine, getBuildingType } from "../game/BuildingTypes.js";
+import { CementMill, CornerStore, Farm, IgneousQuarry, MountainIronMine, ObstructingGrove, Quadplex, Quarry, RedGreenhouse, Road, SmallHouse, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TreeFarm, VolcanoIronMine, WindTurbine, getBuildingType } from "../game/BuildingTypes.js";
 import { BIGGER_MOBILE_RATIO } from "../rendering/RenderUtil.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { StandardScroller } from "./StandardScroller.js";
@@ -45,7 +45,7 @@ export class TutorialOverlay implements IHasDrawable {
 
     private grantCopy<T extends { new(...args: any[]): {} }>(cls: T) {
         const building = this.city.buildingTypes.find(p => p.type === getBuildingType(cls))!;
-        //building.locked = false;
+        if (building.onlyAllowInRegions.length && !building.onlyAllowInRegions.includes(this.city.regionID!)) return; //No granting disallowed buildings in other regions
         //I was originally doing this: this.city.transferResourcesFrom(building.getCosts(this.city)); //Full cost of the building for free
         //But then I realized the player could soft-lock themselves by building roads! So now I will simply grant them a copy of the building.
         this.city.unplacedBuildings.push(building.clone());
@@ -201,7 +201,7 @@ export class TutorialOverlay implements IHasDrawable {
                 advancementCriteria: () => this.uiManager.isConstructing(),
                 onStart: () => {
                     this.city.unlock(getBuildingType(Road)); //If we unlocked it earlier, Build Copy would let the player soft-lock themselves.
-                    this.city.buildings.forEach(p => { if (p.isRoad) p.locked = false });
+                    this.city.buildings.forEach(p => { if (p.isRoad) this.city.unlock(p.type); });
                     this.uiManager.showBottomBar();
                 },
                 onStop: () => { },
@@ -257,10 +257,12 @@ export class TutorialOverlay implements IHasDrawable {
                 onStart: () => {
                     this.uiManager.showBottomBar();
                     this.grantCopy(Farm);
+                    this.grantCopy(RedGreenhouse); //If playing in volcanic region, you just get a replacement freebie.
                 },
                 onStop: () => {
                     //Check both placed and unplaced buildings because you get to skip the tutorial after the first time.
-                    this.city.buildings.concat(this.city.unplacedBuildings).find(p => p.type === getBuildingType(Farm))!.outputResources[0] = new Grain(0, 3);
+                    const farm = this.city.buildings.concat(this.city.unplacedBuildings).find(p => p.type === getBuildingType(Farm));
+                    if (farm) farm.outputResources[0] = new Grain(0, 3); //Now conditional because Farms aren't available in all regions
                 }, //Set the farm to produce 3 grain; it's a random resource by default.
             },
             {
@@ -369,7 +371,10 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 type: "auto",
                 advancementCriteria: () => this.city.buildings.some(p => p.type === getBuildingType(Quarry) && p.roadConnected),
-                onStart: () => { this.grantCopy(Quarry); },
+                onStart: () => {
+                    this.grantCopy(Quarry);
+                    this.grantCopy(IgneousQuarry); //If playing in volcanic region, you just get a replacement freebie.
+                },
                 onStop: () => { this.city.frozenAdvanceLongTick(); },
             },
             {
@@ -521,6 +526,7 @@ export class TutorialOverlay implements IHasDrawable {
                 advancementCriteria: () => this.city.buildings.some(p => p.type === getBuildingType(MountainIronMine) && p.roadConnected),
                 onStart: () => {
                     this.grantCopy(MountainIronMine);
+                    this.grantCopy(VolcanoIronMine); //If playing in volcanic region, you just get a replacement freebie.
                     for (let x = 0; x < 10; x++) this.grantCopy(Road); //It's easy to get softlocked if you give them the cash.
                 },
                 onStop: () => { this.city.frozenAdvanceLongTick(); },
@@ -541,7 +547,8 @@ export class TutorialOverlay implements IHasDrawable {
                 advancementCriteria: () => this.city.buildings.some(p => p.type === getBuildingType(WindTurbine) && p.powerConnected),
                 onStart: () => {
                     this.city.resources.get("iron")!.capacity = 10; //Need some capacity to hold the iron. :)
-                    this.city.buildings.concat(this.city.unplacedBuildings).find(p => p.type === getBuildingType(MountainIronMine))!.outputResources[0].amount = 10;
+                    const ironMine = this.city.buildings.concat(this.city.unplacedBuildings).find(p => p.type === getBuildingType(MountainIronMine));
+                    if (ironMine) ironMine.outputResources[0].amount = 10; //Now conditional due to other regions
                     this.grantCopy(WindTurbine);
                 },
                 onStop: () => {
@@ -616,7 +623,10 @@ export class TutorialOverlay implements IHasDrawable {
                 },
                 type: "auto",
                 advancementCriteria: () => this.city.buildings.some(p => p.type === getBuildingType(TreeFarm) && p.roadConnected),
-                onStart: () => { this.grantCopy(TreeFarm); },
+                onStart: () => {
+                    this.grantCopy(TreeFarm);
+                    //Opted not to give a freebie Vertical Tree Farm for the Volcanic region since wood isn't as critical early-game.
+                },
                 onStop: () => { },
             },
             {
@@ -689,6 +699,17 @@ export class TutorialOverlay implements IHasDrawable {
                     text: `Power plants are expensive to run, but even the least cost-effective one is cheaper than importing power from outside the city. Fossil fuels pollute heavily but are cheaper over the long term than your run-of-the-mill wind turbine or solar power plant. Oil, coal, nuclear, and fusion power plants require you to provide resources directly to them, which is risky if you aren't around to manage the city every day, but you can pay a little extra for a fuel truck to keep them going non-stop. Also important to note is that power plants always run at their max capacity, so if you're not using the power, you're throwing away flunds. Because of that, an effective approach is stashing your wind turbines when you build a more efficient facility, then taking them out and placing them again as you begin to run into a power deficit.`,
                 }
             });
+
+            //Region-specific
+            if (this.city.regionID === "volcanic") {
+                steps.push({
+                    ...fieldsNotNeededForExtras,
+                    title: "Volcanic Ventilation",
+                    content: {
+                        text: "There's a lot to know about this region, but I'll keep it short. On the positive side, you get a few specific techs for free, the Thermal Recovery tech has a greater effect, and wind turbines produce more power. However, many buildings cost a bit more and are more likely to catch fire, fire/police/healthcare services are limited, and people are more reluctant to move in or tour the region. Earthquakes are more frequent, and you'll encounter lightning and eruption events. Also unique to this zone are several types of buildings, a few types of resources, a tech, and a title.",
+                    }
+                });
+            }
         }
         if (this.city.flags.has(CityFlags.PoliceProtectionMatters)) {
             steps.push({
@@ -789,7 +810,7 @@ export class TutorialOverlay implements IHasDrawable {
             this.steps[this.city.tutorialStepIndex].onStop();
 
             //Unlock a lot of buildings
-            this.city.buildingTypes.filter(p => TUTORIAL_COMPLETION_BUILDING_UNLOCKS.has(p.type)).forEach(p => p.locked = false);
+            this.city.buildingTypes.filter(p => TUTORIAL_COMPLETION_BUILDING_UNLOCKS.has(p.type)).forEach(p => this.city.unlock(p.type));
             this.city.tutorialStepIndex = -1;
             this.city.lastShortTick = this.city.lastLongTick = Date.now();
             this.player.finishedTutorial = true;

@@ -51,6 +51,10 @@ export class StandardScroller {
         this.scroll = scroll; //Use sparingly...it doesn't check bounds.
     }
 
+    scrollToEnd(): void {
+        this.scroll = this.maxScroll;
+    }
+
     setChildrenSize(size: number): void {
         if (size === this.lastSize) return; //To avoid skipping events unnecessarily--the width likely isn't changing due to scrolling, but the Drawables get rebuilt
         this.lastTouch = -99999; //Reset so it calculates on the next touch (because we don't know the screen coordinates when this is called)

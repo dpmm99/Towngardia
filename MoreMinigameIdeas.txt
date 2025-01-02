@@ -1,0 +1,29 @@
+Feasible minigame ideas from Qwen and Llama:
+Word Weavers
+Gameplay: Players are given a set of letters and a blank crossword puzzle grid.
+Objective: Fill in the grid with words that intersect correctly, using all the given letters exactly once.
+Twist: Some letters have special properties (e.g., "wild" letters that can be any letter, or "blocker" letters that cannot be used in certain positions).
+Scoring: Points are awarded for each correctly placed word, with bonuses for using all the special letters effectively.
+Replayability: A vast dictionary and random letter selection ensure a new puzzle each play.
+
+Garden Growth
+Gameplay: Players are given a garden with a limited number of plots and a set of seeds with different growth patterns (e.g., spreading, towering).
+Objective: Plant the seeds in a way that maximizes the total growth (height and spread) of all plants without overlapping.
+Twist: Each seed has a specific growth pattern and can be affected by adjacent plants (e.g., shading, nutrient competition).
+Scoring: Points are awarded for the total growth achieved, with bonuses for efficient use of space and minimal waste.
+Replayability: Randomly generated seed sets and garden layouts ensure a unique challenge each time.
+
+Recipe Rendezvous
+Gameplay: Players are given a set of ingredients and a set of recipes with specific ingredient requirements.
+Objective: Create as many recipes as possible using the given ingredients, while also minimizing waste and maximizing the total point value of the created recipes.
+Twist: Some ingredients have special properties (e.g., "substitutions" that can be used in place of other ingredients, or " bonuses" that increase the point value of certain recipes).
+Scoring: Points are awarded for each created recipe, with bonuses for efficient use of ingredients and minimization of waste.
+Replayability: Randomly generated ingredient sets and recipe requirements ensure a new challenge each time.
+
+Museum Curator
+Gameplay: Players are given a set of artifacts and a museum with limited exhibit space.
+Objective: Curate an exhibit by selecting and arranging the artifacts in a way that maximizes the total point value, while also satisfying specific exhibit requirements (e.g., thematic consistency, chronological order).
+Twist: Some artifacts have special properties (e.g., "showstoppers" that attract more visitors, or "controversies" that decrease visitor interest).
+Scoring: Points are awarded for the total point value of the exhibit, with bonuses for efficient use of space and satisfaction of exhibit requirements.
+Replayability: Randomly generated artifact sets and exhibit requirements ensure a new challenge each time.
+(It'd be almost like a tower defense game, placing towers in an irregular area with some slowing enemies, some buffing other towers, some attacking rapidly, some slowly, some attacking areas, etc. The key artifacts making it a puzzle would be like "reduces the EFFECT of surrounding artifacts" and "reduces the ATTRACTION of surrounding artifacts" along with positive ones.)

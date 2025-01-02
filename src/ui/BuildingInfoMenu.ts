@@ -234,8 +234,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 if (resource.type === 'population') {
                     text = `Housing for ${humanizeFloor(resource.capacity)}`;
                 } else if (resource.type === 'tourists') {
-                    if (building.x !== -1 && building.owned) text = `Tourism: ${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)}`;
-                    else text = `Tourism: up to ${humanizeFloor(resource.capacity)}`;
+                    const touristsRegionFactor = this.city.getTouristsRegionFactor(); //Decided to just affect the display and the final calculation in City instead of modifying all tourist attractions.
+                    if (building.x !== -1 && building.owned) text = `Tourism: ${humanizeFloor(resource.amount * touristsRegionFactor)}/${humanizeFloor(resource.capacity * touristsRegionFactor)}`;
+                    else text = `Tourism: up to ${humanizeFloor(resource.capacity * touristsRegionFactor)}`;
                     if (!this.city.flags.has(CityFlags.UnlockedTourism)) grayscale = true;
                 } else if (building.x !== -1 && building.owned && resource.capacity !== 0) { //Don't show capacity or the guaranteed-0 in-stock amount for unplaced buildings or if capacity is 0; it just isn't needed
                     text += ` (${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)})`;
@@ -422,7 +423,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
             //Warnings
             const warnings: { icon: string, text: string }[] = [];
-            if (building.fireHazard > building.getHighestEffect(this.city, EffectType.FireProtection)) warnings.push({ icon: "fire", text: "At risk of fires" });
+            if (building.getFireHazard(this.city) > building.getHighestEffect(this.city, EffectType.FireProtection)) warnings.push({ icon: "fire", text: "At risk of fires" });
             if (building.needsRoad && !building.roadConnected) warnings.push({ icon: "noroad", text: "No road access" });
             if (!building.powerConnected && building.needsPower) warnings.push({ icon: "nopower", text: "No power connection" });
             if (!building.powered && building.needsPower && !building.isNew) warnings.push({ icon: "outage", text: "Not enough " + (idealPowerProduction && building.inputResources.length ? "fuel" : "power") });

@@ -56,6 +56,16 @@ export class VacuumInsulatedWindows extends Tech {
         city.checkAndAwardTitle(TitleTypes.Pioneergreen.id);
         city.unlock(getBuildingType(UrbanCampDome));
     }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") {
+            this.researched = true;
+            this.adoptionRate = 1;
+            this.connections = []; //I still want to show it, but I don't want it to connect to anything.
+            this.recalculatePrerequisites();
+            this.displayY = new GrapheneBatteries().displayY; //Offset it a bit so Wind Turbine Lattice Frame can line up with Lab Grown Meat, Incubators, Genetically Modified Crops, etc.
+        }
+    }
 }
 
 export class RooftopSolar extends Tech {
@@ -89,6 +99,14 @@ export class SmartHomeSystems extends Tech {
         city.unlock(getBuildingType(ShowHome));
         city.unlock(getBuildingType(DepartmentOfEnergy));
     }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") {
+            this.connections = this.connections.filter(p => p.id !== "vacuumwindows"); //Remove the Vacuum Windows connection since that's researched by default in the volcanic region
+            this.connections[0].path = []; //Now it's a straight shot to Wind Turbine Lattice Frame
+            this.recalculatePrerequisites();
+        }
+    }
 }
 
 export class CoalPowerScrubbers extends Tech {
@@ -108,6 +126,13 @@ export class CoalPowerScrubbers extends Tech {
         city.checkAndAwardTitle(TitleTypes.Pioneergreen.id);
         city.unlock(getBuildingType(EnvironmentalLab));
     }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") {
+            this.researched = true;
+            this.adoptionRate = 1;
+        }
+    } //Doesn't have to be hidden/swapped out, can just show as completed, because its only prereq is Heat Pumps--very minor if Carbon Capture Systems is researchable earlier because of this.
 }
 
 export class PerovskiteSolarCells extends Tech {
@@ -144,6 +169,12 @@ export class WindTurbineLattice extends Tech {
 
     override applyEffects(city: City) {
         city.checkAndAwardTitle(TitleTypes.Pioneergreen.id);
+    }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") {
+            this.displayY = new SmartHomeSystems().displayY;
+        }
     }
 }
 
@@ -274,6 +305,15 @@ export class VerticalFarming extends Tech {
     override applyEffects(city: City) {
         city.unlock(getBuildingType(VerticalFarm));
     }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") {
+            this.researched = true;
+            this.adoptionRate = 1;
+            this.displayY = new LabGrownMeat().displayY;
+            this.description = "Building unlock: Vertical Tree Farm. Multi-story indoor tree farming facilities that maximize land use and wood yield in extreme environments.";
+        }
+    }
 }
 
 export class HydroponicGardens extends Tech {
@@ -287,6 +327,14 @@ export class HydroponicGardens extends Tech {
             1000, 300,
             [{ id: "verticalfarm", path: [] }]
         );
+    }
+
+    override applyRegionEffects(region: string) {//TODO: Anything that references this must have a applyRegionEffects method to switch its paths
+        if (region === "volcanic") {
+            this.researched = true;
+            this.adoptionRate = 1;
+            this.displayY = new Incubators().displayY;
+        }
     }
 }
 
@@ -306,6 +354,14 @@ export class LabGrownMeat extends Tech {
     override applyEffects(city: City) {
         city.unlock(getBuildingType(Carnicultivator));
     }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") {
+            this.displayY = new VerticalFarming().displayY;
+            this.connections[0].id = "smarthome";
+            this.recalculatePrerequisites();
+        }
+    }
 }
 
 export class Incubators extends Tech {
@@ -322,6 +378,12 @@ export class Incubators extends Tech {
     }
 
     //Production rate and capacity changes are handled in the buildings' onLongTick.
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") { //Move up to fill the space where Hydroponic Gardens was
+            this.displayY = new HydroponicGardens().displayY;
+        }
+    }
 }
 
 export class GMCrops extends Tech {
@@ -338,6 +400,13 @@ export class GMCrops extends Tech {
     }
 
     //Production rate and capacity changes are handled in the buildings' onLongTick.
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") {
+            this.connections[0].id = "incubators";
+            this.recalculatePrerequisites();
+        }
+    }
 }
 
 export class RetainingSoil extends Tech { //TODO: the water usage part
@@ -484,6 +553,12 @@ export class NanomedicineResearch extends Tech {
             [{ id: "telemedicine", path: [] }]
         );
     }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") {
+            this.description = "Molecular-scale medical interventions that dramatically improve treatment efficacy at DroneDocs.";
+        }
+    }
 }
 
 export class AIDiagnostics extends Tech {
@@ -572,7 +647,7 @@ export class ThermalRecovery extends Tech { //Intent: to save the player some sp
         super(
             'thermalrecovery',
             'Thermal Recovery',
-            'A layer of thermoelectric metamaterials increases the efficiency of geothermal, oil, coal, nuclear fission, and nuclear fusion power plants.',
+            'A layer of thermoelectric metamaterials increases the efficiency of geothermal, oil, coal, nuclear fission, and nuclear fusion power plants.', //TODO: Tell the player somehow that it's more effective than usual, if they're playing in the Volcanic region
             [{ type: 'research', amount: 250 }, { type: 'copper', amount: 80 }, { type: 'batteries', amount: 20 }],
             0.05, 0.008, //~30 days to fully adopt
             900, 900,
@@ -613,10 +688,34 @@ export class Hydrolox extends Tech {
     }
 }
 
+export class SeismicDampers extends Tech {
+    constructor() {
+        super(
+            'seismicdampers',
+            'Seismic Dampers',
+            'Advanced structural systems that absorb and redirect seismic energy, protecting buildings from all earthquake damage.',
+            [{ type: 'research', amount: 60 }, { type: 'steel', amount: 80 }],
+            0.04, 0.008, // ~30 days to fully adopt
+            360, 520,
+            [{ id: "windlattice", path: [] }]
+        );
+    }
+
+    override applyEffects(city: City) {
+        // The actual earthquake protection will be handled by the event system
+        city.checkAndAwardTitle(TitleTypes.Pioneergreen.id);
+    }
+
+    override canBecomeAvailableInRegion(region: string): boolean {
+        return region === "volcanic";
+    }
+}
+
+
 export const TECH_TYPES: Tech[] = [
     AIDiagnostics, AILogistics, ARShopping, AdvancedRobotics, AutonomousVehicles, BrainComputerInterface,
     BreederReactor, CarbonCapture, CloudSeeding, CoalPowerScrubbers, DroneDelivery, FoodServiceRobots,
     FusionPower, GMCrops, Geothermal, GrapheneBatteries, GridBalancer, HeatPumps, Hydrolox, HydroponicGardens, Incubators, LabGrownMeat,
-    NanomedicineResearch, PerovskiteSolarCells, QuantumComputing, RetainingSoil, RooftopSolar, SmartHomeSystems,
+    NanomedicineResearch, PerovskiteSolarCells, QuantumComputing, RetainingSoil, RooftopSolar, SeismicDampers, SmartHomeSystems,
     TelemedicineInfra, ThermalRecovery, ThreeDPrinting, VRClassrooms, VacuumInsulatedWindows, VerticalFarming, WindTurbineLattice,
 ].map(p => new p());

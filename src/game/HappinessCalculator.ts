@@ -4,7 +4,7 @@ import { CityFlags } from "./CityFlags.js";
 import { EffectType } from "./GridType.js";
 import { FoodSatisfaction } from "./ResourceTypes.js";
 import { Notification } from "./Notification.js";
-import { AssemblyHouse, DataCenter, ECarRental, FreeStuffTable, GameDevStudio, MohoMine, Nanogigafactory, NuclearFuelTruck, NuclearPowerPlant, NuclearStorage, Observatory, PharmaceuticalsLab, SauceCode, SpaceLaunchSite, getBuildingType } from "./BuildingTypes.js";
+import { AssemblyHouse, DataCenter, ECarRental, FreeStuffTable, GameDevStudio, Geolab, MohoMine, Nanogigafactory, NuclearFuelTruck, NuclearPowerPlant, NuclearStorage, Observatory, PharmaceuticalsLab, SauceCode, SpaceLaunchSite, TourksTrekkers, getBuildingType } from "./BuildingTypes.js";
 import { HappinessReward } from "./EventTypes.js";
 
 export const HIGH_TECH_UNLOCK_EDU = 0.9;
@@ -166,7 +166,8 @@ export class HappinessCalculator {
 
             if (!this.city.flags.has(CityFlags.UnlockedGameDev) && avgEducation >= HIGH_TECH_UNLOCK_EDU) {
                 this.city.notify(new Notification("Neeerd!", "You've granted your population a grand education. As such, they are now capable of constructing and running higher-tech facilities relating to electronics, medicine, nuclear energy, astronomy, and geology.", "education"));
-                for (const type of [ECarRental, DataCenter, NuclearStorage, NuclearPowerPlant, NuclearFuelTruck, SauceCode, GameDevStudio, Observatory, AssemblyHouse, Nanogigafactory, PharmaceuticalsLab, MohoMine, SpaceLaunchSite])
+                for (const type of [ECarRental, DataCenter, NuclearStorage, NuclearPowerPlant, NuclearFuelTruck, SauceCode, GameDevStudio, Observatory, AssemblyHouse, Nanogigafactory, PharmaceuticalsLab, MohoMine, SpaceLaunchSite,
+                    /*Volcanic*/TourksTrekkers, Geolab,])
                     this.city.unlock(getBuildingType(type));
                 this.city.flags.add(CityFlags.UnlockedGameDev);
             }

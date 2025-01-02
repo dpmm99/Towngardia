@@ -57,6 +57,8 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
         this.renderConnections(techTreeDrawable);
 
         techs.forEach(tech => {
+            if (!tech.canBecomeAvailableInRegion(this.city.regionID!)) return; //Don't show techs that won't ever be available in this region
+
             maxX = Math.max(maxX, tech.displayX + this.outerExtremesPadding);
             maxY = Math.max(maxY, tech.displayY + this.outerExtremesPadding);
             const x = tech.displayX + this.outerExtremesPadding - this.scrollerX.getScroll();
@@ -173,6 +175,8 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
 
     private renderConnections(techTreeDrawable: Drawable): void {
         this.techManager.techs.forEach(tech => {
+            if (!tech.canBecomeAvailableInRegion(this.city.regionID!)) return; //Don't show techs that won't ever be available in this region
+
             tech.connections.forEach(connection => {
                 const connectedTech = this.techManager.techs.get(connection.id);
                 if (connectedTech) {

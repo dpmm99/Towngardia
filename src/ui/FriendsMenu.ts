@@ -6,6 +6,7 @@ import { StandardScroller } from "./StandardScroller.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
 import { City } from "../game/City.js";
+import { REGIONS } from "../game/Region.js";
 
 export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
@@ -15,6 +16,7 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
     private cityIconSize = 32;
     private itemPadding = 10;
     private requestedAvatars = new Set<string>();
+    private showRegionPicker: boolean = false;
 
     constructor(private player: Player, private uiManager: UIManager) { }
 
@@ -31,6 +33,16 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
 
     public hide(): void {
         this.shown = false;
+    }
+
+    newCity(regionID: string): boolean {
+        const newCityName = prompt("Entitle thy new concrete jungle:", this.player.name + "gardia");
+        if (!newCityName) return false;
+        const newCity = new City(this.player, "", newCityName, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, regionID);
+        newCity.startNew();
+        this.player.addCity(newCity);
+        this.uiManager.switchCity(newCity, this.player);
+        return true;
     }
 
     asDrawable(): Drawable {
@@ -82,7 +94,7 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
         }));
         addFriendContainer.addChild(new Drawable({
             x: this.friendIconSize + 20,
-            y: 8,
+            y: 10,
             width: `calc(100% - ${this.friendIconSize + 30}px)`,
             height: "32px",
             text: "Add friend...",
@@ -97,12 +109,9 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
             height: `${this.friendIconSize}px`,
             fallbackColor: '#444444',
             onClick: () => {
-                const newCityName = prompt("Entitle thy new concrete jungle:", this.player.name + "gardia");
-                if (!newCityName) return;
-                const newCity = new City(this.player, "", newCityName, 64, 64);
-                newCity.startNew();
-                this.player.addCity(newCity);
-                this.uiManager.switchCity(newCity, this.player);
+                //if player has regions unlocked, toggle the region picker instead of assuming they want a new Plains city
+                if (this.player.achievements.some(p => p.attained && p.id === "plainsandastralplanes")) this.showRegionPicker = !this.showRegionPicker;
+                else this.newCity(REGIONS[0].id);
             }
         });
         newCityContainer.addChild(new Drawable({
@@ -114,13 +123,56 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
         }));
         newCityContainer.addChild(new Drawable({
             x: this.friendIconSize + 20,
-            y: 6,
+            y: 10,
             width: `calc(100% - ${this.friendIconSize + 30}px)`,
             height: "32px",
-            text: "New City...",
+            text: this.showRegionPicker ? "Pick a region for your new city:" : "New City...",
         }));
         menuDrawable.addChild(newCityContainer);
         yOffset += this.friendIconSize + this.itemPadding;
+
+        if (this.showRegionPicker) {
+            //Draw list of regions; clicking one creates a new city instead of newCityContainer doing so
+            const regionClickableWidth = this.friendIconSize * 4;
+            const regionClickableHeight = this.friendIconSize * 2 + 30; //The extra 30 is for the text.
+            const regionPickerHeight = regionClickableHeight * Math.ceil(REGIONS.length / 3) + this.itemPadding * 2;
+            const regionPickerContainer = new Drawable({
+                x: this.itemPadding,
+                y: yOffset,
+                width: "100%",
+                height: `${regionPickerHeight}px`,
+                fallbackColor: '#444444',
+            });
+            REGIONS.forEach((region, i) => {
+                //Clickable area is not the image itself
+                const clickable = regionPickerContainer.addChild(new Drawable({
+                    x: this.itemPadding + (regionClickableWidth + this.itemPadding) * (i % 3), //Assuming 3 will fit per row
+                    y: this.itemPadding + regionClickableHeight * Math.floor(i / 3),
+                    width: `${regionClickableWidth}px`,
+                    height: `${regionClickableHeight}px`,
+                    fallbackColor: '#00000000',
+                    onClick: () => {
+                        if (this.newCity(region.id)) this.showRegionPicker = false;
+                    }
+                }));
+                clickable.addChild(new Drawable({
+                    width: `${this.friendIconSize * 4}px`,
+                    height: `${this.friendIconSize * 2}px`,
+                    image: new TextureInfo(this.friendIconSize * 2, this.friendIconSize * 4, 'region/' + region.id),
+                    fallbackColor: '#00000000',
+                }));
+                clickable.addChild(new Drawable({
+                    anchors: ['bottom', 'centerX'],
+                    y: -10,
+                    centerOnOwnX: true,
+                    width: "calc(100% - 20px)",
+                    height: "30px",
+                    text: region.displayName,
+                }));
+            });
+            menuDrawable.addChild(regionPickerContainer);
+            yOffset += regionPickerHeight + this.itemPadding;
+        }
 
         this.scroller.setChildrenSize(yOffset - baseY + 130); // Add some extra padding at the bottom
 
@@ -204,7 +256,7 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
 
         playerContainer.addChild(new Drawable({
             x: this.friendIconSize + 20,
-            y: 8,
+            y: 10,
             text: isCurrentPlayer ? "Your Cities" : !player.finishedTutorial ? `${player.name} (Still in tutorial)` : `${player.name}'s Cities`,
             width: `calc(100% - ${this.cityIconSize + 30}px)`,
             height: "32px"
@@ -244,7 +296,7 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
 
                 cityContainer.addChild(new Drawable({
                     x: this.cityIconSize + 20,
-                    y: 6,
+                    y: 8,
                     text: city.name + (isCurrentCity ? " (Tap to rename)" : isLastCity ? " (Playing as)" : ""),
                     width: `calc(100% - ${this.cityIconSize + 30}px)`,
                     height: "20px"

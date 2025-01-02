@@ -36,4 +36,22 @@ export class Tech {
         clone.costs = this.costs.map(p => ({ type: p.type, amount: p.amount }));
         return clone;
     }
+
+    recalculatePrerequisites(): void {
+        this.prerequisites.length = 0;
+        this.prerequisites.push(...this.connections.map(p => p.id));
+    }
+
+    applyRegionEffects(region: string): void {
+        // Default implementation does nothing
+        // Override in specific techs that need regional variations
+        // Call in City constructor
+        // Change this.connections and this.prerequisites as needed
+    }
+
+    canBecomeAvailableInRegion(region: string): boolean {
+        // Default implementation returns true
+        // Override in specific techs that are region-restricted
+        return true;
+    }
 }

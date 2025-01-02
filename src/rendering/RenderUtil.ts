@@ -99,8 +99,12 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     //Techs are loaded when opening the tech tree menu, other than this one (it takes a moment to load and redraw upon opening the window the first time).
     urls["tech/generic"] = "assets/tech/generic.png";
 
-    for (const bg of ['grass1', 'grass2']) {
+    //TODO: Move these to the regions, or just use region ID + the Region needs a number for how many background tiles there are for that region. Definitely don't want to load them all up-front.
+    for (const bg of ['grass1', 'grass2', 'rock1', 'rock2', 'rock3', 'rock4', 'rock5']) {
         urls["background/" + bg] = `assets/background/${bg}.png`;
+    }
+    for (const region of ['plains', 'volcanic']) { //Not referencing REGIONS directly because Webpack won't find an appropriate order for the imports.
+        urls["region/" + region] = `assets/region/${region}.png`;
     }
 
     //Exception for files we KNOW aren't available yet, to save some unnecessary 404s.

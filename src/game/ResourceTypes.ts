@@ -742,6 +742,57 @@ export class Chocolate extends Resource {
     }
 }
 
+//Region-limited. Volcanic region:
+export class Obsidian extends Resource {
+    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
+        super(
+            "obsidian", "Obsidian",
+            initialCount, productionRate, capacity, consumptionRate,
+            false, 0, 2
+        );
+    }
+}
+
+export class GreenObsidian extends Resource {
+    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
+        super(
+            "greenobsidian", "Green Obsidian",
+            initialCount, productionRate, capacity, consumptionRate,
+            false, 0, 5
+        );
+    }
+}
+
+export class FireObsidian extends Resource {
+    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
+        super(
+            "fireobsidian", "Fire Obsidian",
+            initialCount, productionRate, capacity, consumptionRate,
+            false, 0, 7
+        );
+    }
+}
+
+export class Sulfur extends Resource {
+    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
+        super(
+            "sulfur", "Sulfur",
+            initialCount, productionRate, capacity, consumptionRate,
+            false, 0, 2
+        );
+    }
+}
+
+export class Dynamite extends Resource {
+    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
+        super(
+            "dynamite", "Dynamite",
+            initialCount, productionRate, capacity, consumptionRate,
+            false, 0, 5
+        );
+    }
+}
+
 //More special resources: cars, self-driving cars, bicycles, buses, drones, snowplows? (or it's just a building's radius effect)
 
 export const RESOURCE_TYPES = <Resource[]>([
@@ -752,7 +803,8 @@ export const RESOURCE_TYPES = <Resource[]>([
     /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays, PracticeRuns, MinigameOptionResearch,
     /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, PowerCosts, DeptOfEnergyBonus, EnvironmentalLabBonus,
     /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Timeslips, Water,
-    /*Event-limited*/ BrainBrews, GleeGrenades, TurboTonics, Chocolate
+    /*Event-limited*/ BrainBrews, GleeGrenades, TurboTonics, Chocolate,
+    /*Region-limited*/ Obsidian, GreenObsidian, FireObsidian, Sulfur, Dynamite,
 ].map(p => new p()));
 
 //For easy checking if something is a food.

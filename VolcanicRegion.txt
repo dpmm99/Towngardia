@@ -1,0 +1,57 @@
+Natural Structures:
+- Dry Woods: replaces Obstructing Grove; still just gives wood
+- Ignimbrite: replaces medium and large Boulders; a patch of obsidian or other volcanic rock
+- Small Boulder: a different image (lava bomb) and they contain some iron and copper in addition to rock
+- Active Volcano: produces some particulate pollution and greenhouse gases constantly
+- Gem Boulders: a way to earn extra flunds after a month or two, because you just use dynamite to turn them into gems and free up the space
+- Lake of Fire: replaces ponds as "luxurious"
+Artificial Structures:
+- Obsidian Gatherer: generates obsidian from nothing
+- Obsidian Crusher: converts obsidian into sand
+- Volcano Iron Mine: mainly produces iron, but also produces small amounts of Sulfur and Fire Obsidian; must be built on the foot of a volcano
+- Tumbler: converts Fire Obsidian into gems
+- Red Greenhouse: more expensive, but the only viable type of farm
+- Vertical Tree Farm: also more expensive, but the only way to produce your own wood
+- Geolab: predicts earthquakes and produces research points
+- Hazmat Storage: for dynamite, lithium, and sulfur (lithium no longer stored by normal storage depots)
+- Enclosed Ranch: a ranch, but the animals live in concrete domes due to the bad outside air
+- Igneous Quarry: Smaller and also produces some Green Obsidian
+- Increased fire hazard for most buildings because the region is hot and dry
+- Drones and rovers instead of standard fire, police, and healthcare facilities
+- Wind Turbines produce more power
+- Tourk's Trekkers: replaces Carter's Cars, and it sells tougher vehicles
+- Some outdoorsy decorations are inaccessible
+Resources:
+- Obsidian - basically just for making sand
+- Green Obsidian - just for selling, worth more than obsidian but less than fire obsidian
+- Fire Obsidian - can be polished into Gems
+- Sulfur - obtained from anywhere but is an *additional* requirement for concrete, plastic, and battery production as well as construction of Vertical Farms
+- Dynamite - made from sulfur
+- Many buildings that required wood use concrete instead and tend to cost a bit more, but factory recipes still use wood
+Events:
+- Dry Lightning - strikes just one building roughly once a week (probability-wise), more frequently for higher accumulated greenhouse gases
+- Strombolian Eruption - can frequently produce fresh patches of Ignimbrite or damage buildings by a volcano (damages buildings instead of producing Ignimbrite if it picked an occupied spot; it always picks a directly adjacent spot for the Ignimbrite)
+- Vulcanian Eruption - a third as frequent; can produce fresh boulders (5% chance of a gem boulder, 95% chance of a regular boulder) or damage buildings somewhat far (~6 tiles) from a volcano and increases accumulated greenhouse gases by 0.03 directly - picks a spot for the boulder by angle and magnitude
+- No Cold Snaps, but Heat Waves increase power usage even more
+- Earthquakes are more common, but they don't produce more fumaroles or hot springs
+- Explosion - if Hazmat Storage catches on fire, instead of just being a fire, it does huge damage to itself and nearby buildings, proportional to how full your storage is
+Achievement that unlocks it:
+- Plains and Astral Planes - An end-goal for your first city. A large, well-educated population is bound to make incredible discoveries, especially with a Museum of Future Arts at hand. Unlock regions and realms by building a Portal in your city. Requires a population of 50,000 and four Colleges.
+Titles:
+- The Great Filter: No, I'm not talking about the Fermi Paradox explanation of the same name. Well, I mean, I could be. It IS pretty dumb of the species to live in an area of extreme volcanic activity like this. But anyway... Attain this by building enough Carbon Capture Plants to reduce accumulated greenhouse gases to zero.
+Techs:
+- Free: CoalPowerScrubbers, HydroponicGardens, VacuumInsulatedWindows
+- Unavailable: Vertical Farming (but I just changed the label to say it unlocks Vertical Tree Farms and made it free instead of hiding it)
+- New: Seismic Dampers - eliminates damage from earthquakes; costs steel
+- Nanomedicine Research affects the replacement medical facility because there is no Hospital
+- ThermalRecovery is extra powerful
+Layout:
+- Less continuous usable map space due to many volcanoes
+- A few hot springs
+- No oil seeps
+- No sand
+- Mysterious Rubble is always needed
+- Lithium Plateau optional
+- Plenty of fumaroles at the start
+Rules:
+- Lower move-in and tourism rates
