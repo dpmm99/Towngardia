@@ -17,6 +17,7 @@ export class ContextMenu implements IHasDrawable {
     private city: City | null = null;
     public building: Building | null = null;
     private lastDrawable: Drawable | null = null;
+    //It might make sense to turn all these booleans into a single enum.
     public copying: boolean = false;
     public moving: boolean = false;
     public ridingAlong: Building[] = []; //Buildings that are being moved along with the main building
@@ -26,6 +27,7 @@ export class ContextMenu implements IHasDrawable {
     public switchingRecipe: boolean = false;
     public collecting: boolean = false;
     public collectedResources: { type: string, amount: number }[] = [];
+    public provisioningAlert: boolean = false;
 
     constructor(private uiManager: UIManager, private game: GameState) {
     }
@@ -43,6 +45,7 @@ export class ContextMenu implements IHasDrawable {
         this.repairing = false;
         this.switchingRecipe = false;
         this.collecting = false;
+        this.provisioningAlert = false;
         if (this.building) city.drawInFrontBuildings = [this.building];
         else city.drawInFrontBuildings = [];
     }
@@ -69,6 +72,7 @@ export class ContextMenu implements IHasDrawable {
         if (this.repairing) return this.lastDrawable = this.drawRepairConfirmation(building);
         if (this.reopening) return this.lastDrawable = this.drawReopenConfirmation(building);
         if (this.switchingRecipe) return this.lastDrawable = this.drawRecipeSwitch(building);
+        if (this.provisioningAlert) return this.lastDrawable = this.drawProvisioningAlert(building);
 
         //Radial menu
         const menu = new Drawable({
@@ -628,5 +632,56 @@ export class ContextMenu implements IHasDrawable {
         }
         confirmation.height = nextY + "px";
         return confirmation;
+    }
+
+    //Similar to but much simpler than drawCollection, drawProvisioningAlert shows a message to indicate that the player needs to build storage for missingResources[0]
+    private drawProvisioningAlert(building: Building) {
+        const missingResources = building.inputResources.filter(p => !this.city?.resources.get(p.type)?.capacity);
+        if (!missingResources.length) {
+            this.provisioningAlert = false;
+            this.building = null;
+            return new Drawable({ width: "0px" });
+        }
+        const alert = new Drawable({
+            x: building.x + (building.width - 1) / 2 - 1.6, //-1.6 x and +2.9 y for rough centering
+            y: building.y - 1 + (building.height - 1) / 2 + 2.9,
+            width: "300px",
+            fallbackColor: '#222222',
+            id: "provisioningAlert",
+        });
+        let nextY = 5;
+        alert.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "90px",
+            height: "16px",
+            text: "Provisioning",
+        }));
+        nextY += 16;
+        alert.addChild(new Drawable({
+            x: 5,
+            y: nextY,
+            width: "calc(100% - 10px)",
+            height: "24px",
+            text: `You need storage for ${missingResources[0].displayName},`,
+        }));
+        nextY += 24;
+
+        //Suggest a building that stores the missing resource, preferably the cheapest one (in terms of flunds alone) that you have unlocked. Remember 'owned' means it's not natural/built into the map.
+        const storageBuildings = this.city?.buildingTypes.filter(b => !b.locked && b.owned && b.stores.some(p => p.type === missingResources[0].type))
+            .sort((a, b) => a.getCosts(this.city!).find(p => p.type === "flunds")!.amount - b.getCosts(this.city!).find(p => p.type === "flunds")!.amount);
+        if (storageBuildings?.length) {
+            alert.addChild(new Drawable({
+                x: 5,
+                y: nextY,
+                width: "calc(100% - 10px)",
+                height: "24px",
+                text: `e.g., ${storageBuildings[0].displayName}`,
+            }));
+            nextY += 24;
+        }
+        alert.height = nextY + "px";
+        return alert;
     }
 }

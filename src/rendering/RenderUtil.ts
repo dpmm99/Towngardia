@@ -76,9 +76,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     for (const category of getBuildingCategoryNames()) {
         urls["category/" + category] = `assets/category/${category.toLowerCase()}.png`;
     }
-    //for (const footprintType of getFootprintTypeNames()) {
-    //    urls["footprint/" + footprintType] = `assets/footprint/${footprintType.toLowerCase()}.png`;
-    //}
+
     urls["footprint/EMPTY"] = "assets/footprint/empty.png"; //Instead of loading all footprints, just load one up-front to use as a fallback, and the others can be loaded when needed.
     for (const resource of [...city.resources.values()]
         .filter(p => p.capacity > 0 || p.isSpecial)) { //Tentatively, only preloading resources that the city HAS. Others will be loaded on demand.
@@ -89,21 +87,6 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     urls["resource/power"] = "assets/resource/power.png";
     urls["resource/weight"] = "assets/resource/weight.png";
     urls["resource/generic"] = "assets/resource/generic.png";
-    //const otherSprites = [
-    //    /*right bar*/ 'friends', 'addfriend', 'newcity', 'research', 'notifications', 'notificationson', 'titles', 'achievements', 'views', 'budget', 'provisionview', 'memorymixology', 'slots', 'starbox', 'monobrynth', 'neponet', 'gift',
-    //    /*AchievementsMenu*/ 'title1', 'title2', 'title3', //TODO: Rename if you actually use them; must match achievement/title names
-    //    /*top bar*/ 'resources', 'menu', 'progressbg', 'progressfg', 'diet', 'foodsufficiency', 'foodsatisfaction', 'foodhealth',
-    //    /*resource bar*/ 'tradesettingson', 'tradesettingsoff', 'autobuyhandle', 'autosellhandle', 'arrowleft', 'arrowright',
-    //    /*ConstructMenu*/ 'ok', 'x',
-    //    /*ContextMenu*/ 'info', 'move', 'remove', 'demolish', 'demolishnobg', 'buildcopy', 'switch', 'switchnobg', 'fastforward', 'fastforwardnobg', 'altitect',
-    //    /*BudgetMenu*/ 'incometax', 'propertytax', 'salestax', 'budgetok', "fireprotection", "policeprotection", "healthcare", "education", "environment", "infrastructure", //Services might be resources, dunno
-    //    /*TechTreeMenu*/ 'completeresearch', 'progressresearch', 'cannotresearch', 'adoptionrate',
-    //    /*NotificationsMenu*/ 'unread', 'notice', 'advisor', 'logistics', 'minigames',
-    //    /*Events (could be automatic/generic)*/ 'coldsnap', 'blackout', 'epidemic',
-    //    /*Views bar*/ 'residentialdesirability', 'landvalue', 'luxury', 'businesspresence', 'pettycrime', 'organizedcrime', 'noise', 'particulatepollution', 'greenhousegases', 'placementgrid', 'efficiencyview', 'hidebuildings', 'fadebuildings', 'businessvalue', //Others Copilot spat out, some of which I likely do want: 'firehazard', 'healthhazard', 'unemployment', 'traffic', 'infrastructure', 'happiness', 'population'
-    //    /*errors and view-specific icons on any building*/ 'noroad', 'nopower', 'outage', 'fire', 'provision', 'cannotprovision', 'reopen', 'errorbackdrop', 'warningbackdrop', 'collectionbackdrop', 'resourceborder', 'willupgrade', 'publictransport',
-    //    /*Multiple minigames*/ 'checked', 'unchecked',
-    //];
 
     //No longer loading all UI elements up front. Here's a narrowed down list--just the things that are visible as soon as you start the game... aaand some warnings and resource and danger backdrops because the placeholders would look really out-of-place.
     const otherSprites = [
@@ -120,9 +103,6 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     urls["tech/generic"] = "assets/tech/generic.png";
 
     //TODO: Move these to the regions, or just use region ID + the Region needs a number for how many background tiles there are for that region. Definitely don't want to load them all up-front.
-    //for (const bg of ['grass1', 'grass2', 'rock1', 'rock2', 'rock3', 'rock4', 'rock5']) {
-    //    urls["background/" + bg] = `assets/background/${bg}.png`;
-    //}
     //Only load the background for your city's region
     const backgroundImages = city.regionID === "plains" ? ['grass1', 'grass2'] : city.regionID === "volcanic" ? ['rock1', 'rock2', 'rock3', 'rock4', 'rock5'] : [];
     for (const bg of backgroundImages) urls["background/" + bg] = `assets/background/${bg}.png`;
@@ -133,8 +113,6 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     //Exception for files we KNOW aren't available yet, to save some unnecessary 404s.
     delete urls["category/BLOCKER"];
     delete urls["category/NATURAL_RESOURCE"];
-    delete urls["footprint/ALL"];
-    delete urls["footprint/MUST_BE_ON"]
     delete urls["resource/crime"];
     delete urls["resource/education"];
     delete urls["resource/foodsufficiency"];
@@ -149,6 +127,39 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     delete urls["resource/timeslips"];
     delete urls["resource/powercosts"];
     delete urls["resource/miniresearch"];
+
+    return urls;
+}
+
+export function getLatePreloadSpriteURLs(): { [key: string]: string } {
+    const urls: { [key: string]: string } = {};
+
+    const otherSprites = [
+        /*right bar*/ 'addfriend', 'newcity', 'provisionview', 'memorymixology', 'slots', 'starbox', 'monobrynth', 'neponet', 'gift',
+        /*AchievementsMenu*/ 'title1', 'title2', 'title3', //TODO: Rename if you actually use them; must match achievement/title names
+        /*top bar*/ 'diet', 'foodsufficiency', 'foodsatisfaction', 'foodhealth',
+        /*resource bar*/ 'tradesettingson', 'tradesettingsoff', 'autobuyhandle', 'autosellhandle', 'arrowleft', 'arrowright',
+        /*ConstructMenu*/ 'ok', 'x',
+        /*ContextMenu*/ 'info', 'move', 'remove', 'demolish', 'demolishnobg', 'buildcopy', 'switch', 'switchnobg', 'fastforward', 'fastforwardnobg', 'altitect',
+        /*BudgetMenu*/ 'incometax', 'propertytax', 'salestax', 'budgetok', "fireprotection", "policeprotection", "healthcare", "education", "environment", "infrastructure", //Services might be resources, dunno
+        /*TechTreeMenu*/ 'completeresearch', 'progressresearch', 'cannotresearch', 'adoptionrate',
+        /*NotificationsMenu*/ 'unread', 'notice', 'advisor', 'logistics', 'minigames',
+        /*Events (could be automatic/generic)*/ 'coldsnap', 'blackout', 'epidemic',
+        /*Views bar*/ 'residentialdesirability', 'landvalue', 'luxury', 'businesspresence', 'pettycrime', 'organizedcrime', 'noise', 'particulatepollution', 'greenhousegases', 'placementgrid', 'efficiencyview', 'hidebuildings', 'fadebuildings', 'businessvalue', //Others Copilot spat out, some of which I likely do want: 'firehazard', 'healthhazard', 'unemployment', 'traffic', 'infrastructure', 'happiness', 'population'
+        /*errors and view-specific icons on any building*/ 'fire', 'provision', 'cannotprovision', 'reopen', 'errorbackdrop', 'resourceborder', 'willupgrade', 'publictransport',
+        /*Multiple minigames*/ 'checked', 'unchecked',
+    ];
+
+    for (const sprite of otherSprites) {
+        urls["ui/" + sprite] = `assets/ui/${sprite}.png`;
+    }
+
+    for (const footprintType of getFootprintTypeNames()) {
+        urls["footprint/" + footprintType] = `assets/footprint/${footprintType.toLowerCase()}.png`;
+    }
+    delete urls["footprint/EMPTY"]; //Leave out EMPTY because we preloaded it earlier.
+    delete urls["footprint/ALL"];
+    delete urls["footprint/MUST_BE_ON"];
 
     return urls;
 }

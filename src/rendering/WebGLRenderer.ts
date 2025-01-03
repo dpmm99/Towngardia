@@ -5,7 +5,7 @@ import { Drawable } from "../ui/Drawable.js";
 import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { IRenderer } from "./IRenderer.js";
-import { BIGGER_MOBILE_RATIO, DEVICE_PIXEL_RATIO, TILE_HEIGHT, TILE_WIDTH, calculateScreenPosition, cssDimToPixels, getInUseSpriteURLs, hexToRgb, screenToWorldCoordinates, worldToScreenCoordinates } from "./RenderUtil.js";
+import { BIGGER_MOBILE_RATIO, DEVICE_PIXEL_RATIO, TILE_HEIGHT, TILE_WIDTH, calculateScreenPosition, cssDimToPixels, getInUseSpriteURLs, getLatePreloadSpriteURLs, hexToRgb, screenToWorldCoordinates, worldToScreenCoordinates } from "./RenderUtil.js";
 import { TextRenderer } from "./TextRenderer.js";
 
 export class WebGLRenderer implements IRenderer {
@@ -172,6 +172,12 @@ export class WebGLRenderer implements IRenderer {
             Object.entries(urls).filter(([key]) => !this.sprites.has(key))
         );
         if (Object.keys(missingUrls).length) this.loadSprites(missingUrls);
+    }
+    latePreloadSprites() {
+        setTimeout(async () => {
+            const remainingUrls = getLatePreloadSpriteURLs();
+            this.loadMoreSprites(null!, remainingUrls);
+        }, 1000);
     }
 
     drawCity(view: CityView, city: City): void {

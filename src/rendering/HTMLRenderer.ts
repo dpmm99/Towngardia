@@ -4,7 +4,7 @@ import { CityView } from "../ui/CityView.js";
 import { Drawable } from "../ui/Drawable.js";
 import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { IRenderer } from "./IRenderer.js";
-import { calculateScreenPosition, domPreloadSprites, screenToWorldCoordinates } from "./RenderUtil.js";
+import { calculateScreenPosition, domPreloadSprites, getLatePreloadSpriteURLs, screenToWorldCoordinates } from "./RenderUtil.js";
 
 export class HTMLRenderer implements IRenderer {
     private container: HTMLElement;
@@ -58,6 +58,12 @@ export class HTMLRenderer implements IRenderer {
         await domPreloadSprites(city);
     }
     async loadMoreSprites(city: City, urls: { [key: string]: string }) { }
+    latePreloadSprites() {
+        setTimeout(async () => {
+            const remainingUrls = getLatePreloadSpriteURLs();
+            await domPreloadSprites(null!, remainingUrls);
+        }, 1000);
+    }
 
     drawCity(view: CityView, city: City): void {
         const sortedBuildings = city.buildings.sort((a, b) => (a.y + a.x) - (b.y + b.x));

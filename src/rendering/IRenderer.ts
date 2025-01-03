@@ -7,6 +7,7 @@ export interface IRenderer {
     getVisibilityMode(): boolean;
     getCanvas(): HTMLCanvasElement | null;
     preloadSprites(city: City): Promise<void>;
+    latePreloadSprites(): void;
     addWindow(window: IHasDrawable): void;
     setCameraPosition(x: number, y: number): void;
     screenToWorldCoordinates(city: City, screenX: number, screenY: number): { x: number, y: number };

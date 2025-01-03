@@ -144,6 +144,7 @@ export class City {
             this.titles.delete(TitleTypes.TheGreatFilter.id); //This title is only available in the Volcanic region
         }
         this.buildingTypes.forEach(p => p.setInfoRegion(this.regionID!)); //Set the region for all building types--may adjust what they store or their variant image or whatever
+        this.unplacedBuildings.forEach(p => p.setInfoRegion(this.regionID!)); 
 
         //Calculate present building counts so they don't need stored
         for (const building of this.buildings.concat(this.unplacedBuildings)) {
@@ -152,6 +153,7 @@ export class City {
 
         //Reapply building-originated effects so they don't have to be saved and reapply mods so not every moddable field has to be saved separately
         for (const building of this.buildings) {
+            building.setInfoRegion(this.regionID); //Region also needs reapplied--safe because it's stated to be idempotent
             building.effects?.applyEffects(building, this);
             building.applyMods(this, undefined, false, true);
         }

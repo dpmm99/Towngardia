@@ -63,6 +63,7 @@ export class GameState {
 
         this.uiManager?.switchRenderer(this.renderer);
         this.uiManager?.centerOn(this.city.buildings.findLast(p => p.owned || this.city?.networkRoot === p)!);
+        this.renderer.latePreloadSprites();
     }
 
     //Call from the UIManager's switchCity method if running in a UI.

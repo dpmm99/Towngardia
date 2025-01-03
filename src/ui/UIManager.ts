@@ -498,6 +498,11 @@ export class UIManager {
         this.contextMenu.repairing = true;
     }
 
+    showProvisioningAlert(building: Building) {
+        this.contextMenu.update(this.city, building.x, building.y);
+        this.contextMenu.provisioningAlert = true;
+    }
+
     showWarning(text: string) {
         this.warningWindow.text = text;
         this.frameRequested = true;

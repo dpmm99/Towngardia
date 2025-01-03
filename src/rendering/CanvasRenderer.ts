@@ -9,7 +9,7 @@ import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { FilteredImageCache } from "./FilteredImageCache.js";
 import { IRenderer } from "./IRenderer.js";
-import { DEVICE_PIXEL_RATIO, INVERSE_BIGGER_MOBILE_RATIO, TILE_HEIGHT, TILE_WIDTH, calculateScreenPosition, domPreloadSprites, screenToWorldCoordinates, worldToScreenCoordinates } from "./RenderUtil.js";
+import { DEVICE_PIXEL_RATIO, INVERSE_BIGGER_MOBILE_RATIO, TILE_HEIGHT, TILE_WIDTH, calculateScreenPosition, domPreloadSprites, getLatePreloadSpriteURLs, screenToWorldCoordinates, worldToScreenCoordinates } from "./RenderUtil.js";
 import { TextRenderer } from "./TextRenderer.js";
 
 const BACKGROUND_TILE_WIDTH = 8;
@@ -75,6 +75,12 @@ export class CanvasRenderer implements IRenderer {
             const sprites = await domPreloadSprites(city, missingUrls);
             for (const sprite of sprites) this.sprites.set(sprite.id, sprite.img);
         }
+    }
+    latePreloadSprites() {
+        setTimeout(async () => {
+            const remainingUrls = getLatePreloadSpriteURLs();
+            await this.loadMoreSprites(this.view!.city, remainingUrls);
+        }, 1000);
     }
 
     drawCity(view: CityView, city: City): void {

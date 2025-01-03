@@ -573,6 +573,11 @@ export class Building implements IHasDrawable {
             height: "32px",
             image: new TextureInfo(64, 64, canProvision ? "ui/provision" : "ui/cannotprovision"),
             onClick: view.showProvisioning ? () => {
+                if (this.inputResources.some(p => !city.resources.get(p.type)?.capacity)) {
+                    city.uiManager?.showProvisioningAlert(this); //Tell the user they need to build storage first
+                    return;
+                }
+
                 //Calculate desired and affordable amounts, take them from the city, and put them in the building.
                 const requestedAmounts = this.inputResources.map(p => ({ type: p.type, amount: Math.min(p.consumptionRate * view.provisionTicks, p.capacity - p.amount) }));
                 const allowedFraction = city.calculateAffordablePortion(requestedAmounts);
@@ -583,6 +588,11 @@ export class Building implements IHasDrawable {
                 this.immediatePowerOn(city);
                 city.updateLastUserActionTime();
             } : () => {
+                if (this.inputResources.some(p => !city.resources.get(p.type)?.capacity)) {
+                    city.uiManager?.showProvisioningAlert(this); //Tell the user they need to build storage first
+                    return;
+                }
+
                 //The view isn't supposed to show provisioning, but since we are anyway (decided it's necessary so the player doesn't forget), enter provisioning mode *instead* of providing resources to the building.
                 view.uiManager.toggleProvisioning();
             },
