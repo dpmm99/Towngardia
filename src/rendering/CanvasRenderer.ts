@@ -1,5 +1,5 @@
 import { Building } from "../game/Building.js";
-import { CityHall, InformationCenter } from "../game/BuildingTypes.js";
+import { BLOCKER_TYPES, BUILDING_TYPES, CityHall, InformationCenter } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { FootprintType } from "../game/FootprintType.js";
 import { EffectType } from "../game/GridType.js";
@@ -9,7 +9,7 @@ import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { FilteredImageCache } from "./FilteredImageCache.js";
 import { IRenderer } from "./IRenderer.js";
-import { BIGGER_MOBILE_RATIO, DEVICE_PIXEL_RATIO, INVERSE_BIGGER_MOBILE_RATIO, TILE_HEIGHT, TILE_WIDTH, calculateScreenPosition, domPreloadSprites, screenToWorldCoordinates, worldToScreenCoordinates } from "./RenderUtil.js";
+import { DEVICE_PIXEL_RATIO, INVERSE_BIGGER_MOBILE_RATIO, TILE_HEIGHT, TILE_WIDTH, calculateScreenPosition, domPreloadSprites, hexToRgb, screenToWorldCoordinates, worldToScreenCoordinates, rgbaStringToRgb } from "./RenderUtil.js";
 import { TextRenderer } from "./TextRenderer.js";
 
 const BACKGROUND_TILE_WIDTH = 8;
@@ -19,6 +19,7 @@ export class CanvasRenderer implements IRenderer {
     private worldCoordinateDrawables: IHasDrawable[] = [];
     private view: CityView | undefined; //Just so it's not passed around a bunch
     private sprites: Map<string, HTMLImageElement> = new Map();
+    private pendingOrFailedSpriteLoads: Set<string> = new Set();
     private cameraX: number = 0;
     private cameraY: number = 0;
     private zoom: number = 1;
@@ -96,6 +97,7 @@ export class CanvasRenderer implements IRenderer {
             }
         }
 
+        this.keepDiamondCache = false;
         if (view.drawResidentialDesirability) this.drawTiles(city, city.getResidentialDesirability, city.isRoadAdjacentAndNotRoad);
         if (view.drawLandValue) this.drawTiles(city, city.getLandValue);
         if (view.drawLuxury) this.drawTiles(city, city.getLuxury);
@@ -114,6 +116,7 @@ export class CanvasRenderer implements IRenderer {
             return building !== null && !(building instanceof CityHall || building instanceof InformationCenter || building.isRoad || !building.owned); //Buildings without a meaningful efficiency.
         });
         if (view.drawGrid) this.drawGridTiles(city);
+        if (!this.keepDiamondCache) this.diamondCache.clear();
 
         for (const drawable of this.postTileDrawables) { //TODO: Clean up if you can by putting the final position and size into the Drawable instead of having it relative to the building position.
             this.ctx.save();
@@ -138,6 +141,7 @@ export class CanvasRenderer implements IRenderer {
                 this.drawTile(city, x, y, this.view!.getColorString(value));
             }
         }
+        this.keepDiamondCache = true;
     }
 
     private drawGridTiles(city: City) {
@@ -164,20 +168,10 @@ export class CanvasRenderer implements IRenderer {
     private drawTile(city: City, tileX: number, tileY: number, color: string): void {
         const { x, y } = worldToScreenCoordinates(city, tileX - 1, tileY - 1, 1, 1, 0, true);
 
-        const halfWidth = TILE_WIDTH / 2;
-        const halfHeight = TILE_HEIGHT / 2;
-
         this.ctx.save();
         this.ctx.translate(x, y);
-        this.ctx.beginPath();
-        this.ctx.moveTo(0, halfHeight);
-        this.ctx.lineTo(halfWidth, 0);
-        this.ctx.lineTo(TILE_WIDTH, halfHeight);
-        this.ctx.lineTo(halfWidth, TILE_HEIGHT);
-        this.ctx.closePath();
-
-        this.ctx.fillStyle = color;
-        this.ctx.fill();
+        const cachedDiamond = this.renderDiamond(rgbaStringToRgb(color));
+        this.ctx.drawImage(cachedDiamond, 0, 0);
         this.ctx.restore();
     }
 
@@ -195,7 +189,7 @@ export class CanvasRenderer implements IRenderer {
         //TODO: put background tiles in the city but shorten to just one or two digits for minimal waste, orrr store them in the *regions*. Though alternating through the tiles doesn't look so bad.
         let bgID = "background/grass" + ((tileX + tileY) % 2 + 1);
         if (city.regionID === "volcanic") bgID = "background/rock" + ((tileX + tileY) % 5 + 1);
-        const image = this.sprites.get(bgID);
+        const image = this.getSprite(bgID, undefined);
         if (!image) return;
         const height = BACKGROUND_TILE_WIDTH * TILE_HEIGHT;
 
@@ -209,7 +203,8 @@ export class CanvasRenderer implements IRenderer {
         const { x, y } = calculateScreenPosition(building, city);
 
         //TODO: fallback image, fallback color
-        const img = this.sprites.get("building/" + building.type + (building.variant || ""));
+        const buildingImageID = "building/" + building.type + (building.variant || "");
+        let img = this.getSprite(buildingImageID, undefined);
         const height = img?.height ?? (building.height * TILE_HEIGHT);
         const width = img?.width ?? (building.width * TILE_WIDTH);
 
@@ -326,8 +321,56 @@ export class CanvasRenderer implements IRenderer {
         return width;
     }
 
+    private getSprite(imageId: string | undefined, fallbackImageId: string | undefined): HTMLImageElement | HTMLCanvasElement | undefined {
+        if (!imageId) return undefined;
+
+        let sprite: HTMLImageElement | HTMLCanvasElement | undefined = this.sprites.get(imageId) || (fallbackImageId && this.sprites.get(fallbackImageId)) || undefined;
+
+        //Handle building sprites specifically--they have an automatic fallback system, but it requires a City reference.
+        if (!sprite) {
+            if (imageId.startsWith("building/")) {
+                // Try size-based fallback if dimensions provided
+                const buildingID = imageId.replace("building/", "").replace(/\d$/, ""); //The imageId can end with 1 digit to represent a variant; if it does, remove the digit. Also means no actual building ID can end with a digit.
+                const building = BUILDING_TYPES.values().find(p => p.type === buildingID) || BLOCKER_TYPES.values().find(p => p.type === buildingID);
+                if (!building) return undefined;
+
+                // Fallback to 1x1 if there's no placeholder for those exact dimensions
+                sprite = this.sprites.get(`building/unloaded${building.width}x${building.height}`) || this.sprites.get("building/unloaded1x1");
+            } else if (imageId.startsWith("resource/") || imageId.startsWith("ui/") || imageId.startsWith("region/")) {
+                //Simple "?" icon
+                sprite = this.sprites.get("resource/generic");
+            } else if (imageId.startsWith("footprint/")) { //Other footprints just default to empty for a split second--could actually make the footprints render a diamond and cache it instead of loading images. //TODO: In fact, do exactly that for the data views that use gradients--make 20-step gradients for them.
+                sprite = this.sprites.get("footprint/EMPTY");
+            } else if (imageId.startsWith("tech/")) {
+                sprite = this.sprites.get("tech/generic");
+            } else if (imageId.startsWith("background/")) {
+                //Just make a 1x1 pixel transparent image while backgrounds load
+                const canvas = document.createElement("canvas");
+                canvas.width = canvas.height = 1;
+                sprite = canvas;
+            }
+
+            //TODO: just delay the load of the not-immediately-visible UI elements until after the first frame, before they're requested
+
+            // Request actual sprite load if not already pending or previously failed
+            if (!this.pendingOrFailedSpriteLoads.has(imageId)) {
+                this.pendingOrFailedSpriteLoads.add(imageId);
+                //Debounce so the frame can render
+                requestAnimationFrame(async () => {
+                    await this.loadMoreSprites(this.view!.city, { [imageId!]: "assets/" + imageId + ".png" });
+                    if (this.sprites.get(imageId!)) {
+                        this.pendingOrFailedSpriteLoads.delete(imageId!); //Load succeeded
+                        if (this.view) this.view.uiManager.frameRequested = true; //First time I've needed to request a frame from the frame renderer!
+                    }
+                });
+            }
+        }
+
+        return sprite;
+    }
+
     private renderDrawable(drawable: Drawable, parentWidth: number, parentHeight: number) {
-        let sprite: HTMLImageElement | HTMLCanvasElement | undefined | "" = (drawable.image?.id && this.sprites.get(drawable.image.id)) || (drawable.fallbackImage?.id && this.sprites.get(drawable.fallbackImage.id));
+        let sprite: HTMLImageElement | HTMLCanvasElement | undefined | "" = (drawable.image?.id && this.getSprite(drawable.image.id, drawable.fallbackImage?.id));
 
         let sumHeight: number | null = null;
         let moreLinesOfTextSprites: (HTMLImageElement | HTMLCanvasElement | undefined)[] = []; //Note: Didn't implement any of this new text stuff in the WebGL renderer (wordWrap, noXStretch, rightAlign, keepParentWidth)
@@ -383,18 +426,13 @@ export class CanvasRenderer implements IRenderer {
                 }
             }
         } else if (drawable.fallbackColor != "#00000000") {
-            this.ctx.fillStyle = drawable.fallbackColor;
             if (drawable.isDiamond) { //Basically the same as drawTile. Not implemented in WebGLRenderer
-                const halfWidth = TILE_WIDTH / 2;
-                const halfHeight = TILE_HEIGHT / 2;
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, halfHeight);
-                this.ctx.lineTo(halfWidth, 0);
-                this.ctx.lineTo(TILE_WIDTH, halfHeight);
-                this.ctx.lineTo(halfWidth, TILE_HEIGHT);
-                this.ctx.closePath();
-                this.ctx.fill();
-            } else this.ctx.fillRect(0, 0, width * (drawable.clipWidth ?? 1), height);
+                const cachedDiamond = this.renderDiamond(hexToRgb(drawable.fallbackColor), width, height);
+                this.ctx.drawImage(cachedDiamond, 0, 0, width, height);
+            } else {
+                this.ctx.fillStyle = drawable.fallbackColor;
+                this.ctx.fillRect(0, 0, width * (drawable.clipWidth ?? 1), height);
+            }
         }
 
         sumHeight ??= height; //Word wrap will set this to the total height of all lines; everything else will just set it to the height of the one and only sprite
@@ -404,6 +442,56 @@ export class CanvasRenderer implements IRenderer {
         drawable.children.forEach(child => this.renderDrawable(child, drawable.keepParentWidth ? parentWidth : width, sumHeight!));
 
         this.ctx.restore();
+    }
+
+    //Smoothness testing (execute in devtools, then look at noise): for (let x = 0; x < 64; x++) game.city.effectGrid[63][x].push({ type: 5, multiplier: x / 64, building: undefined, dynamicCalculation: undefined, getEffect: game.city.effectGrid[0][0][0].getEffect })
+    private readonly COLOR_STEPS = 16;
+    private diamondCache = new Map<number, HTMLCanvasElement>();
+    private keepDiamondCache: boolean = false; //We wipe the cache of diamonds when you stop looking at the data views that require them.
+
+    private quantizeColor(color: Float32Array): number {
+        // Quantize each component to COLOR_STEPS levels and pack into a single integer
+        const r = Math.floor(color[0] * (this.COLOR_STEPS - 1));
+        const g = Math.floor(color[1] * (this.COLOR_STEPS - 1));
+        const b = Math.floor(color[2] * (this.COLOR_STEPS - 1));
+        const a = Math.floor(color[3] * (this.COLOR_STEPS - 1));
+
+        // Pack into a single integer (each component uses 4 bits for COLOR_STEPS=16)
+        return (r << 12) | (g << 8) | (b << 4) | a;
+    }
+
+    private renderDiamond(rgbColor: Float32Array, width: number = TILE_WIDTH, height: number = TILE_HEIGHT): HTMLCanvasElement {
+        const cacheKey = this.quantizeColor(rgbColor);
+
+        let cachedDiamond = this.diamondCache.get(cacheKey); //We're caching the diamonds because rendering a diamond is MUCH slower than rendering an image of a diamond. Go figure. :)
+        if (!cachedDiamond) {
+            cachedDiamond = document.createElement('canvas');
+            cachedDiamond.width = width;
+            cachedDiamond.height = height;
+            const diamondCtx = cachedDiamond.getContext('2d')!;
+
+            const halfWidth = width / 2;
+            const halfHeight = height / 2;
+            diamondCtx.beginPath();
+            diamondCtx.moveTo(0, halfHeight);
+            diamondCtx.lineTo(halfWidth, 0);
+            diamondCtx.lineTo(width, halfHeight);
+            diamondCtx.lineTo(halfWidth, height);
+            diamondCtx.closePath();
+
+            // Use the quantized color for consistent caching
+            const quantizedColor = [
+                ((cacheKey >> 12) & 0xF) / (this.COLOR_STEPS - 1),
+                ((cacheKey >> 8) & 0xF) / (this.COLOR_STEPS - 1),
+                ((cacheKey >> 4) & 0xF) / (this.COLOR_STEPS - 1),
+                (cacheKey & 0xF) / (this.COLOR_STEPS - 1)
+            ];
+            diamondCtx.fillStyle = "#" + quantizedColor.map(p => Math.round(255 * p).toString(16).padStart(2, "0")).join("");
+            diamondCtx.fill();
+
+            this.diamondCache.set(cacheKey, cachedDiamond);
+        }
+        return cachedDiamond;
     }
 
     private renderSprite(drawable: Drawable, sprite: HTMLCanvasElement | HTMLImageElement, width: number, height: number, parentWidth: number, parentHeight: number, yOffset: number = 0) {

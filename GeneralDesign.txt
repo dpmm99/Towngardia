@@ -154,4 +154,6 @@ minigame minilab + playing the minigames: alternative reward sets as options for
 3000 population + >=4 skyscrapers + >=1k flunds: Altitect minigame
 earthquake: geothermal tech and a hot spring inn
 8000 population: greenhouse gases begin to affect happiness and weather event chances
+keep a Sands of Time running for several days: Portal
+50k population, 4 colleges, and a Portal: regions
 and techs unlock 11 buildings

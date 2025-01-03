@@ -290,7 +290,7 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
                     x: 10,
                     width: `${this.cityIconSize}px`,
                     height: `${this.cityIconSize}px`,
-                    image: new TextureInfo(this.cityIconSize, this.cityIconSize, `cities/${city.id}`), //TODO: an occasional city snapshot? Seems a bit tough!
+                    // image: new TextureInfo(this.cityIconSize, this.cityIconSize, `cities/${city.id}`), //TODO: an occasional city snapshot? Seems a bit tough!
                     fallbackColor: '#00000000',
                 }));
 
