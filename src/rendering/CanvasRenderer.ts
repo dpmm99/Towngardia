@@ -354,7 +354,7 @@ export class CanvasRenderer implements IRenderer {
                 this.pendingOrFailedSpriteLoads.add(imageId);
                 //Debounce so the frame can render
                 requestAnimationFrame(async () => {
-                    await this.loadMoreSprites(this.view!.city, { [imageId!]: "assets/" + imageId + ".png" });
+                    await this.loadMoreSprites(this.view!.city, { [imageId!]: "assets/" + imageId.toLowerCase() + ".png" });
                     if (this.sprites.get(imageId!)) {
                         this.pendingOrFailedSpriteLoads.delete(imageId!); //Load succeeded
                         if (this.view) this.view.uiManager.frameRequested = true; //First time I've needed to request a frame from the frame renderer!
