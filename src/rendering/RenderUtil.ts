@@ -225,17 +225,3 @@ export function hexToRgb(hex: string): Float32Array {
 
     return new Float32Array([r / 255, g / 255, b / 255, a / 255]);
 }
-
-export function rgbaStringToRgb(rgba: string): Float32Array {
-    const match = rgba.match(/rgba\((\d+),(\d+),(\d+),(\d+(\.\d+)?)\)/);
-    if (!match) {
-        throw new Error('Invalid rgba color format');
-    }
-
-    const r = parseInt(match[1], 10) / 255;
-    const g = parseInt(match[2], 10) / 255;
-    const b = parseInt(match[3], 10) / 255;
-    const a = parseFloat(match[4]);
-
-    return new Float32Array([r, g, b, a]);
-}

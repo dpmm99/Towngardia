@@ -9,7 +9,7 @@ import { IHasDrawable } from "../ui/IHasDrawable.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { FilteredImageCache } from "./FilteredImageCache.js";
 import { IRenderer } from "./IRenderer.js";
-import { DEVICE_PIXEL_RATIO, INVERSE_BIGGER_MOBILE_RATIO, TILE_HEIGHT, TILE_WIDTH, calculateScreenPosition, domPreloadSprites, hexToRgb, screenToWorldCoordinates, worldToScreenCoordinates, rgbaStringToRgb } from "./RenderUtil.js";
+import { DEVICE_PIXEL_RATIO, INVERSE_BIGGER_MOBILE_RATIO, TILE_HEIGHT, TILE_WIDTH, calculateScreenPosition, domPreloadSprites, screenToWorldCoordinates, worldToScreenCoordinates } from "./RenderUtil.js";
 import { TextRenderer } from "./TextRenderer.js";
 
 const BACKGROUND_TILE_WIDTH = 8;
@@ -97,7 +97,6 @@ export class CanvasRenderer implements IRenderer {
             }
         }
 
-        this.keepDiamondCache = false;
         if (view.drawResidentialDesirability) this.drawTiles(city, city.getResidentialDesirability, city.isRoadAdjacentAndNotRoad);
         if (view.drawLandValue) this.drawTiles(city, city.getLandValue);
         if (view.drawLuxury) this.drawTiles(city, city.getLuxury);
@@ -116,7 +115,6 @@ export class CanvasRenderer implements IRenderer {
             return building !== null && !(building instanceof CityHall || building instanceof InformationCenter || building.isRoad || !building.owned); //Buildings without a meaningful efficiency.
         });
         if (view.drawGrid) this.drawGridTiles(city);
-        if (!this.keepDiamondCache) this.diamondCache.clear();
 
         for (const drawable of this.postTileDrawables) { //TODO: Clean up if you can by putting the final position and size into the Drawable instead of having it relative to the building position.
             this.ctx.save();
@@ -141,7 +139,6 @@ export class CanvasRenderer implements IRenderer {
                 this.drawTile(city, x, y, this.view!.getColorString(value));
             }
         }
-        this.keepDiamondCache = true;
     }
 
     private drawGridTiles(city: City) {
@@ -170,8 +167,8 @@ export class CanvasRenderer implements IRenderer {
 
         this.ctx.save();
         this.ctx.translate(x, y);
-        const cachedDiamond = this.renderDiamond(rgbaStringToRgb(color));
-        this.ctx.drawImage(cachedDiamond, 0, 0);
+        this.ctx.fillStyle = color;
+        this.renderDiamond();
         this.ctx.restore();
     }
 
@@ -426,11 +423,10 @@ export class CanvasRenderer implements IRenderer {
                 }
             }
         } else if (drawable.fallbackColor != "#00000000") {
+            this.ctx.fillStyle = drawable.fallbackColor;
             if (drawable.isDiamond) { //Basically the same as drawTile. Not implemented in WebGLRenderer
-                const cachedDiamond = this.renderDiamond(hexToRgb(drawable.fallbackColor), width, height);
-                this.ctx.drawImage(cachedDiamond, 0, 0, width, height);
+                this.renderDiamond(width, height);
             } else {
-                this.ctx.fillStyle = drawable.fallbackColor;
                 this.ctx.fillRect(0, 0, width * (drawable.clipWidth ?? 1), height);
             }
         }
@@ -445,53 +441,16 @@ export class CanvasRenderer implements IRenderer {
     }
 
     //Smoothness testing (execute in devtools, then look at noise): for (let x = 0; x < 64; x++) game.city.effectGrid[63][x].push({ type: 5, multiplier: x / 64, building: undefined, dynamicCalculation: undefined, getEffect: game.city.effectGrid[0][0][0].getEffect })
-    private readonly COLOR_STEPS = 16;
-    private diamondCache = new Map<number, HTMLCanvasElement>();
-    private keepDiamondCache: boolean = false; //We wipe the cache of diamonds when you stop looking at the data views that require them.
-
-    private quantizeColor(color: Float32Array): number {
-        // Quantize each component to COLOR_STEPS levels and pack into a single integer
-        const r = Math.floor(color[0] * (this.COLOR_STEPS - 1));
-        const g = Math.floor(color[1] * (this.COLOR_STEPS - 1));
-        const b = Math.floor(color[2] * (this.COLOR_STEPS - 1));
-        const a = Math.floor(color[3] * (this.COLOR_STEPS - 1));
-
-        // Pack into a single integer (each component uses 4 bits for COLOR_STEPS=16)
-        return (r << 12) | (g << 8) | (b << 4) | a;
-    }
-
-    private renderDiamond(rgbColor: Float32Array, width: number = TILE_WIDTH, height: number = TILE_HEIGHT): HTMLCanvasElement {
-        const cacheKey = this.quantizeColor(rgbColor);
-
-        let cachedDiamond = this.diamondCache.get(cacheKey); //We're caching the diamonds because rendering a diamond is MUCH slower than rendering an image of a diamond. Go figure. :)
-        if (!cachedDiamond) {
-            cachedDiamond = document.createElement('canvas');
-            cachedDiamond.width = width;
-            cachedDiamond.height = height;
-            const diamondCtx = cachedDiamond.getContext('2d')!;
-
-            const halfWidth = width / 2;
-            const halfHeight = height / 2;
-            diamondCtx.beginPath();
-            diamondCtx.moveTo(0, halfHeight);
-            diamondCtx.lineTo(halfWidth, 0);
-            diamondCtx.lineTo(width, halfHeight);
-            diamondCtx.lineTo(halfWidth, height);
-            diamondCtx.closePath();
-
-            // Use the quantized color for consistent caching
-            const quantizedColor = [
-                ((cacheKey >> 12) & 0xF) / (this.COLOR_STEPS - 1),
-                ((cacheKey >> 8) & 0xF) / (this.COLOR_STEPS - 1),
-                ((cacheKey >> 4) & 0xF) / (this.COLOR_STEPS - 1),
-                (cacheKey & 0xF) / (this.COLOR_STEPS - 1)
-            ];
-            diamondCtx.fillStyle = "#" + quantizedColor.map(p => Math.round(255 * p).toString(16).padStart(2, "0")).join("");
-            diamondCtx.fill();
-
-            this.diamondCache.set(cacheKey, cachedDiamond);
-        }
-        return cachedDiamond;
+    private renderDiamond(width: number = TILE_WIDTH, height: number = TILE_HEIGHT) {
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(0, halfHeight);
+        this.ctx.lineTo(halfWidth, 0);
+        this.ctx.lineTo(TILE_WIDTH, halfHeight);
+        this.ctx.lineTo(halfWidth, TILE_HEIGHT);
+        this.ctx.closePath();
+        this.ctx.fill();
     }
 
     private renderSprite(drawable: Drawable, sprite: HTMLCanvasElement | HTMLImageElement, width: number, height: number, parentWidth: number, parentHeight: number, yOffset: number = 0) {
