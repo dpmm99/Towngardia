@@ -30,7 +30,7 @@ export class CitySerializer {
             rv: o.regionVersion,
             dp: o.desiredPower, //That's me!
             cd: o.createdDate,
-            no: o.notifications, //There are few, they're simple, and there will never be zero, so very simple serialization is fine.
+            no: o.notifications.map(p => this.notification(p)),
             pc: o.lastImportedPowerCost,
             cs: o.recentConstructionResourcesSold,
             pp: o.peakPopulation,
@@ -161,6 +161,17 @@ export class CitySerializer {
         };
     }
 
+    notification(o: Notification) {
+        return {
+            title: o.title,
+            body: o.body,
+            icon: o.icon,
+            ab: o.affectedBuildings.map(p => p.id),
+            date: o.date,
+            seen: o.seen,
+        };
+    }
+
     building(o: Building, isTemplate: boolean = false): any {
         //Fields that apply regardless of whether it's placed, unplaced, or a template
         const r: any = {
@@ -190,6 +201,7 @@ export class CitySerializer {
                 ue: o.upkeepEfficiency,
                 pt: o.poweredTimeDuringLongTick || undefined,
                 de: o.damagedEfficiency === 1 ? undefined : o.damagedEfficiency,
+                dc: o.damageCause === "" ? undefined : o.damageCause,
                 in: o.isNew || undefined, //would need to set to false explicitly on load, because the default is true for Building as a whole
                 va: o.variant || undefined,
                 bo: this.buildingSet(o.builtOn),
@@ -266,7 +278,7 @@ export class CityDeserializer {
         if (o.ob && r.presentBuildingCount.size === 0) r.presentBuildingCount = new Map(o.ob); //Shim so players don't have to refresh the page just because I removed 'ob' from the save data.
         r.desiredPower = o.dp;
         r.createdDate = new Date(o.cd);
-        r.notifications = o.no.map((p: any) => new Notification(p.title, p.body, p.icon, new Date(p.date), p.seen));
+        r.notifications = this.notifications(o.no, r);
         r.lastImportedPowerCost = o.pc;
         r.recentConstructionResourcesSold = o.cs;
         r.peakPopulation = o.pp;
@@ -295,6 +307,12 @@ export class CityDeserializer {
         if (o.la) r.lastUserActionTimestamp = o.la;
         if (o.ls) r.lastSavedUserActionTimestamp = o.ls;
         return r;
+    }
+
+    notifications(o: any, city: City) {
+        return o.map((p: any) => new Notification(p.title, p.body, p.icon,
+            (p.ab || []).map((id: number) => city.buildings.find(b => b.id === id)).filter((n: any) => n), //Affected buildings' IDs are stored.
+            new Date(p.date), p.seen));
     }
 
     assists(o: any, city: City) {
@@ -431,6 +449,7 @@ export class CityDeserializer {
             r.upkeepEfficiency = o.ue;
             r.poweredTimeDuringLongTick = o.pt !== undefined ? o.pt : 0;
             r.damagedEfficiency = o.de !== undefined ? o.de : 1;
+            r.damageCause = o.dc || "";
             r.isNew = o.in || false;
             //builtOn must be done in the second pass after all Building objects are at least *created*, because they have to reference each other.
             
@@ -535,6 +554,6 @@ export class PlayerDeserializer {
     }
 
     notifications(o: any): Notification[] {
-        return o ? o.map((p: any) => new Notification(p.title, p.body, p.icon, new Date(p.date), p.seen)) : [];
+        return o ? o.map((p: any) => new Notification(p.title, p.body, p.icon, [], new Date(p.date), p.seen)) : [];
     }
 }

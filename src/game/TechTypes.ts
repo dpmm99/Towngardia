@@ -37,6 +37,13 @@ export class Geothermal extends Tech {
         city.checkAndAwardTitle(TitleTypes.Pioneergreen.id); //Checked for each eco-friendly research that comes after Heat Pumps--i.e., the second eco-friendly tech you can research.
         city.unlock(getBuildingType(GeothermalPowerPlant)); //NOTE: If a building of this type already exists, that one won't EVER show the Build Copy button.
     }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") { //Making room for Lightning Rods
+            this.displayX = new HydroponicGardens().displayX;
+            this.displayY = 1120;
+        }
+    }
 }
 
 export class VacuumInsulatedWindows extends Tech {
@@ -79,6 +86,10 @@ export class RooftopSolar extends Tech {
             520, 720,
             [{ id: "gridbalancer", path: [] }]
         );
+    }
+
+    override applyRegionEffects(region: string) { //Making room for Lightning Rods
+        if (region === "volcanic") this.displayY = 920;
     }
 }
 
@@ -152,6 +163,13 @@ export class PerovskiteSolarCells extends Tech {
         const rooftopSolar = city.techManager.techs.get(new RooftopSolar().id);
         if (rooftopSolar) rooftopSolar.adjustCost("silicon", -0.25, true)
     }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") { //Making room for Lightning Rods
+            this.displayX = new HydroponicGardens().displayX;
+            this.displayY = new AIDiagnostics().displayY;
+        }
+    }
 }
 
 export class WindTurbineLattice extends Tech {
@@ -195,6 +213,13 @@ export class FusionPower extends Tech {
         city.unlock(getBuildingType(FusionPowerPlant));
         city.unlock(getBuildingType(FusionFuelTruck));
     }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") { //Making room for Lightning Rods
+            this.displayX = new TelemedicineInfra().displayX;
+            this.displayY = 920;
+        }
+    }
 }
 
 export class BreederReactor extends Tech {
@@ -215,6 +240,13 @@ export class BreederReactor extends Tech {
         for (const building of city.buildings.concat(city.unplacedBuildings).concat(city.buildingTypes).filter(p => p instanceof FusionPowerPlant)) {
             building.inputResources.find(p => p.type === 'tritium')!.consumptionRate *= 0.125;
             building.inputResources.push(new Lithium(0, 0, 0.125, 0.125 * 2 * CAPACITY_MULTIPLIER)); //Twice the usual capacity since power is pretty important
+        }
+    }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") { //Making room for Lightning Rods
+            this.displayX = new AIDiagnostics().displayX;
+            this.displayY = 920;
         }
     }
 }
@@ -654,6 +686,13 @@ export class ThermalRecovery extends Tech { //Intent: to save the player some sp
             [{ id: "fusionpower", path: [] }]
         );
     }
+
+    override applyRegionEffects(region: string) {
+        if (region === "volcanic") { //Making room for Lightning Rods
+            this.displayX = new TelemedicineInfra().displayX;
+            this.displayY = 1120;
+        }
+    }
 }
 
 export class GridBalancer extends Tech { //Intent: to reduce the player's self-inflicted punishment for producing too much power
@@ -671,6 +710,10 @@ export class GridBalancer extends Tech { //Intent: to reduce the player's self-i
 
     override applyEffects(city: City) {
         city.checkAndAwardTitle(TitleTypes.Pioneergreen.id);
+    }
+
+    override applyRegionEffects(region: string) { //Making room for Lightning Rods
+        if (region === "volcanic") this.displayY = 920;
     }
 }
 
@@ -711,11 +754,29 @@ export class SeismicDampers extends Tech {
     }
 }
 
+export class LightningRods extends Tech {
+    constructor() {
+        super(
+            'lightningrods',
+            'Lightning Rods',
+            'Lightning rods that protect buildings from lightning strikes, preventing damage.',
+            [{ type: 'research', amount: 50 }, { type: 'copper', amount: 90 }],
+            0.04, 0.008, // ~30 days to fully adopt, BUT it adjusts the probability of Dry Lightning triggering instead of reducing damage by that fraction.
+            760, 920, //To make room, I moved Grid Balancer, Rooftop Solar Panels, Perovskite-Blend Solar Cells, Geothermal Power, Fusion Power, Thermal Recovery, AND Breeder Reactor
+            [{ id: "rooftopsolar", path: [] }]
+        );
+    }
+    // The actual lightning protection will be handled by the event system
+
+    override canBecomeAvailableInRegion(region: string): boolean {
+        return region === "volcanic";
+    }
+}
 
 export const TECH_TYPES: Tech[] = [
     AIDiagnostics, AILogistics, ARShopping, AdvancedRobotics, AutonomousVehicles, BrainComputerInterface,
     BreederReactor, CarbonCapture, CloudSeeding, CoalPowerScrubbers, DroneDelivery, FoodServiceRobots,
     FusionPower, GMCrops, Geothermal, GrapheneBatteries, GridBalancer, HeatPumps, Hydrolox, HydroponicGardens, Incubators, LabGrownMeat,
-    NanomedicineResearch, PerovskiteSolarCells, QuantumComputing, RetainingSoil, RooftopSolar, SeismicDampers, SmartHomeSystems,
+    LightningRods, NanomedicineResearch, PerovskiteSolarCells, QuantumComputing, RetainingSoil, RooftopSolar, SeismicDampers, SmartHomeSystems,
     TelemedicineInfra, ThermalRecovery, ThreeDPrinting, VRClassrooms, VacuumInsulatedWindows, VerticalFarming, WindTurbineLattice,
 ].map(p => new p());

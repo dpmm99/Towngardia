@@ -26,7 +26,7 @@ Could have events that make you change your city layout a bit, like "a hot sprin
 Could require there to be enough factories/businesses to supply all citizens (so you need more as the city grows) in order for there to be any surplus for you to use directly for the city
 - That's a great idea for ensuring larger cities don't automatically mean you have a ton of disposable income from excess resources
 
-Regions could be like... ancient ocean: more oil, sand, maybe coal and crystals. Delta: more swamps and coal or something. Tundra: nothing useful and perpetual winter (no heatwaves)? Volcanic yard with a lot of copper and iron?
+Regions could be like... ancient ocean: more oil, sand, maybe coal and crystals. Delta: more swamps and coal or something. Tundra: nothing useful and perpetual winter (no heatwaves)?
 
 Disaster ideas:
 Close call - fission power plant has to shut down for a day to repair after the safety triggered
@@ -44,8 +44,6 @@ Main remaining features:
 More regions (ancient ocean, delta, tundra, polluted paradise, some random planet with no atmosphere)
 aaand probably being able to buy things (particularly the resources that aren't in every region) more easily if your friends are selling them. I was thinking sales go into a list for 5 days, but then you have to load and affect the other players' city data...
 Otherwise, I'm pretty well down to just making buildings, events, techs, and titles/achievements, though I have a decent number of each of those.
-
-
 
 Coolest open ideas:
 Sort businesses by patron value (or maybe do a fixed sort order for all building types, but need an indicator to show which ones are newly unlocked). Also, nothing shows the buff sources.
@@ -73,10 +71,11 @@ new events:
 	aurora (tourism)
 	spring bloom (agriculture boost)
 	meteor shower (research boost)
-	lightning strike (just damages one to a few random buildings)
 	social events
 	perfect weather (Claude suggested "clear skies week" = solar power + happiness, "perfect growing conditions" = agriculture)
 	food festival (happiness + business)
+	snow accumulation
+	fission 'close call'
 new buildings:
 	I mainly need more high-tier businesses (much greater customer capacities but lower value per customer than Convention Center)
 	maybe a building that can be placed on roads to reduce nearby residential power consumption (and even then, maybe only in summer) - could be a solar panel or just a vegetation trellis or whatever
@@ -101,7 +100,6 @@ new buildings:
 	Other environment building ideas: wildlife sanctuary (+tourism), ecosystem restoration center (improves land value)
 	More specific decorations: bronze dragon, giant wind instrument, giant steampunk chess set, plaza that looks like a compass rose, fancy bike path that both reduces traffic and spreads luxury, human-sized hamster wheels (maybe spreads a little healthcare and produces 0.1 MW for the laughs :))
 Mechanical failures - a few buildings would damage themselves slowly over time and show a wrench icon instead of fire when they're damaged, but the damage wouldn't harm efficiency for 5 days, then the backdrop turns from the 'warning' one into the 'error' one after that. A tech could unlock auto-repair. Could apply to all factories and high-traffic businesses starting at 2k population or something like that as a flunds sink, but factories would go back to not being worth having if you don't need the output resources.
-Disasters like snow accumulation, fission 'close call', lightning strike that only damages one building
 Make city progress -> earn wisdom points -> buy care packages you can send to newer players, e.g., temporary building unlocks, resources or discounts, research speed
 Community projects - like research, but not just spending resources, and different kinds of rewards?
 Possible multi-friend project: Intercity Trade Center (permanently reduces market buy prices)
@@ -124,9 +122,9 @@ make research points and random resources always useful by adding a few repeatab
 Underused/unused resources:
 toys could be a regional or citywide effect minigame wherein you distribute them (also distributed to increase happiness via Free Stuff Tables now)
 rubber for cars (plus batteries though they aren't unused), but dunno
-Unused and unproduceable: clay, bricks, paper, rubber, lumber... dunno. (but paper is distributed to increase happiness via Free Stuff Tables now)
+Unused and unproduceable: clay, bricks, paper, rubber, lumber... dunno. (but paper is distributed to increase happiness via Free Stuff Tables now and helps in Memory Mixology)
 Tritium can only be obtained as high-end minigame rewards. (but I made a couple minigames able to more reliably produce larger amounts of it)
-pharmaceuticals for health (also distributed to increase happiness via Free Stuff Tables now)
+pharmaceuticals for health (also distributed to increase happiness via Free Stuff Tables now; otherwise, only used for 3 techs)
 
 
 
@@ -155,5 +153,5 @@ minigame minilab + playing the minigames: alternative reward sets as options for
 earthquake: geothermal tech and a hot spring inn
 8000 population: greenhouse gases begin to affect happiness and weather event chances
 keep a Sands of Time running for several days: Portal
-50k population, 4 colleges, and a Portal: regions
+30k population, 4 colleges, and a Portal: regions
 and techs unlock 11 buildings

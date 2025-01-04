@@ -223,8 +223,8 @@ export class GameState {
         city.addBuilding(new Road().clone(), 4, 3);
         city.addBuilding(new Road().clone(), 4, 2);
         //Test notifications
-        city.notifications.push(new Notification("City Test Title", "City test body but it's a wall of text this time, quite long and exciting and full of letters and spaces and words and just about no punctuation, but hey, whatcha gonna do when they come for you? Bad boys, bad boys...", undefined, new Date("2036-01-01")));
-        city.notifications.push(new Notification("City Test Title 2", "City test body 2", undefined, new Date("2024-09-08")));
+        city.notifications.push(new Notification("City Test Title", "City test body but it's a wall of text this time, quite long and exciting and full of letters and spaces and words and just about no punctuation, but hey, whatcha gonna do when they come for you? Bad boys, bad boys...", undefined, [], new Date("2036-01-01")));
+        city.notifications.push(new Notification("City Test Title 2", "City test body 2", undefined, [], new Date("2024-09-08")));
 
         const adjustedBuildingTypes = [...this.buildingTypes.filter(p => !p.isResidence && p.canStowInInventory), new Road(), new Road(), new Road(), new SmallBoulder(), new MediumBoulder(), new BigBoulder(), new GeothermalVent(), new OilSeep()]; //Make roads a higher probability
         for (let x = 0; x < city.width; x++) {

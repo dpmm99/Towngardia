@@ -407,6 +407,8 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                     id: `${infoDrawable.id}.efficiency`,
                 }));
                 nextY += 24 + padding;
+
+                //TODO: Add efficiency bonuses here--healthcare bonus from food healthiness, events
             }
             if (building instanceof InformationCenter) nextY = this.addTourismInfo(infoDrawable, padding, nextY, iconSize, barWidth);
             else if (building instanceof PostOffice) nextY = this.addPostOfficeInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
@@ -427,7 +429,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             if (building.needsRoad && !building.roadConnected) warnings.push({ icon: "noroad", text: "No road access" });
             if (!building.powerConnected && building.needsPower) warnings.push({ icon: "nopower", text: "No power connection" });
             if (!building.powered && building.needsPower && !building.isNew) warnings.push({ icon: "outage", text: "Not enough " + (idealPowerProduction && building.inputResources.length ? "fuel" : "power") });
-            if (building.damagedEfficiency < 1) warnings.push({ icon: "fire", text: "Damaged (" + Math.ceil(100 * (1 - building.damagedEfficiency)) + "%)" });
+            if (building.damagedEfficiency < 1) warnings.push({ icon: "fire", text: "Damaged by " + (building.damageCause || "N/A") + " (" + Math.ceil(100 * (1 - building.damagedEfficiency)) + "%)" });
             if (building.businessFailed) warnings.push({ icon: "reopen", text: "Business failed" });
 
             if (warnings.length > 0) {

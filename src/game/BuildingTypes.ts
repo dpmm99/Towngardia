@@ -610,7 +610,7 @@ export class LogisticsCenter extends Building {
 export class FreeStuffTable extends Building { //TODO: Might be another good event: free stuff "stolen"! Lose a portion of input resources depending on how bad your police coverage is (up to 25% for no citywide coverage + up to 75% for no local coverage).
     constructor() {
         super(
-            "freestuff", "Free Stuff Table", "A location dedicated to proving to your citizens that you have a heart... or at least a mildly sympathetic appendage. If you provide the resources, your city workers hand out free stuff here. Everybody loves free stuff! Actually, it might just be the thrill of unexpected urban generosity that tickles their fancy. Consumes some resources of your chosen type to directly increase happiness, but the effect weakens as population grows.",
+            "freestuff", "Free Stuff Table", "A location dedicated to proving to your citizens that you have a heart... or at least a mildly sympathetic appendage. If you provide the resources, your city workers hand out free stuff here. Everybody loves free stuff! Actually, it might just be the thrill of unexpected urban generosity that tickles their fancy. Consumes some resources of your chosen type to directly increase happiness, but the effect weakens as population grows. Must be placed in a Logistics Center's parking lot.",
             BuildingCategory.GOVERNMENT,
             1, 1, 0,
             0.1,
@@ -787,6 +787,8 @@ export class SmallHouse extends Building {
         if (regionID === "volcanic") this.variant = 1;
     }
 
+    getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: Math.sqrt(city.peakPopulation) * 0.5 }]; }
+
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) *
             (4 - 0.5 * city.techManager.getAdoption('heatpumps') - 0.5 * city.techManager.getAdoption('vacuumwindows') - 0.5 * city.techManager.getAdoption('smarthome'));
@@ -816,6 +818,8 @@ export class Quadplex extends Building {
         super.setInfoRegion(regionID);
         if (regionID === "volcanic") this.variant = 1;
     }
+
+    getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: Math.sqrt(city.peakPopulation) }]; }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) *
@@ -851,6 +855,8 @@ export class SmallApartment extends Building {
         if (regionID === "volcanic") this.variant = 1;
     }
 
+    getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: Math.sqrt(city.peakPopulation) * 1.25 }]; }
+
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) *
             (21 - 3 * city.techManager.getAdoption('heatpumps') - 2 * city.techManager.getAdoption('vacuumwindows') - 1 * city.techManager.getAdoption('smarthome'));
@@ -883,6 +889,8 @@ export class Highrise extends Building {
         super.setInfoRegion(regionID);
         if (regionID === "volcanic") this.variant = 1;
     }
+
+    getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: Math.sqrt(city.peakPopulation) * 2.5 }]; }
     
     override canPlace(city: City, x: number, y: number, bySpawner: boolean): boolean {
         return super.canPlace(city, x, y, bySpawner) && city.peakPopulation > 330
@@ -922,6 +930,8 @@ export class Skyscraper extends Building {
         super.setInfoRegion(regionID);
         if (regionID === "volcanic") this.variant = 1;
     }
+
+    getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: Math.sqrt(city.peakPopulation) * 5 }]; }
 
     override canPlace(city: City, x: number, y: number, bySpawner: boolean): boolean {
         return super.canPlace(city, x, y, bySpawner) && city.peakPopulation > 800
@@ -1846,6 +1856,7 @@ export class SandCollector extends Building {
         );
         this.outputResources.push(new Sand(0, 2.5));
         this.checkFootprint[0][0] = this.checkFootprint[1][0] = this.checkFootprint[0][1] = this.checkFootprint[1][1] = FootprintType.SAND;
+        this.onlyAllowInRegions.push("plains");
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1919,6 +1930,7 @@ export class CrystalMine extends Building {
         this.checkFootprint[0][0] = FootprintType.GEM_MINE;
         this.needsPower = false;
         this.outputResources.push(new Gemstones(0, 0.5)); //Produces a tiny amount of gemstones a day.
+        this.onlyAllowInRegions.push("plains");
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1966,6 +1978,7 @@ export class OilDerrick extends Building {
         );
         this.checkFootprint[0][0] = FootprintType.OIL_WELL;
         this.outputResources.push(new Oil(0, 1));
+        this.onlyAllowInRegions.push("plains");
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2079,6 +2092,12 @@ export class PlasticsFactory extends Building {
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.1, "dynamicEffectByEfficiency"),
             new EffectDefinition(EffectType.Noise, 0.1, "dynamicEffectByEfficiency")]);
+    }
+
+    override setInfoRegion(regionID: string): void {
+        super.setInfoRegion(regionID);
+        if (regionID === "volcanic" && !this.inputResources.find(p => p.type === getResourceType(Sulfur)))
+            this.inputResources.unshift(new Sulfur(0, 0, 0.25));
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2214,13 +2233,19 @@ export class Nanogigafactory extends Building {
             2, 2, 0,
             0.5,
         );
-        this.inputResources.push(new Lithium(0, 0, 0.75)); //NOTE: gets reset every frame in onLongTick.
+        this.inputResources.push(new Lithium(0, 0, 0.5)); //NOTE: gets reset every frame in onLongTick.
         this.inputResources.push(new Copper(0, 0, 0.5));
         this.inputResources.push(new Plastics(0, 0, 0.5));
         this.outputResources.push(new Batteries(0, 1));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.1, "dynamicEffectByEfficiency")]);
+    }
+
+    override setInfoRegion(regionID: string): void {
+        super.setInfoRegion(regionID);
+        if (regionID === "volcanic" && !this.inputResources.find(p => p.type === getResourceType(Sulfur)))
+            this.inputResources.unshift(new Sulfur(0, 0, 0.25));
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -2236,7 +2261,7 @@ export class Nanogigafactory extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 
     override onLongTick(city: City): void {
-        this.inputResources.find(p => p.type === 'lithium')!.consumptionRate = 0.75 - 0.375 * city.techManager.getAdoption('graphenebattery');
+        this.inputResources.find(p => p.type === 'lithium')!.consumptionRate = 0.5 - 0.25 * city.techManager.getAdoption('graphenebattery');
         super.onLongTick(city);
     }
 }
@@ -4354,7 +4379,7 @@ export class VerticalTreeFarm extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 400 }, { type: "wood", amount: 30 }, { type: "steel", amount: 20 }];
+        return [{ type: "flunds", amount: 400 }, { type: "wood", amount: 30 }, { type: "steel", amount: 20 }, { type: "sulfur", amount: 10 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -4405,6 +4430,9 @@ export class ObsidianGatherer extends Building {
             0.3,
         );
         this.outputResources.push(new Obsidian(0, 2));
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Noise, 0.05)]);
         this.onlyAllowInRegions.push("volcanic");
     }
 
@@ -4429,6 +4457,9 @@ export class ObsidianCrusher extends Building {
         );
         this.inputResources.push(new Obsidian(0, 0, 1));
         this.outputResources.push(new Sand(0, 2.5));
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Noise, 0.15)]);
         this.onlyAllowInRegions.push("volcanic");
     }
 
@@ -4482,6 +4513,9 @@ export class IgneousQuarry extends Building { //Very close to the same as Quarry
         this.needsPower = false;
         this.outputResources.push(new Stone(0, 1.5));
         this.outputResources.push(new GreenObsidian(0, 0.25));
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Noise, 0.1)]);
         this.onlyAllowInRegions.push("volcanic");
     }
 
@@ -4518,6 +4552,9 @@ export class Tumbler extends Building {
         );
         this.inputResources.push(new FireObsidian(0, 0, 1.5));
         this.outputResources.push(new Gemstones(0, 2.25));
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Noise, 0.05)]);
         this.onlyAllowInRegions.push("volcanic");
     }
 
@@ -4530,6 +4567,27 @@ export class Tumbler extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
+}
+
+export class PowderMill extends Building {
+    constructor() {
+        super(
+            "powdermill", "Powder Mill", "A building that turns sulfur into dynamite--don't ask about the other ingredients. The whole process is a blast! Or, rather, it will be, if you don't ensure it has adequate fire protection.",
+            BuildingCategory.INDUSTRIAL,
+            3, 3, 0,
+            0.5,
+        );
+        this.inputResources.push(new Sulfur(0, 0, 2));
+        this.outputResources.push(new Dynamite(0, 1.75));
+        this.onlyAllowInRegions.push("volcanic");
+    }
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 430 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 10 }];
+    }
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 0.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+    }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
 }
 
 export class Geolab extends Building {
@@ -4697,7 +4755,7 @@ export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, Library, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, Observatory, QuantumComputingLab, WeatherControlMachine,
     /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse, PeppermintPillar, CocoaCupCo, ReindeerRetreat, WrappedWonder, FlowerTower,
     /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, Playground, UrbanCampDome, FlippinFun, H2Whoa, SesharTower, MuseumOfFutureArts, SandsOfTime, Portal,
-    /*Volcanic regional*/ TourksTrekkers, RedGreenhouse, VerticalTreeFarm, EnclosedRanch, ObsidianGatherer, ObsidianCrusher, VolcanoIronMine, IgneousQuarry, Tumbler, Geolab, HazmatStorage, PoliceRovers, DroneFireControl, DroneDoc,
+    /*Volcanic regional*/ TourksTrekkers, RedGreenhouse, VerticalTreeFarm, EnclosedRanch, ObsidianGatherer, ObsidianCrusher, VolcanoIronMine, IgneousQuarry, Tumbler, PowderMill, Geolab, HazmatStorage, PoliceRovers, DroneFireControl, DroneDoc,
     ].map(p => new p()).map(p => [p.type, p]));
 export function get(type: string): Building { //Get an UNMODIFIED copy of the building type. (City.buildingTypes can have modified values; this and BUILDING_TYPES do not.)
     return BUILDING_TYPES.get(type)!;
@@ -4712,5 +4770,5 @@ export const TUTORIAL_COMPLETION_BUILDING_UNLOCKS: Set<string> = new Set([
     IceCreamTruck, PlantMilkPlant,
     SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, PalmNomNom, GregsGrogBarr, Casino, CartersCars, BlankCheckBank,
     SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, FlippinFun, H2Whoa,
-    /*Volcanic region*/ RedGreenhouse, VerticalTreeFarm, EnclosedRanch, ObsidianGatherer, ObsidianCrusher, VolcanoIronMine, IgneousQuarry, Tumbler, HazmatStorage,
+    /*Volcanic region*/ RedGreenhouse, VerticalTreeFarm, EnclosedRanch, ObsidianGatherer, ObsidianCrusher, VolcanoIronMine, IgneousQuarry, Tumbler, PowderMill, HazmatStorage,
 ].map(getBuildingType));

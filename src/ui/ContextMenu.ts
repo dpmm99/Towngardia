@@ -423,7 +423,7 @@ export class ContextMenu implements IHasDrawable {
             y: 10,
             width: "48px",
             height: "48px",
-            image: new TextureInfo(48, 48, "ui/fire"),
+            image: new TextureInfo(48, 48, "ui/fire"), //TODO: Make a repair icon or reuse the generic 'damaged' icon or whatever the damageCause is if you go that route.
         }));
 
         //'Repair' text
@@ -433,7 +433,7 @@ export class ContextMenu implements IHasDrawable {
             y: 22,
             width: "204px",
             height: "24px",
-            text: "Repair",
+            text: "Repair" + (building.damageCause ? " (from " + building.damageCause + ")" : ""),
             rightAlign: true,
         }));
 

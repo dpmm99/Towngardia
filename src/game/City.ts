@@ -28,7 +28,7 @@ import { GIFT_TYPES } from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
 import { ARShopping, FoodServiceRobots, SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
 
-const CITY_DATA_VERSION = 5; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
+const CITY_DATA_VERSION = 6; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
     //Not serialized
     public uiManager: UIManager | null = null;
@@ -255,6 +255,12 @@ export class City {
 
             this.dataVersion = 5;
         }
+        if (this.dataVersion < 6) {
+            for (const building of this.buildingTypes.concat(this.buildings).concat(this.unplacedBuildings).filter(p => p.type === "nanogigafactory")) {
+                building.inputResources.find(p => p.type === "lithium")!.consumptionRate = 0.5;
+            }
+            this.dataVersion = 6;
+        }
     }
 
     enableResourceConstruction() { //NOT for normal players. :)
@@ -325,6 +331,15 @@ export class City {
                 this.buildingTypesByCategory.set(buildingType.category, []);
             }
             this.buildingTypesByCategory.get(buildingType.category)!.push(buildingType);
+        }
+
+        //Now sort each category by the first cost of each building via getCosts. Maybe not the exact perfect sorting, but better than the haphazard sorting I have now.
+        for (const category of this.buildingTypesByCategory.values()) {
+            category.sort((a, b) => {
+                const aCost = a.getCosts(this);
+                const bCost = b.getCosts(this);
+                return (aCost[0]?.amount ?? 0) - (bCost[0]?.amount ?? 0);
+            });
         }
     }
 
@@ -447,6 +462,7 @@ export class City {
             }
 
             resource.consume(cost.amount);
+            if (resource.amount < 0) resource.amount = 0; //For very rare rounding issues.
             this.resourceEvents.push({ type: resource.type, event: "consume", amount: cost.amount });
         }
 
@@ -1194,7 +1210,10 @@ export class City {
         //Buy up to the auto-buy amount, but don't go into debt for it.
         if (resource.amount < Math.floor(resource.autoBuyBelow * resource.capacity) && this.flunds.amount > 0) {
             const needed = Math.floor(resource.autoBuyBelow * resource.capacity) - resource.amount;
-            if (resource.buyPrice === 0 || resource.buyPriceMultiplier === 0) throw new Error("Resource " + resource.type + " has a buy price of 0.");
+            if (resource.buyPrice === 0 || resource.buyPriceMultiplier === 0) {
+                console.error("Resource " + resource.type + " has a buy price of 0.");
+                return;
+            }
             const affordableAmount = Math.min(needed, this.flunds.amount / (resource.buyPrice * resource.buyPriceMultiplier));
             this.flunds.consume(affordableAmount * resource.buyPrice * resource.buyPriceMultiplier);
             resource.amount += affordableAmount;
@@ -1375,11 +1394,11 @@ export class City {
         }
 
         //Affect the greenhouse gases pseudo-resource
+        const greenhouseGases = this.resources.get(new ResourceTypes.GreenhouseGases().type)!;
         if (this.flags.has(CityFlags.GreenhouseGasesMatter)) {
-            const greenhouseGases = this.resources.get(new ResourceTypes.GreenhouseGases().type)!;
             greenhouseGases.productionRate = this.getCityAverageGreenhouseGases() * 0.01;
             greenhouseGases.amount = Math.max(0, greenhouseGases.amount + greenhouseGases.productionRate);
-        }
+        } else greenhouseGases.amount = 0; //Just in case I missed a spot where I was modifying the pseudo-resource without the flag check.
 
         //Recalculate cached values
         this.calculatePowerUsageMultiplier();
@@ -1686,8 +1705,10 @@ export class City {
     checkStartEvents() {
         for (const eventType of this.eventTypes) {
             if (eventType.shouldStart(this, new Date(this.lastLongTick))) {
-                this.events.push(eventType.clone());
-                if (eventType.startMessage) this.notify(new Notification(eventType.displayName, eventType.startMessage, eventType.notificationIcon ?? undefined));
+                const newEvent = eventType.clone();
+                this.events.push(newEvent);
+                const distinctAffectedBuildings = [...new Set(newEvent.affectedBuildings)];
+                if (eventType.startMessage) this.notify(new Notification(newEvent.displayName, newEvent.startMessage, newEvent.notificationIcon ?? undefined, distinctAffectedBuildings));
             }
         }
     }

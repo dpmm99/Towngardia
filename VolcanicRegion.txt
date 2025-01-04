@@ -16,6 +16,7 @@ Artificial Structures:
 - Hazmat Storage: for dynamite, lithium, and sulfur (lithium no longer stored by normal storage depots)
 - Enclosed Ranch: a ranch, but the animals live in concrete domes due to the bad outside air
 - Igneous Quarry: Smaller and also produces some Green Obsidian
+- Powder Mill: produces dynamite from sulfur
 - Increased fire hazard for most buildings because the region is hot and dry
 - Drones and rovers instead of standard fire, police, and healthcare facilities
 - Wind Turbines produce more power
@@ -25,7 +26,7 @@ Resources:
 - Obsidian - basically just for making sand
 - Green Obsidian - just for selling, worth more than obsidian but less than fire obsidian
 - Fire Obsidian - can be polished into Gems
-- Sulfur - obtained from anywhere but is an *additional* requirement for concrete, plastic, and battery production as well as construction of Vertical Farms
+- Sulfur - obtained from anywhere but is an *additional* requirement for plastic and battery production as well as construction of Vertical Tree Farms
 - Dynamite - made from sulfur
 - Many buildings that required wood use concrete instead and tend to cost a bit more, but factory recipes still use wood
 Events:
@@ -35,14 +36,13 @@ Events:
 - No Cold Snaps, but Heat Waves increase power usage even more
 - Earthquakes are more common, but they don't produce more fumaroles or hot springs
 - Explosion - if Hazmat Storage catches on fire, instead of just being a fire, it does huge damage to itself and nearby buildings, proportional to how full your storage is
-Achievement that unlocks it:
-- Plains and Astral Planes - An end-goal for your first city. A large, well-educated population is bound to make incredible discoveries, especially with a Museum of Future Arts at hand. Unlock regions and realms by building a Portal in your city. Requires a population of 50,000 and four Colleges.
 Titles:
 - The Great Filter: No, I'm not talking about the Fermi Paradox explanation of the same name. Well, I mean, I could be. It IS pretty dumb of the species to live in an area of extreme volcanic activity like this. But anyway... Attain this by building enough Carbon Capture Plants to reduce accumulated greenhouse gases to zero.
 Techs:
 - Free: CoalPowerScrubbers, HydroponicGardens, VacuumInsulatedWindows
 - Unavailable: Vertical Farming (but I just changed the label to say it unlocks Vertical Tree Farms and made it free instead of hiding it)
 - New: Seismic Dampers - eliminates damage from earthquakes; costs steel
+- New: Lightning Rods - eliminates damage from Dry Lightning; costs copper
 - Nanomedicine Research affects the replacement medical facility because there is no Hospital
 - ThermalRecovery is extra powerful
 Layout:

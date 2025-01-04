@@ -129,7 +129,7 @@ export class CitizenDietSystem {
         }
 
         const eventGratificationBonus = this.city.events.filter(p => p instanceof DietReward).reduce((a, e) => a + e.getBonus(), 1); //Just additive
-        this.city.resources.get(new FoodSatisfaction().type)!.amount = happinessEffect / perfectHappiness * eventGratificationBonus; //Effect on happiness
+        this.city.resources.get(new FoodSatisfaction().type)!.amount = Math.min(1, happinessEffect / perfectHappiness) * eventGratificationBonus; //Effect on happiness
         this.city.resources.get(new FoodSufficiency().type)!.amount = foodRatio; //Business value effect
 
         // Consume food (4x a day)

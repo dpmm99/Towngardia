@@ -1,4 +1,5 @@
 import { City } from "../game/City.js";
+import { CityFlags } from "../game/CityFlags.js";
 import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
 import { FoodHealth, FoodSatisfaction, FoodSufficiency, RESOURCE_TYPES } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
@@ -85,7 +86,7 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
         nextY += 70;
 
         // Food Health bar
-        this.addProgressBar(windowDrawable, nextY, "Healthiness", this.city.resources.get(new FoodHealth().type)!.amount, "ui/foodhealth");
+        this.addProgressBar(windowDrawable, nextY, "Healthiness", this.city.resources.get(new FoodHealth().type)!.amount, "ui/foodhealth", this.city.flags.has(CityFlags.HealthcareMatters));
         nextY += 90;
 
         // Diet Composition
@@ -114,13 +115,14 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
     }
 
     //TODO: Would be cooler if vertical along the sides of the screen, but...eh.
-    private addProgressBar(parent: Drawable, y: number, label: string, value: number, iconPath: string): void {
+    private addProgressBar(parent: Drawable, y: number, label: string, value: number, iconPath: string, grayscale: boolean = false): void {
         parent.addChild(new Drawable({
             x: 10,
             y: y,
             width: "48px",
             height: "48px",
-            image: new TextureInfo(48, 48, iconPath)
+            image: new TextureInfo(48, 48, iconPath),
+            grayscale: grayscale
         }));
 
         parent.addChild(new Drawable({
@@ -128,7 +130,8 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
             y: y + 8,
             text: label,
             width: "150px",
-            height: "32px"
+            height: "32px",
+            grayscale: grayscale
         }));
 
         parent.addChild(new Drawable({

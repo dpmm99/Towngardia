@@ -111,14 +111,14 @@ export class HappinessCalculator {
     }
 
     private calculateEnvironmentHappiness(): number {
-        const particulate = this.getAverageEffect(EffectType.ParticulatePollution) * -0.12 * this.city.particulatePollutionMultiplier;
+        const particulate = Math.max(0, this.getAverageEffect(EffectType.ParticulatePollution)) * -0.12 * this.city.particulatePollutionMultiplier;
         this.setDisplayStats("Particulate pollution", particulate);
         const noise = this.getAverageEffect(EffectType.Noise) * -0.07;
         this.setDisplayStats("Noise", noise);
 
         let environment = particulate + noise;
         if (this.city.flags.has(CityFlags.GreenhouseGasesMatter)) {
-            const greenhouse = this.getAverageEffect(EffectType.GreenhouseGases) * -0.05;
+            const greenhouse = Math.max(0, this.getAverageEffect(EffectType.GreenhouseGases)) * -0.05;
             environment += greenhouse;
             this.setDisplayStats("Greenhouse gases", greenhouse);
         }

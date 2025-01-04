@@ -13,7 +13,7 @@ import { CityFlags } from "./CityFlags.js";
 const AchievementTypes =
 {
     CarbonNation: new Achievement("carbonnation", "Carbon Nation", `Hear the hippies' concerns fizzle out. Maintain net-zero carbon emissions for a week in a city with at least ${GREENHOUSE_GASES_MIN_POPULATION} population.`, (me: Achievement, player: Player, city: City): number => {
-        if (city.resources.get("population")!.amount < GREENHOUSE_GASES_MIN_POPULATION) return 0;
+        if (!city.flags.has(CityFlags.GreenhouseGasesMatter)) return 0;
         if (city.getCityAverageGreenhouseGases() > 0) {
             me.dataPoints = [];
             return 0;
@@ -40,6 +40,9 @@ const AchievementTypes =
 
         const worstPolluted = Math.max(...farms.map(p => p.getHighestEffect(city, EffectType.ParticulatePollution))); //Deliberately chose to ignore the particulatePollutionMultiplier factor here.
         return worstPolluted / 0.7; //0.7 is considered very high in this case.
+    }),
+    FusionHa: new Achievement("fusionha", "Fuuusion...Ha!", "Obliterate 300 stars in Starbox on Hard.", (me: Achievement, player: Player, city: City): number => {
+        return (me.dataPoints?.[0] || 0) / 300; //Set directly in Starbox just so I don't need another city-level variable to temporarily store it for the split second it takes to call checkAndAwardAchievement.
     }),
     NoAdultLeftADolt: new Achievement("noadultleftadolt", "No Adult Left A Dolt", "Have colleges covering all residences in a city with at least 1000 population", (me: Achievement, player: Player, city: City): number => {
         if (city.resources.get("population")!.amount < 1000) return 0;
@@ -71,8 +74,8 @@ const AchievementTypes =
         const entertainment = city.buildings.filter(p => p.isEntertainment && p.roadConnected && p.powerConnected && p.powered).length;
         return Math.min(1, homes / 10) * 0.667 + 0.334 * Math.min(1, entertainment / 5);
     }),
-    PlainsAndAstralPlanes: new Achievement("plainsandastralplanes", "Plains and Astral Planes", "An end-goal for your first city. A large, well-educated population is bound to make incredible discoveries, especially with a Museum of Future Arts at hand. Unlock regions and realms by building a Portal in your city. Requires a population of 50,000 and four Colleges.", (me: Achievement, player: Player, city: City): number => {
-        const populationPart = Math.min(1, city.resources.get("population")!.amount / 50000);
+    PlainsAndAstralPlanes: new Achievement("plainsandastralplanes", "Plains and Astral Planes", "An end-goal for your first city. A large, well-educated population is bound to make incredible discoveries, especially with a Museum of Future Arts at hand. Unlock regions and realms by building a Portal in your city. Requires a population of 30,000 and four Colleges.", (me: Achievement, player: Player, city: City): number => {
+        const populationPart = Math.min(1, city.resources.get("population")!.amount / 30000);
         const collegePart = Math.min(4, city.presentBuildingCount.get(getBuildingType(College)) ?? 0);
         const museumPart = Math.min(1, city.presentBuildingCount.get(getBuildingType(MuseumOfFutureArts)) ?? 0);
         const portalPart = city.presentBuildingCount.get(getBuildingType(Portal)) ? Math.min(1, city.buildings.find(p => p.type === getBuildingType(Portal))?.lastEfficiency ?? 0) : 0;
@@ -142,6 +145,9 @@ const AchievementTypes =
         const excessPower = power.productionRate - power.consumptionRate;
         if (excessPower <= 0 || power.consumptionRate === 0) return 0;
         return 10 * excessPower / power.consumptionRate;
+    }),
+    Xenocide: new Achievement("xenocide", "Xenocide", "Without any mistakes, clear every tile in Monobrynth on Hard after finding scanner goggles and revealing that one of the tiles has an alien but no rewards. You know you don't HAVE to do that, right...?", (me: Achievement, player: Player, city: City): number => {
+        return 1; //Only checked directly in Monobrynth, so nothing to do here.
     }),
 };
 

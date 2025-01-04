@@ -183,6 +183,10 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
 
         this.winnings = filterConvertAwardWinnings(this.city, this.winnings, extraFlunds);
         progressMinigameOptionResearch(this.city, rangeMapLinear(this.totalStarsDestroyed, 0.01, 0.07, 100, 300, 0.001, multiplier));
+        if (this.selectedDifficulty === 'hard') {
+            this.city.player.achievements.find(p => p.id === "fusionha")!.dataPoints = [this.totalStarsDestroyed];
+            this.city.checkAndAwardAchievement("fusionha");
+        }
         this.city.updateLastUserActionTime();
         this.game.fullSave();
     }

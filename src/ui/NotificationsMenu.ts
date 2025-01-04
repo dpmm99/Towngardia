@@ -135,6 +135,38 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
                     height: "24px"
                 }));
                 paddingAdjust = -10;
+                //Below that, if the notification's affectedBuildings are not empty, give a "Tap to view" button (just text)
+                if (notification.affectedBuildings.length) {
+                    //We have to enclose it in a box so we can center the text without affecting the positioning of the next notification
+                    previousNotification.addChild(previousNotification = new Drawable({ //Nested so it can be 'below' the arbitrary height of the body
+                        anchors: ['below'],
+                        width: "100%",
+                        height: "36px",
+                        fallbackColor: '#00000000',
+                        onClick: () => {
+                            //If multiple buildings were affected by this event, we probably want to show whichever one is are still damaged. Otherwise, show the first affected building.
+                            const bestBuilding = notification.affectedBuildings.find(b => b.damagedEfficiency < 1) || notification.affectedBuildings[0];
+                            this.uiManager.hideNotifications();
+                            this.uiManager.centerOn(bestBuilding);
+                            this.uiManager.showBuildingInfo(bestBuilding);
+                        },
+                        children: [new Drawable({ //Button backdrop
+                            anchors: ['centerX'],
+                            centerOnOwnX: true,
+                            width: "150px",
+                            height: "100%",
+                            fallbackColor: '#444444',
+                            children: [new Drawable({ //Button text
+                                anchors: ['centerX'],
+                                centerOnOwnX: true,
+                                y: 6,
+                                text: "Tap to view",
+                                width: "calc(100% - 20px)",
+                                height: "32px",
+                            })]
+                        })],
+                    }));
+                }
             } else paddingAdjust = 0;
         });
 

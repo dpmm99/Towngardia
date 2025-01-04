@@ -1,6 +1,6 @@
 import { TitleTypes } from "./AchievementTypes.js";
 import { Building } from "./Building.js";
-import { ActiveVolcano, ChocolateBar, CocoaCupCo, ColdStorage, FireBay, FireStation, FlowerTower, GemBoulder, Geolab, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HazmatStorage, HeartyShack, HotSpring, HotSpringInn, Ignimbrite, MiracleWorkshop, PeppermintPillar, ReindeerRetreat, SmallBoulder, WrappedWonder, getBuildingType } from "./BuildingTypes.js";
+import { ActiveVolcano, ChocolateBar, CocoaCupCo, ColdStorage, FireBay, FireStation, FlowerTower, GemBoulder, Geolab, GeothermalVent, HauntymonthGrave, HauntymonthHouse, HauntymonthLamp, HazmatStorage, HeartyShack, HotSpring, HotSpringInn, Ignimbrite, MiracleWorkshop, PeppermintPillar, PowderMill, ReindeerRetreat, SmallBoulder, WrappedWonder, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -290,6 +290,7 @@ export class Burglary extends CityEvent {
     override start(city: City, date: Date): void {
         super.start(city, date);
         city.flunds.amount *= 0.8;
+        this.affectedBuildings = [city.cityHall];
     }
 }
 
@@ -322,6 +323,7 @@ export class Heist extends CityEvent {
     override start(city: City, date: Date): void {
         super.start(city, date);
         city.flunds.amount *= 0.4;
+        this.affectedBuildings = [city.cityHall];
     }
 }
 
@@ -377,6 +379,7 @@ export class Earthquake extends CityEvent {
     override start(city: City, date: Date): void {
         super.start(city, date);
         this.startMessage = new Earthquake().startMessage;
+        this.affectedBuildings = [];
 
         //If you didn't start with a geothermal vent, the first earthquake should create one. Otherwise, a diminishing chance for each vent you have. 0 -> 100%, 1 -> 33%, 2 -> 20%, 3 -> 14%, 4 -> 11%, 5 -> 9%...
         if (city.regionID !== "volcanic") {
@@ -390,7 +393,9 @@ export class Earthquake extends CityEvent {
                     y = 1 + Math.floor((city.height - 2) * Math.random());
                 } while (--tries > 0 && city.getBuildingsInArea(x, y, 1, 1, 1, 1).size); //Also don't place adjacent to any immovable object or it'll be unusable. But I opted to just check that there are no buildings nearby of any type.
                 if (!city.grid[y][x]) {
-                    city.addBuilding(new GeothermalVent(), x, y);
+                    const vent = new GeothermalVent();
+                    city.addBuilding(vent, x, y);
+                    this.affectedBuildings.push(vent);
                     this.startMessage += " The earthquake formed a new geothermal vent in the region, which could be a source of cheap, reliable, eco-friendly power.";
                 }
             }
@@ -405,7 +410,9 @@ export class Earthquake extends CityEvent {
                     y = 8 + Math.floor((city.height - 10) * Math.random());
                 } while (--tries > 0 && city.getBuildingsInArea(x, y, 2, 2, 0, 0).size);
                 if (!city.grid[y][x]) {
-                    city.addBuilding(new HotSpring(), x, y);
+                    const hotSpring = new HotSpring();
+                    city.addBuilding(hotSpring, x, y);
+                    this.affectedBuildings.push(hotSpring);
                     city.unlock(getBuildingType(HotSpringInn));
                     this.startMessage += " It also formed a hot spring, which we can turn into a tourist trap--Hot Spring Inn is now available.";
                 }
@@ -426,8 +433,11 @@ export class Earthquake extends CityEvent {
         for (const building of potentiallyDamaged) {
             if (!building.owned) continue; //Don't touch unowned buildings (boulders and mountains and such)
             building.damagedEfficiency = Math.max(0, building.damagedEfficiency - damageFactor * (0.1 + Math.random() * 0.25));
+            building.damageCause = "earthquake";
+            this.affectedBuildings.push(building);
             if (--buildingsToDamage === 0) break;
         }
+        if (!this.affectedBuildings.length) this.startMessage = "An earthquake has struck the region. Fortunately, the epicenter was far enough from the city that no buildings were damaged.";
     }
 }
 
@@ -462,11 +472,14 @@ export class Fire extends CityEvent {
     override start(city: City, date: Date): void {
         super.start(city, date);
 
+        this.affectedBuildings = [];
         const epicenter = this.getFireEpicenter(city);
         if (!epicenter) return; //Shouldn't have started the fire in the first place
+        this.affectedBuildings.push(epicenter);
 
         let intensity = epicenter.getFireHazard(city) * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) + 0.3 * Math.random();
         epicenter.damagedEfficiency = Math.max(0, epicenter.damagedEfficiency - intensity);
+        epicenter.damageCause = "fire";
         intensity *= 0.9;
         
         //Generally do the most damage to the closest buildings, but not roads, fire stations, or already-very-damaged buildings. More damage but fewer buildings affected than an Earthquake.
@@ -477,21 +490,25 @@ export class Fire extends CityEvent {
             if (building === epicenter || building instanceof FireBay || building instanceof FireStation || building.damagedEfficiency < 1 - intensity || !building.owned) continue;
             const coverage = building.getHighestEffect(city, EffectType.FireProtection);
             building.damagedEfficiency = Math.max(0, building.damagedEfficiency - (0.8 + Math.random() * 0.2) * intensity * (1.1 - coverage));
+            building.damageCause = "fire";
+            this.affectedBuildings.push(building);
             intensity *= 0.9;
             if (--buildingsToDamage === 0) break;
         }
 
-        //Second pass: if any of the damaged buildings is a HazmatStorage, cause an explosion--extra damage to all buildings around it
-        const hazmatStorage = potentiallyDamaged.find(p => p.type === getBuildingType(HazmatStorage));
+        //Second pass: if any of the damaged buildings is a HazmatStorage or PowderMill, cause an explosion--extra damage to all buildings around it
+        const hazmatStorage = potentiallyDamaged.find(p => p.type === getBuildingType(HazmatStorage)) || potentiallyDamaged.find(p => p.type === getBuildingType(PowderMill));
         if (hazmatStorage) {
-            //Hazmat damage is affected by how full your Dynamite storage is
-            const dynamite = city.resources.get(getResourceType(Dynamite))!;
-            const dynamiteFactor = dynamite.amount / dynamite.capacity;
+            //Hazmat damage is affected by how full your Dynamite storage is (or the dynamite output if it's a Powder Mill)
+            const dynamite = hazmatStorage.storeAmount ? city.resources.get(getResourceType(Dynamite))! : hazmatStorage.outputResources.find(p => p.type === getResourceType(Dynamite))!;
+            const dynamiteFactor = dynamite.amount / dynamite.capacity * (hazmatStorage.storeAmount ? 1 : 0.75); //Lower potential damage for Powder Mills since they store less and *only* sulfur and dynamite
             if (dynamiteFactor < 0.05) return;
             const buildings = city.getBuildingsInArea(hazmatStorage.x, hazmatStorage.y, hazmatStorage.width, hazmatStorage.height, 3, 3, true, true);
             for (const building of buildings) {
                 if (!building.owned) continue;
                 building.damagedEfficiency = Math.max(0, building.damagedEfficiency - dynamiteFactor * (0.5 + Math.random() * 0.6));
+                building.damageCause = "explosion";
+                this.affectedBuildings.push(building);
             }
 
             //Also consume some of the dynamite (no more than the building COULD store)
@@ -507,7 +524,7 @@ export class Fire extends CityEvent {
                 amountWord = "minor";
                 causePhrase = "because it had some dynamite in it";
             }
-            this.startMessage += ` Oh, on top of that, a Hazmat Storage caught on fire and exploded, causing ${amountWord} damage to itself and nearby buildings ${causePhrase}.`;
+            this.startMessage += ` Oh, on top of that, a ${hazmatStorage.displayName} caught on fire and exploded, causing ${amountWord} damage to itself and nearby buildings ${causePhrase}.`;
         }
     }
 }
@@ -541,6 +558,7 @@ export class Riot extends CityEvent {
 
     override start(city: City, date: Date): void {
         super.start(city, date);
+        this.affectedBuildings = [];
 
         const epicenter = this.getRiotEpicenter(city);
         if (!epicenter) return; //Shouldn't have started the riot in the first place
@@ -548,6 +566,7 @@ export class Riot extends CityEvent {
         //Even perfect fire coverage can only reduce it to 0.1
         let intensity = Math.max(0.1, 0.3 + 0.3 * Math.random() - 0.6 * epicenter.getHighestEffect(city, EffectType.FireProtection));
         epicenter.damagedEfficiency = Math.max(0, epicenter.damagedEfficiency - intensity);
+        epicenter.damageCause = "riot";
         intensity *= 0.9;
 
         //Generally do the most damage to the closest buildings, but not roads or already-very-damaged buildings. More damage but fewer buildings affected than an Earthquake.
@@ -561,7 +580,9 @@ export class Riot extends CityEvent {
         for (const building of potentiallyDamaged) {
             if (building === epicenter || building.damagedEfficiency < 1 - intensity || !building.owned) continue;
             building.damagedEfficiency = Math.max(0, building.damagedEfficiency - (0.8 + Math.random() * 0.2) * intensity);
+            building.damageCause = "riot";
             intensity *= 0.9;
+            this.affectedBuildings.push(building);
             if (--buildingsToDamage === 0) break;
         }
     }
@@ -694,6 +715,7 @@ export class Spoilage extends CityEvent {
 
     override shouldStart(city: City, date: Date): boolean {
         //Increasing chance each tick if a cold storage has been underpowered for at least 1 day. Track it on the Cold Storages themselves via the businessFailureCounter.
+        this.affectedBuildings = [];
         let anyUnpowered = false;
         let maxBusinessFailureCounter = 0;
         const coldStorages = city.buildings.filter(p => p.type === getBuildingType(ColdStorage));
@@ -702,6 +724,7 @@ export class Spoilage extends CityEvent {
             if (p.lastEfficiency < 0.8) {
                 if (++p.businessFailureCounter >= LONG_TICKS_PER_DAY) {
                     anyUnpowered = true;
+                    this.affectedBuildings.push(p);
                     if (p.businessFailureCounter > maxBusinessFailureCounter) maxBusinessFailureCounter = p.businessFailureCounter;
                 }
             } else p.businessFailureCounter = 0;
@@ -733,16 +756,21 @@ export class DryLightning extends CityEvent {
     }
 
     override shouldStart(city: City, date: Date): boolean {
-        // 3.5% chance per tick, about a 63% chance in a week, increasing with greenhouse gases
-        return city.regionID === "volcanic" && this.checkedStart(Math.random() < 0.035 * (1 + city.resources.get(new GreenhouseGases().type)!.amount), city, date);
+        // 3.5% chance per tick, about a 63% chance in a week, increasing with greenhouse gases. Chance is completely eliminated by fully-adopted Lightning Rods tech.
+        const ghgFactor = city.flags.has(CityFlags.GreenhouseGasesMatter) ? city.resources.get(new GreenhouseGases().type)!.amount : 0;
+        return city.regionID === "volcanic" && this.checkedStart(Math.random() < 0.035 * (1 + ghgFactor) * (1 - city.techManager.getAdoption("lightningrods")), city, date);
     }
 
     override start(city: City, date: Date): void {
         super.start(city, date);
+        this.affectedBuildings = [];
+
         const buildings = city.buildings.filter(p => p.owned && !p.isRoad);
         const targetBuilding = buildings[Math.floor(buildings.length * Math.random())];
         if (targetBuilding) {
             targetBuilding.damagedEfficiency = Math.max(0, targetBuilding.damagedEfficiency - 0.2 - targetBuilding.getFireHazard(city) * 0.6 * Math.random()); // about 20%-50% damage, lower for low-fire-hazard buildings
+            targetBuilding.damageCause = "lightning";
+            this.affectedBuildings.push(targetBuilding);
         }
     }
 }
@@ -775,11 +803,13 @@ export class StrombolianEruption extends CityEvent {
         if (!targetTile) return; //Can't trigger the event if there are no tiles... but that should be impossible.
 
         //Ignimbrite is 3x3, so you can't place directly at that tile; try putting each corner on that tile and see if any of those work.
+        this.affectedBuildings = [];
         const ignimbrite = new Ignimbrite();
         const possibleOffsets = [[0, 0], [0, ignimbrite.height - 1], [ignimbrite.width - 1, 0], [ignimbrite.width - 1, ignimbrite.height - 1]];
         for (const offset of possibleOffsets) {
             if (ignimbrite.canPlace(city, targetTile.x - offset[0], targetTile.y - offset[1], true)) {
                 city.addBuilding(ignimbrite, targetTile.x - offset[0], targetTile.y - offset[1]);
+                this.affectedBuildings.push(ignimbrite);
                 return;
             }
         }
@@ -789,6 +819,8 @@ export class StrombolianEruption extends CityEvent {
         for (const building of buildingsToDamage) {
             if (!building.owned || building.isRoad) continue;
             building.damagedEfficiency = Math.max(0, building.damagedEfficiency - 0.4 - Math.random() * 0.3); // 40%-70% damage
+            building.damageCause = "eruption";
+            this.affectedBuildings.push(building);
         }
     }
 }
@@ -811,6 +843,7 @@ export class VulcanianEruption extends CityEvent {
         if (!volcano) return;
 
         //Randomize until they're inside the map, giving up after 20 tries
+        this.affectedBuildings = [];
         let targetX: number, targetY: number;
         let tries = 20;
         do {
@@ -820,21 +853,23 @@ export class VulcanianEruption extends CityEvent {
             targetY = Math.round(volcano.y + volcano.height / 2 + magnitude * Math.sin(angle));
         } while (--tries > 0 && (targetX < 0 || targetX >= city.width || targetY < 0 || targetY >= city.height));
 
-        const boulder = Math.random() < 0.05 ? new GemBoulder() : new SmallBoulder();
+        const boulder = Math.random() < 0.1 ? new GemBoulder() : new SmallBoulder();
         if (city.grid[targetY] && boulder.canPlace(city, targetX, targetY, true)) {
             city.addBuilding(boulder, targetX, targetY);
+            this.affectedBuildings.push(boulder);
         } else {
             const buildingsToDamage = city.getBuildingsInArea(targetX, targetY, boulder.width, boulder.height, 0, 0, false, true);
             for (const building of buildingsToDamage) {
                 if (!building.owned || building.isRoad) continue;
                 building.damagedEfficiency = Math.max(0, building.damagedEfficiency - 0.4 - Math.random() * 0.3); // 40%-70% damage
+                building.damageCause = "eruption";
+                this.affectedBuildings.push(building);
             }
         }
 
-        city.resources.get(new GreenhouseGases().type)!.amount += 0.03;
+        if (city.flags.has(CityFlags.GreenhouseGasesMatter)) city.resources.get(new GreenhouseGases().type)!.amount += 0.03;
     }
 }
-
 
 
 

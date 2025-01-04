@@ -1,3 +1,4 @@
+import { Building } from "./Building.js";
 import { City } from "./City.js";
 
 export class CityEvent {
@@ -6,6 +7,7 @@ export class CityEvent {
     public duration: number = 0;
     public variables: number[] = []; //For storing whatever you need for specific events, like boost quantity and start time for a TourismReward.
     public fromPlayer: string | null = null; //For assists, so we can tell the player who helped them.
+    public affectedBuildings: Building[] = []; //Not serialized; just for transfering from the event to the notification
     constructor(
         public type: string,
         public displayName: string,
@@ -58,6 +60,7 @@ export class CityEvent {
     clone(): CityEvent {
         const clone = Object.assign(Object.create(this), this);
         clone.variables = this.variables.slice();
+        clone.affectedBuildings = this.affectedBuildings.slice();
         return clone;
     }
 }

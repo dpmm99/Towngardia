@@ -44,6 +44,7 @@ export class Building implements IHasDrawable {
     lastProvisioningDrawable: Drawable | null = null;
     lastEfficiency: number = 0;
     damagedEfficiency: number = 1; //Reduce if the building is damaged due to fire or earthquake
+    damageCause: string = "";
 
     businessValue: number = 0; //This is what sales tax will be calculated from, multiplied by efficiency. It's also the cost to reopen a failed business.
     businessPatronCap: number = 0;
@@ -543,7 +544,7 @@ export class Building implements IHasDrawable {
                         y: 16,
                         width: "32px",
                         height: "32px",
-                        image: new TextureInfo(64, 64, "ui/fire"),
+                        image: new TextureInfo(64, 64, "ui/fire"), //TODO: Either a separate image per cause or a unique "damage" image would be nice.
                     }),
                 ],
             });

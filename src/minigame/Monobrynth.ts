@@ -99,6 +99,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private costs = [{ type: new MonobrynthPlays().type, amount: 1 }, { type: new Clothing().type, amount: 0 }];
     private isPractice: boolean = false;
     private selectedDifficulty: Difficulty = 'easy';
+    private metXenocideRequirements: boolean = false;
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
 
@@ -164,7 +165,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
                 break;
             case 'hard':
                 if (Math.random() < 0.9) content.push('monster');
-                if (Math.random() < 0.95) content.push('treasure');
+                if (Math.random() < (this.selectedDifficulty === "easy" ? 0.95 : 0.9)) content.push('treasure'); //Slightly reduced chance on higher difficulties due to higher numbers of hard squares... but also for the achievement. :)
                 if (Math.random() < 0.1) content.push('treasure');
                 break;
         }
@@ -207,8 +208,21 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             const [x, y] = this.playerPosition;
             for (let i = Math.max(0, x - 1); i < Math.min(this.difficulty.gridWidth, x + 2); i++) {
                 for (let j = Math.max(0, y - 1); j < Math.min(this.difficulty.gridHeight, y + 2); j++) {
+                    //First requirement for an achievement; second is "cleared all tiles with no failures"
+                    if (this.grid[j][i].visibility !== 'revealed' && this.grid[j][i].content.includes('monster') && !this.grid[j][i].content.includes('treasure')) this.metXenocideRequirements = true;
+
                     this.grid[j][i].visibility = 'revealed';
                 }
+            }
+
+            //Also mark the ones surrounding that as 'seen' if they're still hidden, since the player is able to travel to them anyway--without the corners instead of the whole 5x5 area since the corners stay unreachable.
+            for (let i = Math.max(0, x - 1); i < Math.min(this.difficulty.gridWidth, x + 2); i++) { //Horizontal strips of three tiles
+                if (y > 1 && this.grid[y - 2][i].visibility === 'hidden') this.grid[y - 2][i].visibility = 'seen';
+                if (y < this.difficulty.gridHeight - 2 && this.grid[y + 2][i].visibility === 'hidden') this.grid[y + 2][i].visibility = 'seen';
+            }
+            for (let j = Math.max(0, y - 1); j < Math.min(this.difficulty.gridHeight, y + 2); j++) { //Vertical strips of three tiles
+                if (x > 1 && this.grid[j][x - 2].visibility === 'hidden') this.grid[j][x - 2].visibility = 'seen';
+                if (x < this.difficulty.gridWidth - 2 && this.grid[j][x + 2].visibility === 'hidden') this.grid[j][x + 2].visibility = 'seen';
             }
         }
     }
@@ -299,6 +313,10 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
     private endGameIfAllVisited(): void {
         if (this.grid.every(row => row.every(tile => !tile.content.length && tile.visibility === 'revealed'))) {
+            if (this.selectedDifficulty === 'hard' && this.metXenocideRequirements && this.noneFailed) {
+                this.city.checkAndAwardAchievement("xenocide");
+            }
+
             this.endGame();
             if (this.city.flags.has(CityFlags.UnlockedGameDev) && this.noneFailed && this.city.buildingTypes.find(p => p.type === getBuildingType(TeleportationPod))?.locked) {
                 this.city.unlock(getBuildingType(TeleportationPod));
