@@ -623,9 +623,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         }));
         nextY += 28;
 
-        //New buildings generally start at 0% efficiency and therefore 0 power demand, so we get 1 update to warn the player about the increasing demand.
+        //New buildings generally start at 0% efficiency and therefore 0 power demand, so we get 1 update to warn the player about the increasing demand. Exception: if a residence just spawned/upgraded and it upgrades at the end of this long tick.
         const nextDemandIncrease = this.city.buildings.filter(p => p.isNew).reduce((acc, p) => acc + p.getPowerUpkeep(this.city, true) - p.getPowerUpkeep(this.city)
-            - p.getPowerProduction(this.city) + p.getPowerProduction(this.city, true), 0);
+            - p.getPowerProduction(this.city, true) + p.getPowerProduction(this.city), 0); //+ideal upkeep -current upkeep -ideal production +current production = expected change.
         if (nextDemandIncrease > 0) {
             infoDrawable.addChild(new Drawable({
                 x: padding,

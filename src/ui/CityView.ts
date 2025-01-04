@@ -32,13 +32,16 @@ export class CityView {
     public drawEfficiency = false;
     public drawGrid = false;
     public gradient: number[][] = [];
-    constructor(public city: City, public uiManager: UIManager) {
+    public gradientLowerText = "Bad";
+    public gradientUpperText = "Good";
+    public legendEntries: {icon: string, text: string}[] = [];
+    constructor(public city: City, public uiManager: UIManager, public displayName: string = "Default") {
     }
 
-    public getColorString(value: number): string {
+    public getColorString(value: number, alphaOverride: number = 0): string {
         const interpolatedColor = this.getColorArray(value);
         const [r, g, b, a] = interpolatedColor;
-        return `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
+        return `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${alphaOverride || a})`;
     }
 
     public getColorArray(value: number): number[] {
@@ -76,7 +79,7 @@ export class ProvisioningView extends CityView {
     private filterSlider: LockStepSlider;
 
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Resource Provisioning");
         this.showCollectibles = false;
         this.showProvisioning = true;
         const sliderOptions = { "6 hours": 1, "12 hours": 2, "1 day": 4, "2 days": 8, "3 days": 12, "Max": 100 }; //Most should be 5 days max (20 ticks), but coal power plants are tentatively 10 (40 ticks)...
@@ -149,7 +152,7 @@ export class ProvisioningView extends CityView {
 
 export class ResidentialDesirabilityView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Residential Desirability");
         this.showCollectibles = false;
         this.drawResidentialDesirability = true;
         this.gradient = RedOrangeGreenCyanGradient;
@@ -158,7 +161,7 @@ export class ResidentialDesirabilityView extends CityView {
 
 export class LandValueView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Land Value");
         this.showCollectibles = false;
         this.drawLandValue = true;
         this.gradient = RedOrangeGreenCyanGradient;
@@ -167,52 +170,62 @@ export class LandValueView extends CityView {
 
 export class PettyCrimeView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Petty Crime");
         this.showCollectibles = false;
         this.drawPettyCrime = true;
         this.gradient = GreenOrangeRedBlackGradient;
+        this.gradientLowerText = "Good";
+        this.gradientUpperText = "Bad";
     }
 }
 
 export class OrganizedCrimeView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Organized Crime");
         this.showCollectibles = false;
         this.drawOrganizedCrime = true;
         this.gradient = GreenOrangeRedBlackGradient;
+        this.gradientLowerText = "Good";
+        this.gradientUpperText = "Bad";
     }
 }
 
 export class GreenhouseGasesView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Greenhouse Gases");
         this.showCollectibles = false;
         this.drawGreenhouseGases = true;
         this.gradient = GreenOrangeRedBlackGradient;
+        this.gradientLowerText = "Good";
+        this.gradientUpperText = "Bad";
     }
 }
 
 export class NoiseView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Noise Pollution");
         this.showCollectibles = false;
         this.drawNoise = true;
         this.gradient = GreenOrangeRedBlackGradient;
+        this.gradientLowerText = "Good";
+        this.gradientUpperText = "Bad";
     }
 }
 
 export class ParticulatePollutionView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Particulate Pollution");
         this.showCollectibles = false;
         this.drawParticulatePollution = true;
         this.gradient = GreenOrangeRedBlackGradient;
+        this.gradientLowerText = "Good";
+        this.gradientUpperText = "Bad";
     }
 }
 
 export class PoliceView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Police Protection");
         this.showCollectibles = false;
         this.drawPoliceCoverage = true;
         this.gradient = RedOrangeGreenCyanGradient;
@@ -221,16 +234,17 @@ export class PoliceView extends CityView {
 
 export class FireProtectionView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Fire Protection");
         this.showCollectibles = false;
         this.drawFireCoverage = true;
         this.gradient = RedOrangeGreenCyanGradient;
+        this.legendEntries = [{ icon: "fire", text: "May cause fire" }];
     }
 }
 
 export class HealthcareView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Healthcare");
         this.showCollectibles = false;
         this.drawHealthCoverage = true;
         this.gradient = RedOrangeGreenCyanGradient;
@@ -239,7 +253,7 @@ export class HealthcareView extends CityView {
 
 export class EducationView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Education");
         this.showCollectibles = false;
         this.drawEducation = true;
         this.gradient = RedOrangeGreenCyanGradient;
@@ -248,7 +262,7 @@ export class EducationView extends CityView {
 
 export class LuxuryView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Luxury");
         this.showCollectibles = false;
         this.drawLuxury = true;
         this.gradient = RedOrangeGreenCyanGradient;
@@ -257,16 +271,17 @@ export class LuxuryView extends CityView {
 
 export class BusinessPresenceView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Business Presence");
         this.showCollectibles = false;
         this.drawBusiness = true;
         this.gradient = RedOrangeGreenCyanGradient;
+        this.legendEntries = [{ icon: "willupgrade", text: "May upgrade" }];
     }
 }
 
 export class EfficiencyView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Efficiency");
         this.showCollectibles = false;
         this.drawEfficiency = true;
         this.gradient = RedOrangeGreenCyanGradient;
@@ -275,7 +290,7 @@ export class EfficiencyView extends CityView {
 
 export class PlacementGridView extends CityView {
     constructor(public city: City, public uiManager: UIManager) {
-        super(city, uiManager);
+        super(city, uiManager, "Placement Grid");
         this.showCollectibles = false;
         this.drawGrid = true;
     }

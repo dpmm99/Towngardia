@@ -711,7 +711,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         }));
         parent = parent.addChild(new Drawable({
             anchors: ['bottom'],
-            y: -60,
+            y: -60, //TODO: If you ever have to come back to these instructions, switch all the 'bottom' anchors with negative Y values to 'below' to guarantee proper placement even if the word wrap causes more lines of text.
             width: "calc(100% - 40px)",
             height: "40px",
             wordWrap: true,

@@ -64,7 +64,7 @@ export class UIManager {
     private friendVisitWindow!: FriendVisitWindow;
     private friendGiftWindow!: FriendGiftWindow;
     private tutorialOverlay!: TutorialOverlay;
-    private cityView!: CityView; //Set in switchRenderer, called by the constructor, but TypeScript compiler doesn't know that
+    public cityView!: CityView; //Set in switchRenderer, called by the constructor, but TypeScript compiler doesn't know that //TODO: Make a getter for ViewsBar, keep it public, or make the text and legend its own bar?
     private worldCoordinateDrawables: IHasDrawable[] = [];
     private windows: IHasDrawable[] = [];
     private renderOnlyWindow: IHasDrawable | null = null;
