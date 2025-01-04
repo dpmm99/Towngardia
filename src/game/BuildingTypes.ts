@@ -4316,7 +4316,7 @@ export class RedGreenhouse extends Building {
             3, 3, 0,
             0.3,
         );
-        this.outputResourceOptions = [Grain, RootVegetables, Berries, LeafyGreens, Legumes].map(foodType => new foodType(0, 5));
+        this.outputResourceOptions = [Grain, RootVegetables, Apples, Berries, LeafyGreens, Legumes].map(foodType => new foodType(0, 5));
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, -0.05)]);
         this.onlyAllowInRegions.push("volcanic");
     }
@@ -4404,7 +4404,7 @@ export class ObsidianGatherer extends Building {
             2, 2, 0,
             0.3,
         );
-        this.outputResources.push(new Obsidian(0, 1));
+        this.outputResources.push(new Obsidian(0, 2));
         this.onlyAllowInRegions.push("volcanic");
     }
 
@@ -4413,10 +4413,10 @@ export class ObsidianGatherer extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 0.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
 }
 
 export class ObsidianCrusher extends Building {
@@ -4428,7 +4428,7 @@ export class ObsidianCrusher extends Building {
             0.3,
         );
         this.inputResources.push(new Obsidian(0, 0, 1));
-        this.outputResources.push(new Sand(0, 2));
+        this.outputResources.push(new Sand(0, 2.5));
         this.onlyAllowInRegions.push("volcanic");
     }
 
@@ -4437,7 +4437,7 @@ export class ObsidianCrusher extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 2 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 0.75 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
@@ -4463,7 +4463,7 @@ export class VolcanoIronMine extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 2.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
@@ -4516,8 +4516,8 @@ export class Tumbler extends Building {
             2, 2, 0,
             0.3,
         );
-        this.inputResources.push(new FireObsidian(0, 0, 1));
-        this.outputResources.push(new Gemstones(0, 1));
+        this.inputResources.push(new FireObsidian(0, 0, 1.5));
+        this.outputResources.push(new Gemstones(0, 2.25));
         this.onlyAllowInRegions.push("volcanic");
     }
 
@@ -4526,7 +4526,7 @@ export class Tumbler extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 3 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 2.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
@@ -4596,7 +4596,8 @@ export class PoliceRovers extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 300 }, { type: "steel", amount: 10 }, { type: "electronics", amount: 5 }];
+        //No electronics cost for the first one, but you need Secure Storage to build more after that
+        return city.presentBuildingCount.get("policerovers") ? [{ type: "flunds", amount: 300 }, { type: "steel", amount: 10 }, { type: "electronics", amount: 5 }] : [{ type: "flunds", amount: 300 }, { type: "steel", amount: 10 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -4626,7 +4627,8 @@ export class DroneFireControl extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 350 }, { type: "steel", amount: 10 }, { type: "electronics", amount: 8 }];
+        //No electronics cost for the first one, but you need Secure Storage to build more after that
+        return city.presentBuildingCount.get("dronefirecontrol") ? [{ type: "flunds", amount: 350 }, { type: "steel", amount: 10 }, { type: "electronics", amount: 8 }] : [{ type: "flunds", amount: 350 }, { type: "steel", amount: 10 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
