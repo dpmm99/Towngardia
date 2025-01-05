@@ -399,3 +399,4 @@ FodyWeavers.xsd
 /dist
 *.pem
 *.lnk
+*.~lock.*.ods*

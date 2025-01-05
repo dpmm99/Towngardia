@@ -192,7 +192,7 @@ export async function domPreloadSprites(city: City, urls: { [key: string]: strin
     };
 
     // Create an array of promises to load all images
-    const loadPromises = Object.entries(urls).map(([key, url]) => loadImage(key, url));
+    const loadPromises = Object.entries(urls).filter(([key, url]) => url).map(([key, url]) => loadImage(key, url));
 
     // Wait for all images to be loaded
     return await Promise.all(loadPromises);

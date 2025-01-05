@@ -13,6 +13,7 @@ import { Monobrynth } from "../minigame/Monobrynth.js";
 import { NepotismNetworking } from "../minigame/NepotismNetworking.js";
 import { SlotMachine } from "../minigame/SlotMachine.js";
 import { Starbox } from "../minigame/Starbox.js";
+import { CanvasRenderer } from "../rendering/CanvasRenderer.js";
 import { IRenderer } from "../rendering/IRenderer.js";
 import { DEVICE_PIXEL_RATIO, TILE_HEIGHT, TILE_WIDTH, worldToScreenCoordinates } from "../rendering/RenderUtil.js";
 import { AchievementsMenu } from "./AchievementsMenu.js";
@@ -1102,5 +1103,42 @@ export class UIManager {
 
     draw() {
         this.renderer.drawCity(this.cityView, this.city);
+    }
+
+    async renderCityToNewCanvas(): Promise<HTMLCanvasElement | undefined> {
+        if (!(this.renderer instanceof CanvasRenderer)) return; //Not supported.
+
+        // Create temporary canvas sized to fit the city
+        const border = 5; //Some extra pixels on all sides for buildings that stick out and some inexactness
+        const extraPixelsAtTop = 190; //Some extra pixels in case there are tall buildings in the top row.
+        const canvas = document.createElement('canvas');
+        canvas.width = this.city.width * TILE_WIDTH + border * 2;
+        canvas.height = this.city.height * TILE_HEIGHT + extraPixelsAtTop + border * 2;
+
+        // Create partial clone of renderer
+        const tempRenderer = await (this.renderer as CanvasRenderer).cloneForSnapshot(canvas);
+
+        // Position camera to fit the entire city in the canvas
+        tempRenderer.setCameraPosition(TILE_WIDTH / 2 - border, -border - extraPixelsAtTop - TILE_HEIGHT);
+        tempRenderer.setZoom(1);
+
+        // Create default view and render
+        const view = new CityView(this.city, this);
+        tempRenderer.drawCity(view, this.city, true);
+
+        return canvas;
+    }
+
+    async saveCityImage(format: 'png' | 'webp') {
+        const canvas = await this.renderCityToNewCanvas();
+        if (!canvas) return;
+
+        //Save the canvas as a file immediately
+        const dataURL = canvas.toDataURL('image/' + format, 1);
+        const a = document.createElement('a');
+        a.href = dataURL;
+        const cityName = this.city.name.replace(/[^a-z0-9_()]/gi, '_');
+        a.download = cityName + '_' + new Date().toISOString().replace(/:/g, '-') + '.' + format;
+        a.click();
     }
 }

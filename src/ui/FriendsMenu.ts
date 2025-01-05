@@ -227,7 +227,7 @@ export class FriendsMenu implements IHasDrawable, IOnResizeEvent {
             }, <{ [key: string]: string; }>{})
         };
         const missingUrls = Object.fromEntries(
-            Object.entries(urls).filter(([key, val]) => val && !this.requestedAvatars.has(key))
+            Object.entries(urls).filter(([key, val]) => !this.requestedAvatars.has(key)) //Moved the filter into the CanvasRenderer so it knows not to try to lazy-load nonexistent avatars
         );
         for (const url of Object.keys(missingUrls)) this.requestedAvatars.add(url);
 

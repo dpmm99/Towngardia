@@ -39,6 +39,14 @@ export class CanvasRenderer implements IRenderer {
     getCanvas(): HTMLCanvasElement | null {
         return this.canvas;
     }
+    
+    async cloneForSnapshot(targetCanvas: HTMLCanvasElement): Promise<CanvasRenderer> {
+        // Create new renderer reusing sprites and image cache so it doesn't try to load more images (they should all be loaded already)
+        const clone = new CanvasRenderer(targetCanvas, this.filteredImageCache);
+        clone.sprites = this.sprites;
+        clone.pendingOrFailedSpriteLoads = this.pendingOrFailedSpriteLoads;
+        return clone;
+    }
 
     addWorldCoordinateDrawable(drawable: IHasDrawable): void {
         this.worldCoordinateDrawables.push(drawable);
@@ -72,6 +80,7 @@ export class CanvasRenderer implements IRenderer {
             Object.entries(urls).filter(([key]) => !this.sprites.has(key))
         );
         if (Object.keys(missingUrls).length) {
+            Object.keys(missingUrls).forEach(imageID => this.pendingOrFailedSpriteLoads.add(imageID)); //To stop the responsive auto-load from loading player avatars
             const sprites = await domPreloadSprites(city, missingUrls);
             for (const sprite of sprites) this.sprites.set(sprite.id, sprite.img);
         }
@@ -83,9 +92,9 @@ export class CanvasRenderer implements IRenderer {
         }, 1000);
     }
 
-    drawCity(view: CityView, city: City): void {
+    drawCity(view: CityView, city: City, skipResize: boolean = false): void {
         this.view = view; //just so it's not passed around a bunch
-        this.clear();
+        this.clear(skipResize);
         this.ctx.save();
         this.ctx.scale(this.zoom, this.zoom);
         this.ctx.translate(-this.cameraX, -this.cameraY);
@@ -483,9 +492,9 @@ export class CanvasRenderer implements IRenderer {
         drawable.screenArea = [topLeft.x, topLeft.y, bottomRight.x, bottomRight.y];
     }
 
-    clear(): void {
-        if (this.canvas.height != this.canvas.clientHeight * DEVICE_PIXEL_RATIO) this.canvas.height = this.canvas.clientHeight * DEVICE_PIXEL_RATIO;
-        if (this.canvas.width != this.canvas.clientWidth * DEVICE_PIXEL_RATIO) this.canvas.width = this.canvas.clientWidth * DEVICE_PIXEL_RATIO;
+    clear(skipResize: boolean = false): void {
+        if (!skipResize && this.canvas.height != this.canvas.clientHeight * DEVICE_PIXEL_RATIO) this.canvas.height = this.canvas.clientHeight * DEVICE_PIXEL_RATIO;
+        if (!skipResize && this.canvas.width != this.canvas.clientWidth * DEVICE_PIXEL_RATIO) this.canvas.width = this.canvas.clientWidth * DEVICE_PIXEL_RATIO;
         this.yFadeZone = this.canvas.height * 0.7;
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }

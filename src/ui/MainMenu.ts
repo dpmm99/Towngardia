@@ -35,6 +35,31 @@ export class MainMenu implements IHasDrawable {
             onClick: () => this.uiManager.enterFullscreen(),
         }));
 
+        menu.addChild(new Drawable({
+            anchors: ['centerX'],
+            y: nextY += 50,
+            centerOnOwnX: true,
+            width: "calc(100% - 20px)",
+            height: "40px",
+            text: "Save PNG of city",
+            onClick: () => {
+                this.shown = false;
+                this.uiManager.saveCityImage("png");
+            }
+        }));
+        menu.addChild(new Drawable({
+            anchors: ['centerX'],
+            y: nextY += 50,
+            centerOnOwnX: true,
+            width: "calc(100% - 20px)",
+            height: "40px",
+            text: "Save WebP of city",
+            onClick: () => {
+                this.shown = false;
+                this.uiManager.saveCityImage("webp");
+            }
+        }));
+
         //Removed as I have quit maintaining the WebGL renderer and quit maintaining the HTML renderer long ago.
 //        menu.addChild(new Drawable({
 //            x: 10,
