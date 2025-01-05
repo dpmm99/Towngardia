@@ -1373,7 +1373,7 @@ export class City {
         const research = this.resources.get("research")!;
         const innovatorBonus = this.titles.get(TitleTypes.CityOfInnovators.id)?.attained ? 1.1 : 1;
         const eventBonus = this.events.filter(p => p instanceof ResearchReward).reduce((a, b) => a + (b as ResearchReward).getBonus(), 1); //Add bonus from events
-        research.produce(Math.max(1, Math.min(research.productionRate, Math.log10(Math.max(1, this.resources.get("population")!.amount)) * this.getCityAverageEducation())) * innovatorBonus * eventBonus / LONG_TICKS_PER_DAY);
+        research.produce(Math.max(1, research.productionRate * Math.log10(Math.max(research.productionRate, this.resources.get("population")!.amount)) * this.getCityAverageEducation()) * innovatorBonus * eventBonus / LONG_TICKS_PER_DAY);
 
         //Cap the auto-buy amounts
         this.resources.forEach(resource => resource.buyableAmount = Math.min(resource.buyableAmount, resource.buyCapacity));

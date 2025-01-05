@@ -451,7 +451,7 @@ export class Building implements IHasDrawable {
             this.outputResources.forEach(resource => {
                 //For some building types, we'll put the produced resources into the city.resources directly.
                 //Note: Could also do this if the player unlocks a "you don't need to collect Item X anymore" tech. Might need to be allowed to automate some production so you can leave the game for a while and not run out of money. (It should be HARD to have a budget surplus without accounting for selling off resources.)
-                if (resource.autoCollect) city.produce(resource.type, resource.amount);
+                if (resource.autoCollect) city.produce(resource.type, resource.productionRate * this.lastEfficiency);
                 else {
                     const toProduce = { type: resource.type, amount: resource.productionRate * this.lastEfficiency };
                     city.applyReceiptBonus(toProduce); //Only applies to Research, so it does nothing here, but just so I don't forget this location if I expand it in the future...
