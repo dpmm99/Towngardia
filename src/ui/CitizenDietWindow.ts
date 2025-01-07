@@ -86,7 +86,7 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
         nextY += 70;
 
         // Food Health bar
-        this.addProgressBar(windowDrawable, nextY, "Healthiness", this.city.resources.get(new FoodHealth().type)!.amount, "ui/foodhealth", this.city.flags.has(CityFlags.HealthcareMatters));
+        this.addProgressBar(windowDrawable, nextY, "Healthiness", this.city.resources.get(new FoodHealth().type)!.amount, "ui/foodhealth", !this.city.flags.has(CityFlags.HealthcareMatters));
         nextY += 90;
 
         // Diet Composition
