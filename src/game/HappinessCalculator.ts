@@ -205,21 +205,23 @@ export class HappinessCalculator {
             }
         });
 
+        let untreatedWaterPenalty = 0;
         if (this.city.flags.has(CityFlags.WaterTreatmentMatters)) {
-            const untreatedWaterPenalty = -0.5 * Math.sqrt(this.city.untreatedWaterPortion); //Lose 5% happiness for the first 1% untreated water, 15% for 9%.
+            untreatedWaterPenalty = -0.5 * Math.sqrt(this.city.untreatedWaterPortion); //Lose 5% happiness for the first 1% untreated water, 15% for 9%.
             this.setDisplayStats("Untreated water", untreatedWaterPenalty, 0);
         }
 
         const blackoutPenalty = totalPowerNeeded > 0 ? 0.75 * (totalPowerReceived / totalPowerNeeded - 1) : 0;
         this.setDisplayStats("Power outages", blackoutPenalty, 0);
 
+        let waterOutagePenalty = 0;
         if (this.city.flags.has(CityFlags.WaterMatters)) {
-            const waterOutagePenalty = totalWaterNeeded > 0 ? 0.75 * (totalWaterReceived / totalWaterNeeded - 1) : 0;
+            waterOutagePenalty = totalWaterNeeded > 0 ? 0.75 * (totalWaterReceived / totalWaterNeeded - 1) : 0;
             this.setDisplayStats("Water outages", waterOutagePenalty, 0);
         }
 
         const damagePenalty = totalResidences > 0 ? 0.75 * (totalRepair / totalResidences - 1) : 0;
         this.setDisplayStats("Residence damage", damagePenalty, 0);
-        return blackoutPenalty + damagePenalty;
+        return blackoutPenalty + damagePenalty + untreatedWaterPenalty + waterOutagePenalty;
     }
 }

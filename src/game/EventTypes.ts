@@ -656,9 +656,9 @@ export class Epidemic extends CityEvent {
         return city.flags.has(CityFlags.HealthcareMatters) && this.checkedStart(this.skippedStarts > 25 * LONG_TICKS_PER_DAY && Math.random() < this.getEpidemicChance(city), city, date);
     }
 
-    public getEpidemicChance(city: City): number {
+    public getEpidemicChance(city: City, withPollution: boolean = true): number {
         //A little water contamination goes a long way. +1% chance per tick for 1% untreated water, +3% chance for 9% untreated water.
-        return 0.005 * (10 - Math.round(10 * this.getAverageHealth(city))) + (city.flags.has(CityFlags.WaterTreatmentMatters) ? 0.1 * Math.sqrt(city.untreatedWaterPortion) : 0);
+        return 0.005 * (10 - Math.round(10 * this.getAverageHealth(city))) + (withPollution && city.flags.has(CityFlags.WaterTreatmentMatters) ? 0.1 * Math.sqrt(city.untreatedWaterPortion) : 0);
     }
 
     private getAverageHealth(city: City): number {

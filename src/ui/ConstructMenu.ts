@@ -115,7 +115,7 @@ export class ConstructMenu implements IHasDrawable {
 
             parentDrawable.addChild(new Drawable({
                 anchors: ['selfBottom'],
-                x: (x - y) * TILE_WIDTH / 2 - offsetX,
+                x: (x - y) * TILE_WIDTH / 2 - offsetX + this.buildingType!.xDrawOffset,
                 y: (x + y) * TILE_HEIGHT / 2 - offsetY,
                 tileWidth: this.buildingType!.width,
                 tileHeight: this.buildingType!.height,

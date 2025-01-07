@@ -7,7 +7,7 @@ import { StandardScroller } from "./StandardScroller.js";
 export class HappinessFactorsWindow implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
     private shown: boolean = false;
-    private scroller = new StandardScroller(false, true);
+    private scroller = new StandardScroller(true, true);
     constructor(private city: City) {
     }
 

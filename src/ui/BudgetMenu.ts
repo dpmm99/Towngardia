@@ -25,7 +25,7 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
         "environment": "Environment",
         "infrastructure": "Infrastructure",
         "powerprod": "Power plant costs", //currently under "other expenses" but I mayyyyyy make it a service cost
-        "water": "Water supply costs", //is under service costs :)
+        "water": "Water facility costs", //is under service costs :)
         "agriculture": "Agriculture",
         "industry": "Industry",
         "resources": "Resource import costs"

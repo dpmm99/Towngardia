@@ -1453,13 +1453,14 @@ export class RainCollector extends Building {
         super(
             "raincollector", "Rain Collector", "A device that collects rainwater for use across the city. Does nothing during droughts. Doesn't do much the rest of the time, either, really. But at the same time...it kinda collects a lot of water for such a tiny funnel.",
             BuildingCategory.INFRASTRUCTURE,
-            1, 1, -8,
+            1, 1, -6,
             0,
             true,
         );
         this.needsPower = this.needsRoad = false; //Not setting needsWater to false because it does at least need to be connected
         this.storeAmount = 160000;
         this.stores = [new Water(0, 0, 0, this.storeAmount)];
+        this.serviceAllocationType = "water";
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 60 }, { type: "concrete", amount: 8 }]; }
@@ -1469,7 +1470,7 @@ export class RainCollector extends Building {
     }
 
     //Doesn't produce ANY water during a drought. Produces enough for about 32 houses (192 citizens) otherwise.
-    getWaterProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * (city.events.some(p => p.type === "drought") ? 0 : 8000); }
+    getWaterProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency * (city.events.some(p => p.type === "drought") ? 0 : 1)) * 8000; }
 
     override onLongTick(city: City): void {
         if (city.events.some(p => p.type === "drought")) this.poweredTimeDuringLongTick = 0;
@@ -1488,6 +1489,7 @@ export class WaterTreatmentPlant extends Building {
         );
         this.storeAmount = 150000; //We'll call it a little buffer
         this.stores = [new Water(0, 0, 0, this.storeAmount)];
+        this.serviceAllocationType = "water";
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 700 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 15 }]; }
@@ -1511,6 +1513,7 @@ export class WaterTower extends Building {
         this.needsPower = this.needsRoad = false; //Not setting needsWater to false because it does at least need to be connected
         this.storeAmount = 720000; //enough for 864 citizens for 5 days, or 617 citizens for the duration of a drought, so 49 1x1 water towers can get 30k citizens through a drought. In reality, you probably need 1/5 that many, or 10.
         this.stores = [new Water(0, 0, 0, this.storeAmount)];
+        this.serviceAllocationType = "water";
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 230 }, { type: "concrete", amount: 15 }, { type: "steel", amount: 5 }]; }
@@ -1528,6 +1531,7 @@ export class GroundwaterPump extends Building {
             2, 2, 0,
             0.2,
         );
+        this.serviceAllocationType = "water";
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1535,13 +1539,13 @@ export class GroundwaterPump extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 50 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 20 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 16; }
 
     //A house uses 250 a tick. 6k citizens would use 250k a tick. At that rate, you need 5 of these for 30k citizens. Droughts increase the pump needs by 25%.
-    override getWaterProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250000 * (city.events.some(p => p.type === "drought") ? 0.8 : 1); }
+    override getWaterProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency * (city.events.some(p => p.type === "drought") ? 0.8 : 1)) * 250000; }
 }
 
 //# Agriculture
