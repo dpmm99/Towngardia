@@ -25,6 +25,7 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
         "environment": "Environment",
         "infrastructure": "Infrastructure",
         "powerprod": "Power plant costs", //currently under "other expenses" but I mayyyyyy make it a service cost
+        "water": "Water supply costs", //is under service costs :)
         "agriculture": "Agriculture",
         "industry": "Industry",
         "resources": "Resource import costs"
@@ -43,6 +44,7 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
             this.serviceSliders[service] = new LockStepSlider(uiManager, { x: 20, y: 0, fallbackColor: "#00000000" }, this.serviceAndOtherNames[service], `ui/${service}`, ["80%", "90%", "100%"], 0, (value) => { })
         );
         this.serviceSliders["power"] = new LockStepSlider(uiManager, { x: 20, y: 0, fallbackColor: "#00000000" }, "Power Import Limit", `resource/power`, ["0%", "1%", "5%", "20%", "40%", "50%"], 0, (value) => { })
+        this.serviceSliders["waterimport"] = new LockStepSlider(uiManager, { x: 20, y: 0, fallbackColor: "#00000000" }, "Water Import Limit", `resource/water`, ["0%", "1%", "5%", "20%", "40%", "70%", "100%"], 0, (value) => { })
     }
 
     onResize(): void { this.scroller.onResize(); }
@@ -130,7 +132,7 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
         });
 
         // Expenses not covered by the sliders
-        Object.entries(this.budget.otherExpenses).forEach(([key, amount]) => {
+        Object.entries(this.budget.otherExpenses).concat([["water", this.budget.lastServiceCosts["water"]]]).forEach(([key, amount]) => {
             nextY += 10; //A little extra padding because it looks cramped--probably could use an icon for each one
             budgetDrawable.addChild(new Drawable({
                 x: 10,
@@ -187,6 +189,7 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
         // Apply service allocation changes
         Object.entries(this.serviceSliders).forEach(arr => {
             if (arr[0] === "power") this.budget.powerImportLimit = parseInt(arr[1].getValue()) / 100;
+            else if (arr[0] === "waterimport") this.budget.waterImportLimit = parseInt(arr[1].getValue()) / 100;
             else this.budget.serviceAllocations[arr[0]] = parseInt(arr[1].getValue()) / 100;
         });
 
@@ -206,6 +209,7 @@ export class BudgetMenu implements IHasDrawable, IOnResizeEvent {
             this.serviceSliders[arr[0]].setValue((arr[1] * 100) + "%");
         });
         this.serviceSliders["power"].setValue((this.budget.powerImportLimit * 100) + "%");
+        this.serviceSliders["waterimport"].setValue((this.budget.waterImportLimit * 100) + "%");
 
         this.scroller.resetScroll();
         this.shown = true;

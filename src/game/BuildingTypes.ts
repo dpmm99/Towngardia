@@ -5,7 +5,7 @@ import { Business } from "./Business.js";
 import { City } from "./City.js";
 import { FootprintType } from "./FootprintType.js";
 import { EffectType } from "./GridType.js";
-import { Apples, Apps, BarPlays, Batteries, Berries, BrainBrews, Bricks, CAPACITY_MULTIPLIER, Chocolate, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Dynamite, Electronics, EnvironmentalLabBonus, FireObsidian, Fish, Flunds, Furniture, Gemstones, Glass, GleeGrenades, Grain, GreenObsidian, Happiness, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, MinigameOptionResearch, MonobrynthPlays, NepotismNetworkingPlays, Obsidian, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, PowerCosts, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, SlotsPlays, StarboxPlays, Steel, Stone, Sulfur, Textiles, Tourists, Toys, Tritium, TurboTonics, Uranium, VitaminB12, Wood, getResourceType } from "./ResourceTypes.js";
+import { Apples, Apps, BarPlays, Batteries, Berries, BrainBrews, Bricks, CAPACITY_MULTIPLIER, Chocolate, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Dynamite, Electronics, EnvironmentalLabBonus, FireObsidian, Fish, Flunds, Furniture, Gemstones, Glass, GleeGrenades, Grain, GreenObsidian, Happiness, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, MinigameOptionResearch, MonobrynthPlays, NepotismNetworkingPlays, Obsidian, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, PowerCosts, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, SlotsPlays, StarboxPlays, Steel, Stone, Sulfur, Textiles, Tourists, Toys, Tritium, TurboTonics, Uranium, VitaminB12, Water, Wood, getResourceType } from "./ResourceTypes.js";
 import { Geothermal } from "./TechTypes.js";
 import { Notification } from "./Notification.js";
 import { LONG_TICKS_PER_DAY } from "./FundamentalConstants.js";
@@ -111,7 +111,7 @@ export class BikeRental extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
-        this.needsRoad = false;
+        this.needsWater = this.needsRoad = false;
         this.serviceAllocationType = "infrastructure";
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 0.5, "dynamicEffectByEfficiency")]);
     }
@@ -158,6 +158,8 @@ export class BusStation extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * 6;
     }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 200; }
 }
 
 export class ECarRental extends Building {
@@ -171,6 +173,7 @@ export class ECarRental extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 10;
         this.areaIndicatorRounded = true;
         this.serviceAllocationType = "infrastructure";
+        this.needsWater = false;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 1.8, "dynamicEffectByEfficiency")]);
     }
 
@@ -200,6 +203,7 @@ export class TeleportationPod extends Building {
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
         this.areaIndicatorRounded = true;
         this.serviceAllocationType = "infrastructure";
+        this.needsWater = false;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.PublicTransport, 6, "dynamicEffectByEfficiency")]);
     }
 
@@ -226,6 +230,7 @@ export class Warehouse extends Building {
             2, 3, 0,
             0.2,
         );
+        this.needsWater = false;
         this.stores.push(new Clay(), new Stone(), new Bricks(), new Glass(), new Concrete(), new Wood(), new Lumber(), new Iron(), new Steel(), new Rubber(), new Textiles());
         this.storeAmount = 50;
     }
@@ -254,6 +259,7 @@ export class ColdStorage extends Building {
             3, 2, 0,
             0.2,
         );
+        this.needsWater = false;
         this.stores.push(new Apples(), new Berries(), new LeafyGreens(), new Legumes(), new Poultry(), new RedMeat(), new RootVegetables(), new Dairy(), new PlantBasedDairy(), new Fish(), new Pharmaceuticals(), new VitaminB12(), new LabGrownMeat());
         this.storeAmount = 30;
     }
@@ -279,6 +285,7 @@ export class Silo extends Building {
             1, 1, 0,
             0.1,
         );
+        this.needsWater = false;
         this.stores.push(new Grain(), new Coal(), new Plastics(), new Sand()); //May store Cement, Salt, whatever similarly granular/powdery things exist.
         this.storeAmount = 10;
     }
@@ -300,6 +307,7 @@ export class OilTank extends Building {
             2, 2, 0,
             0.4,
         );
+        this.needsWater = false;
         this.stores.push(new Oil());
         this.storeAmount = 150;
     }
@@ -342,6 +350,8 @@ export class SecureStorage extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 4 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 100; }
 }
 
 export class DataCenter extends Building {
@@ -367,6 +377,8 @@ export class DataCenter extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
         return (ideal ? 1 : this.lastEfficiency) * (50 - 8 * city.techManager.getAdoption('heatpumps')); //Probably pointless since Heat Pumps is the easiest tech to get, but hey...maybe for a challenge run or something. :)
     }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1000; }
 }
 
 export class NuclearStorage extends Building { //Should probably be required before you can build any nuclear power plant, 'cuz the waste has to have a place to go!
@@ -377,6 +389,7 @@ export class NuclearStorage extends Building { //Should probably be required bef
             3, 3, 0,
             0.1,
         );
+        this.needsWater = false;
         this.stores.push(new Tritium(), new Uranium());
         this.storeAmount = 80;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
@@ -408,6 +421,7 @@ export class CityHall extends Building {
             0.1,
             false,
         );
+        this.needsWater = false;
         this.canStowInInventory = false;
         this.outputResources = [this.flunds = new Flunds(0, 0, 0, 250)];
         this.flunds.isSpecial = false; //Or else you can't collect them. :)
@@ -529,6 +543,7 @@ export class InformationCenter extends Building {
             0.1,
         );
         this.canStowInInventory = false;
+        this.needsWater = false;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 500 }]; }
@@ -559,6 +574,7 @@ export class PostOffice extends Building {
             0.1,
         );
         this.canStowInInventory = false;
+        this.needsWater = false;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1100 }, { type: "concrete", amount: 15 }]; } //TODO: Switch a few buildings to brick...and make clay and bricks somehow.
@@ -579,6 +595,7 @@ export class LogisticsCenter extends Building {
             3, 3, 0,
             0.3,
         );
+        this.needsWater = false;
         this.stores.push(
             //Same storage as Silo, Warehouse, and Cold Storage, plus a few Secure Storage items. No oil, no nuclear fuel, no apps, and not the other Secure Storage resources.
             new Grain(), new Coal(), new Plastics(), new Sand(),
@@ -633,6 +650,8 @@ export class FreeStuffTable extends Building { //TODO: Might be another good eve
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2; }
 
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 400; }
+
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 1.25 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
@@ -651,6 +670,7 @@ export class DepartmentOfEnergy extends Building { //Unlocked by a tech. Increas
             2, 2, 0,
             0.4,
         );
+        this.needsWater = false;
         this.serviceAllocationType = "environment";
     }
 
@@ -698,10 +718,12 @@ export class EnvironmentalLab extends Building { //Unlocked by a tech. Decreases
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 3 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
+        return [{ type: "flunds", amount: 2.5 * (atEfficiency || (this.poweredTimeDuringLongTick * city.budget.serviceAllocations[this.serviceAllocationType])) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 500; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
@@ -719,6 +741,7 @@ export class MinigameMinilab extends Building { //Could make it cost paper or to
             2, 1, 0,
             0.2,
         );
+        this.needsWater = false;
     }
 
     override isBuyable(city: City, bySpawner: boolean = false): boolean {
@@ -794,6 +817,8 @@ export class SmallHouse extends Building {
             (4 - 0.5 * city.techManager.getAdoption('heatpumps') - 0.5 * city.techManager.getAdoption('vacuumwindows') - 0.5 * city.techManager.getAdoption('smarthome'));
     }
 
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250; } //about 42/resident/day
+
     override getPowerProduction(city: City, ideal: boolean = false): number { return 1 * city.techManager.getAdoption('rooftopsolar'); }
 }
 
@@ -825,6 +850,8 @@ export class Quadplex extends Building {
         return (ideal ? 1 : this.lastEfficiency) *
             (14 - 2 * city.techManager.getAdoption('heatpumps') - 1.5 * city.techManager.getAdoption('vacuumwindows') - 1 * city.techManager.getAdoption('smarthome'));
     }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1100; }
 
     override getPowerProduction(city: City, ideal: boolean = false): number { return 1.5 * city.techManager.getAdoption('rooftopsolar'); }
 }
@@ -861,6 +888,8 @@ export class SmallApartment extends Building {
         return (ideal ? 1 : this.lastEfficiency) *
             (21 - 3 * city.techManager.getAdoption('heatpumps') - 2 * city.techManager.getAdoption('vacuumwindows') - 1 * city.techManager.getAdoption('smarthome'));
     }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1500; }
 
     override getPowerProduction(city: City, ideal: boolean = false): number { return 4 * city.techManager.getAdoption('rooftopsolar'); }
 }
@@ -902,6 +931,8 @@ export class Highrise extends Building {
         return (ideal ? 1 : this.lastEfficiency) *
             (52 - 8 * city.techManager.getAdoption('heatpumps') - 6 * city.techManager.getAdoption('vacuumwindows') - 2 * city.techManager.getAdoption('smarthome'));
     }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4800; }
 
     override getPowerProduction(city: City, ideal: boolean = false): number { return 5 * city.techManager.getAdoption('rooftopsolar'); }
 }
@@ -946,6 +977,8 @@ export class Skyscraper extends Building {
 
     override getPowerProduction(city: City, ideal: boolean = false): number { return 8 * city.techManager.getAdoption('rooftopsolar'); }
 
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 21000; }
+
     override applyMods(city: City, mods?: BuildingMod[], negate: boolean = false, reapply: boolean = false): void {
         super.applyMods(city, mods, negate, reapply);
         this.movable = true; //You're allowed to move Skyscrapers around, but only after you've played Altitect on them.
@@ -982,6 +1015,8 @@ export class Dorm extends Building {
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number { return 4 * city.techManager.getAdoption('rooftopsolar'); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2500; }
 }
 
 export class ShowHome extends Building {
@@ -1005,6 +1040,8 @@ export class ShowHome extends Building {
     }
 
     override getPowerProduction(city: City, ideal: boolean = false): number { return 5 * city.techManager.getAdoption('rooftopsolar'); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 300; }
 }
 
 //# Power
@@ -1017,7 +1054,7 @@ export class StarterSolarPanel extends Building {
             0,
             true,
         );
-        this.needsRoad = false;
+        this.needsWater = this.needsRoad = false;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return []; }
@@ -1038,7 +1075,7 @@ export class WindTurbine extends Building {
             1, 1, 0,
             0,
         );
-        this.needsRoad = false;
+        this.needsWater = this.needsRoad = false;
     }
 
     override place(city: City, x: number, y: number): void {
@@ -1068,7 +1105,7 @@ export class SolarFarm extends Building {
             3, 3, 0,
             0.1,
         );
-        this.needsRoad = false;
+        this.needsWater = this.needsRoad = false;
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -1096,6 +1133,7 @@ export class GeothermalPowerPlant extends Building {
             0.3,
             true,
         );
+        this.needsWater = false; //Unreasonable, I know, but I don't want a catch-22 situation where you need to spend a ton on water to kickstart your power plants 'cuz you can't produce any water due to insufficient power.
         this.checkFootprint[1][1] = FootprintType.GEO_VENT;
     }
 
@@ -1118,6 +1156,7 @@ export class OilPowerPlant extends Building {
             3, 3, 0,
             0.5,
         );
+        this.needsWater = false; 
         this.inputResources.push(new Oil(0, 0, 1, 2 * CAPACITY_MULTIPLIER)); //Twice the usual capacity since power is pretty important. This input cost is counted much like upkeep.
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
@@ -1150,7 +1189,7 @@ export class OilTruck extends Building {
             0,
             true,
         );
-        this.needsRoad = this.needsPower = false;
+        this.needsWater = this.needsRoad = this.needsPower = false;
         this.checkFootprint[0][0] = FootprintType.OIL_PLANT; //Must be placed on the rightmost tile of an oil power plant
     }
 
@@ -1191,6 +1230,7 @@ export class CoalPowerPlant extends Building {
             3, 3, 0,
             0.5,
         );
+        this.needsWater = false; 
         this.inputResources.push(new Coal(0, 0, 1, 2 * CAPACITY_MULTIPLIER)); //Twice the usual capacity since power is pretty important. This input cost is counted much like upkeep.
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
@@ -1228,7 +1268,7 @@ export class CoalTruck extends Building {
             0,
             true,
         );
-        this.needsRoad = this.needsPower = false;
+        this.needsWater = this.needsRoad = this.needsPower = false;
         this.checkFootprint[0][0] = FootprintType.COAL_PLANT; //Must be placed on the leftmost tile of a coal power plant
     }
 
@@ -1269,6 +1309,7 @@ export class NuclearPowerPlant extends Building {
             0.2,
             true,
         );
+        this.needsWater = false;
         this.inputResources.push(new Uranium(0, 0, 1, 2 * CAPACITY_MULTIPLIER)); //Twice the usual capacity since power is pretty important. This input cost is counted much like upkeep.
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
@@ -1301,7 +1342,7 @@ export class NuclearFuelTruck extends Building {
             0,
             true,
         );
-        this.needsRoad = this.needsPower = false;
+        this.needsWater = this.needsRoad = this.needsPower = false;
         this.checkFootprint[0][0] = FootprintType.NUCLEAR_PLANT; //Must be placed on the bottom-left tile of a nuclear power plant
     }
 
@@ -1342,6 +1383,7 @@ export class FusionPowerPlant extends Building {
             0.4,
             true,
         );
+        this.needsWater = false;
         this.inputResources.push(new Tritium(0, 0, 1, 2 * CAPACITY_MULTIPLIER)); //Twice the usual capacity since power is pretty important. This input cost is counted much like upkeep.
         this.stampFootprint[0][2] = FootprintType.FUSION_PLANT; //Allows a Fusion Fuel Truck on its rightmost tile for sustained player absences
     }
@@ -1371,7 +1413,7 @@ export class FusionFuelTruck extends Building {
             0,
             true,
         );
-        this.needsRoad = this.needsPower = false;
+        this.needsWater = this.needsRoad = this.needsPower = false;
         this.checkFootprint[0][0] = FootprintType.FUSION_PLANT; //Must be placed on the rightmost tile of a fusion power plant
     }
 
@@ -1406,6 +1448,102 @@ export class FusionFuelTruck extends Building {
     }
 }
 
+export class RainCollector extends Building {
+    constructor() {
+        super(
+            "raincollector", "Rain Collector", "A device that collects rainwater for use across the city. Does nothing during droughts. Doesn't do much the rest of the time, either, really. But at the same time...it kinda collects a lot of water for such a tiny funnel.",
+            BuildingCategory.INFRASTRUCTURE,
+            1, 1, -8,
+            0,
+            true,
+        );
+        this.needsPower = this.needsRoad = false; //Not setting needsWater to false because it does at least need to be connected
+        this.storeAmount = 160000;
+        this.stores = [new Water(0, 0, 0, this.storeAmount)];
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 60 }, { type: "concrete", amount: 8 }]; }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+    }
+
+    //Doesn't produce ANY water during a drought. Produces enough for about 32 houses (192 citizens) otherwise.
+    getWaterProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * (city.events.some(p => p.type === "drought") ? 0 : 8000); }
+
+    override onLongTick(city: City): void {
+        if (city.events.some(p => p.type === "drought")) this.poweredTimeDuringLongTick = 0;
+        super.onLongTick(city);
+    }
+}
+
+export class WaterTreatmentPlant extends Building {
+    constructor() {
+        super(
+            "watertreatmentplant", "Water Treatment Plant", "A facility that poisons the water to ensure that the water doesn't poison the citizens.",
+            BuildingCategory.INFRASTRUCTURE,
+            4, 4, 0,
+            0.1,
+            true,
+        );
+        this.storeAmount = 150000; //We'll call it a little buffer
+        this.stores = [new Water(0, 0, 0, this.storeAmount)];
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 700 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 15 }]; }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 4.25 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Intentionally negligible considering how much water it treats and how water is used by everything
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+}
+
+export class WaterTower extends Building {
+    constructor() {
+        super(
+            "watertower", "Water Tower", "Basically a cup on a stick.",
+            BuildingCategory.INFRASTRUCTURE,
+            1, 1, 0,
+            0,
+            true,
+        );
+        this.needsPower = this.needsRoad = false; //Not setting needsWater to false because it does at least need to be connected
+        this.storeAmount = 720000; //enough for 864 citizens for 5 days, or 617 citizens for the duration of a drought, so 49 1x1 water towers can get 30k citizens through a drought. In reality, you probably need 1/5 that many, or 10.
+        this.stores = [new Water(0, 0, 0, this.storeAmount)];
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 230 }, { type: "concrete", amount: 15 }, { type: "steel", amount: 5 }]; }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 0.25 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+    }
+}
+
+export class GroundwaterPump extends Building {
+    constructor() {
+        super(
+            "groundwaterpump", "Groundwater Pump", "Brings back the water you used on your lawn last year and the water you drank last year so you can do it all over again.",
+            BuildingCategory.INFRASTRUCTURE,
+            2, 2, 0,
+            0.2,
+        );
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 520 }, { type: "steel", amount: 30 }, { type: "copper", amount: 20 }];
+    }
+
+    override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 50 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 16; }
+
+    //A house uses 250 a tick. 6k citizens would use 250k a tick. At that rate, you need 5 of these for 30k citizens. Droughts increase the pump needs by 25%.
+    override getWaterProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250000 * (city.events.some(p => p.type === "drought") ? 0.8 : 1); }
+}
+
 //# Agriculture
 export class TreeFarm extends Building {
     constructor() {
@@ -1430,6 +1568,8 @@ export class TreeFarm extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 1 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Never pays itself off, which is bad, but it's the only way to get wood when you hit the purchase limit.
     }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 200 * (5 - city.techManager.getAdoption('retainingsoil')); }
 
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 1 + 0.35 * city.techManager.getAdoption("gmcrops");
@@ -1486,6 +1626,8 @@ export class Farm extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1000 * (5 - city.techManager.getAdoption('retainingsoil')); } //~5 more flunds a day (as much as 5 houses or 30 citizens)
 }
 
 export class Ranch extends Building {
@@ -1520,10 +1662,12 @@ export class Ranch extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: (1.5 + city.techManager.getAdoption('incubators')) * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: (1.25 + city.techManager.getAdoption('incubators')) * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * (2 + 12 * city.techManager.getAdoption('incubators')); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1200; }
 
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 4 + 2 * city.techManager.getAdoption("incubators");
@@ -1555,6 +1699,8 @@ export class AlgaeFarm extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 650; }
 
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("gmcrops");
@@ -1591,6 +1737,8 @@ export class FishFarm extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * (4 + 8 * city.techManager.getAdoption('incubators')); }
 
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 200; } //Nearly self-sustaining
+
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("incubators");
         this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
@@ -1619,10 +1767,12 @@ export class PlantMilkPlant extends Building {
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 3 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 2.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 700; }
 }
 
 export class VerticalFarm extends Building {
@@ -1675,6 +1825,8 @@ export class VerticalFarm extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1700 * (5 - city.techManager.getAdoption('retainingsoil')); }
 }
 
 export class Carnicultivator extends Building {
@@ -1703,6 +1855,8 @@ export class Carnicultivator extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * (6 + 8 * city.techManager.getAdoption('incubators')); }
 
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 700; }
+
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("incubators");
         this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
@@ -1721,7 +1875,7 @@ export class MountainIronMine extends Building {
         );
         this.checkFootprint[0][0] = FootprintType.MINE;
         this.checkFootprint[1][0] = FootprintType.MINE;
-        this.needsPower = false;
+        this.needsWater = this.needsPower = false;
         this.outputResources.push(new Iron(0, 2)); //Makes a small amount of iron a day
         this.onlyAllowInRegions.push("plains");
     }
@@ -1747,7 +1901,7 @@ export class Quarry extends Building {
         );
         this.stores.push(new Stone());
         this.storeAmount = 3; //Stores 3 stone so the player doesn't need a warehouse before they can use Cement Mill.
-        this.needsPower = false;
+        this.needsWater = this.needsPower = false;
         this.outputResources.push(new Stone(0, 1.5));
         this.onlyAllowInRegions.push("plains");
     }
@@ -1783,6 +1937,7 @@ export class CementMill extends Building {
             2, 2, 0,
             0.3,
         );
+        this.needsWater = false;
         this.inputResources.push(new Stone(0, 0, 1));
         this.outputResources.push(new Concrete(0, 3.5));
     }
@@ -1809,6 +1964,7 @@ export class ShaftCoalMine extends Building {
             0.3,
             true,
         );
+        this.needsWater = false;
         this.outputResources.push(new Coal(0, 1.25));
     }
 
@@ -1832,6 +1988,7 @@ export class VerticalCopperMine extends Building {
             0.3,
             true,
         );
+        this.needsWater = false;
         this.outputResources.push(new Copper(0, 1.5));
     }
 
@@ -1854,6 +2011,7 @@ export class SandCollector extends Building {
             2, 2, 0,
             0,
         );
+        this.needsWater = false;
         this.outputResources.push(new Sand(0, 2.5));
         this.checkFootprint[0][0] = this.checkFootprint[1][0] = this.checkFootprint[0][1] = this.checkFootprint[1][1] = FootprintType.SAND;
         this.onlyAllowInRegions.push("plains");
@@ -1891,6 +2049,8 @@ export class Glassworks extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 350; }
 }
 
 export class SiliconRefinery extends Building {
@@ -1917,6 +2077,8 @@ export class SiliconRefinery extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 200; } //Much less than it should, but oh well, balance :)
 }
 
 export class CrystalMine extends Building {
@@ -1928,7 +2090,7 @@ export class CrystalMine extends Building {
             0.1,
         );
         this.checkFootprint[0][0] = FootprintType.GEM_MINE;
-        this.needsPower = false;
+        this.needsWater = this.needsPower = false;
         this.outputResources.push(new Gemstones(0, 0.5)); //Produces a tiny amount of gemstones a day.
         this.onlyAllowInRegions.push("plains");
     }
@@ -1966,6 +2128,8 @@ export class AssemblyHouse extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 450; }
 }
 
 export class OilDerrick extends Building {
@@ -1976,6 +2140,7 @@ export class OilDerrick extends Building {
             1, 1, 0,
             0.5,
         );
+        this.needsWater = false;
         this.checkFootprint[0][0] = FootprintType.OIL_WELL;
         this.outputResources.push(new Oil(0, 1));
         this.onlyAllowInRegions.push("plains");
@@ -2018,6 +2183,8 @@ export class TextileMill extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250; }
 }
 
 export class ApparelFactory extends Building {
@@ -2029,7 +2196,7 @@ export class ApparelFactory extends Building {
             0.35,
         );
         this.inputResources.push(new Textiles(0, 0, 1));
-        this.outputResources.push(new Clothing(0, 0.5)); //Trying to kinda balance with the minigame that uses it
+        this.outputResources.push(new Clothing(0, 0.5)); //Trying to kinda balance with the minigame that uses it, but it's the biggest money-losing factory
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.ParticulatePollution, 0.02, "dynamicEffectByEfficiency")]);
@@ -2046,6 +2213,8 @@ export class ApparelFactory extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250; }
 }
 
 export class SteelMill extends Building {
@@ -2075,6 +2244,8 @@ export class SteelMill extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 350; }
 }
 
 export class PlasticsFactory extends Building {
@@ -2111,6 +2282,8 @@ export class PlasticsFactory extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 300; }
 }
 
 export class ToyManufacturer extends Building {
@@ -2140,6 +2313,8 @@ export class ToyManufacturer extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 300; }
 }
 
 export class Furnifactory extends Building {
@@ -2169,6 +2344,8 @@ export class Furnifactory extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250; }
 }
 
 export class LithiumMine extends Building {
@@ -2195,6 +2372,8 @@ export class LithiumMine extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 2.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 650; }
 }
 
 export class MohoMine extends Building {
@@ -2223,6 +2402,8 @@ export class MohoMine extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 3.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 700; }
 }
 
 export class Nanogigafactory extends Building {
@@ -2258,6 +2439,8 @@ export class Nanogigafactory extends Building {
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 10; }
 
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 350; }
+
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
 
     override onLongTick(city: City): void {
@@ -2288,6 +2471,8 @@ export class PharmaceuticalsLab extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 18; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 900; }
 }
 
 export class SpaceLaunchSite extends Building {
@@ -2330,6 +2515,8 @@ export class SpaceLaunchSite extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1100; }
 }
 
 //Seasonal industries
@@ -2342,6 +2529,7 @@ export class MiracleWorkshop extends Building {
             0.2,
             true,
         );
+        this.needsWater = false;
         this.outputResourceOptions = [new BrainBrews(0, 0.25), new GleeGrenades(0, 0.25), new TurboTonics(0, 0.25)];
         this.stores.push(...this.outputResourceOptions);
         this.storeAmount = 5;
@@ -2386,6 +2574,8 @@ export class CornerStore extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 200; }
 }
 
 export class Junkyard extends Building {
@@ -2407,6 +2597,8 @@ export class Junkyard extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 150; }
 }
 
 export class SuckasCandy extends Building {
@@ -2428,6 +2620,8 @@ export class SuckasCandy extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 400; }
 }
 
 export class Cafe extends Building {
@@ -2450,6 +2644,8 @@ export class Cafe extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1500; }
 }
 
 export class TheLoadedDie extends Building {
@@ -2472,6 +2668,8 @@ export class TheLoadedDie extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1300; }
 }
 
 export class Cinema extends Building {
@@ -2494,6 +2692,8 @@ export class Cinema extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3100; }
 }
 
 export class Whalemart extends Building {
@@ -2516,6 +2716,8 @@ export class Whalemart extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 9; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3200; }
 }
 
 export class Bar extends Building {
@@ -2539,6 +2741,8 @@ export class Bar extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2200; }
 }
 
 export class PalmNomNom extends Building {
@@ -2563,6 +2767,8 @@ export class PalmNomNom extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 5; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1800; }
 }
 
 export class GregsGrogBarr extends Building {
@@ -2587,6 +2793,8 @@ export class GregsGrogBarr extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2400; }
 }
 
 export class IceCreamTruck extends Building {
@@ -2613,6 +2821,8 @@ export class IceCreamTruck extends Building {
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 2 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 150; }
 }
 
 export class FurnitureStore extends Building {
@@ -2635,6 +2845,8 @@ export class FurnitureStore extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1000; }
 }
 
 export class MaidTwoTeas extends Building {
@@ -2657,6 +2869,8 @@ export class MaidTwoTeas extends Building {
         return [{ type: "flunds", amount: 460 }, { type: "wood", amount: 25 }, { type: "glass", amount: 10 }, { type: "clothing", amount: 10 }];
     }
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2400; }
 }
 
 export class SauceCode extends Building {
@@ -2678,6 +2892,8 @@ export class SauceCode extends Building {
         return [{ type: "flunds", amount: 490 }, { type: "wood", amount: 20 }, { type: "electronics", amount: 15 }, { type: "batteries", amount: 5 }];
     }
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 9; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3100; }
 }
 
 export class Casino extends Building {
@@ -2702,6 +2918,8 @@ export class Casino extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3500; }
 }
 
 export class CartersCars extends Building {
@@ -2724,6 +2942,8 @@ export class CartersCars extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2200; }
 }
 
 export class GameDevStudio extends Building {
@@ -2748,6 +2968,8 @@ export class GameDevStudio extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 16; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 500; }
 }
 
 export class BlankCheckBank extends Building {
@@ -2771,6 +2993,8 @@ export class BlankCheckBank extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 550; }
 
     override getEfficiencyEffectMultiplier(city: City): number {
         const embezzling = this.x === -1 ? 0 : Math.min(city.getNetOrganizedCrime(this.x, this.y), city.getNetOrganizedCrime(this.x + 1, this.y), city.getNetOrganizedCrime(this.x, this.y + 1), city.getNetOrganizedCrime(this.x + 1, this.y + 1));
@@ -2800,6 +3024,8 @@ export class ResortHotel extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 35; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8000; }
 }
 
 export class HotSpringInn extends Building {
@@ -2836,6 +3062,8 @@ export class HotSpringInn extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 22; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1200; }
 }
 
 export class ConventionCenter extends Building {
@@ -2861,6 +3089,8 @@ export class ConventionCenter extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 22; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12000; }
 
     pickVariant(city: City): boolean { //Returns true when the variant changes.
         let variant = 0;
@@ -2914,6 +3144,8 @@ export class ChocolateBar extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1200; }
 }
 
 export class HeartyShack extends Building {
@@ -2937,6 +3169,8 @@ export class HeartyShack extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1200; }
 }
 //End of seasonal businesses
 
@@ -2950,7 +3184,7 @@ export class HauntymonthGrave extends Building {
             0.1,
             true,
         );
-        this.needsPower = this.needsRoad = false;
+        this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.06)]);
@@ -2973,7 +3207,7 @@ export class HauntymonthLamp extends Building {
             0.2,
             true,
         );
-        this.needsRoad = false;
+        this.needsWater = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.08)]);
@@ -2998,7 +3232,7 @@ export class HauntymonthHouse extends Building {
             0.25,
             true,
         );
-        this.needsRoad = false;
+        this.needsWater = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.outputResources.push(new Tourists(5, 5, 0, 80)); //Brings in 80 tourists per long tick, and it gets up to full steam in 4 days.
@@ -3024,7 +3258,7 @@ export class PeppermintPillar extends Building {
             0.1,
             true,
         );
-        this.needsPower = this.needsRoad = false;
+        this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.12)]);
@@ -3061,6 +3295,8 @@ export class CocoaCupCo extends Building {
     }
 
     override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 200; }
 }
 
 export class ReindeerRetreat extends Building {
@@ -3087,6 +3323,8 @@ export class ReindeerRetreat extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2; }
 
     override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 200; }
 }
 
 export class WrappedWonder extends Building {
@@ -3098,7 +3336,7 @@ export class WrappedWonder extends Building {
             0.3,
             true,
         );
-        this.needsRoad = false;
+        this.needsWater = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.25)]);
@@ -3133,6 +3371,8 @@ export class FlowerTower extends Building {
         return [{ type: "flunds", amount: 40 + 400 * (city.presentBuildingCount.get(this.type) ?? 0) }, { type: "stone", amount: 5 }, { type: "plastics", amount: 5 }];
     }
     override isPlaceable(city: City): boolean { return super.isPlaceable(city) && !this.locked; } //When it's locked, it can't be placed, even if you have it in inventory.
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 300; }
 }
 //End of seasonal decorations
 
@@ -3152,6 +3392,8 @@ export class SmallPark extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 30 }]; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 100; }
 }
 
 export class PenguinSculpture extends Building {
@@ -3162,7 +3404,7 @@ export class PenguinSculpture extends Building {
             1, 1, 0,
             0.25,
         );
-        this.needsPower = this.needsRoad = false;
+        this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.06)]);
@@ -3187,6 +3429,8 @@ export class MediumPark extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 80 }]; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 400; }
 }
 
 export class KellyStatue extends Building {
@@ -3197,7 +3441,7 @@ export class KellyStatue extends Building {
             1, 1, 0,
             0,
         );
-        this.needsPower = this.needsRoad = false;
+        this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.07)]);
@@ -3214,7 +3458,7 @@ export class SharonStatue extends Building {
             1, 1, 0,
             0,
         );
-        this.needsPower = this.needsRoad = false;
+        this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.12)]);
@@ -3231,7 +3475,7 @@ export class SmallFountain extends Building {
             1, 1, 0,
             0,
         );
-        this.needsPower = this.needsRoad = false;
+        this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.09)]);
@@ -3255,6 +3499,8 @@ export class Greenhouse extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 150 }, { type: "glass", amount: 10 }]; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 500; }
 }
 
 export class CrystalSpire extends Building {
@@ -3265,7 +3511,7 @@ export class CrystalSpire extends Building {
             1, 1, 0,
             0.18,
         );
-        this.needsPower = this.needsRoad = false;
+        this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.18)]);
@@ -3289,6 +3535,8 @@ export class Playground extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 210 }, { type: "plastics", amount: 10 }]; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 200; }
 }
 
 export class UrbanCampDome extends Building {
@@ -3306,6 +3554,8 @@ export class UrbanCampDome extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 240 }, { type: "glass", amount: 30 }, { type: "plastics", amount: 5 }]; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 450; }
 }
 
 export class FlippinFun extends Building {
@@ -3316,7 +3566,7 @@ export class FlippinFun extends Building {
             2, 1, 0,
             0.2,
         );
-        this.needsRoad = false; //DOES need power, unlike most luxury buildings.
+        this.needsWater = this.needsRoad = false; //DOES need power, unlike most luxury buildings.
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 7;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.15)]);
@@ -3350,6 +3600,8 @@ export class H2Whoa extends Building { //Light-up water jets, just a local luxur
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2; }
 
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 600 * (city.events.find(p => p.type === "drought") ? 0 : 1); }
+
     override onLongTick(city: City): void {
         this.upkeepEfficiency = city.events.find(p => p.type === "drought") ? 0 : 1;
         super.onLongTick(city);
@@ -3372,6 +3624,8 @@ export class SesharTower extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 400; }
 }
 
 export class MuseumOfFutureArts extends Building { //Unlocked by Quantum Computing Lab after some time if you've played a perfect game of Monobrynth
@@ -3393,6 +3647,8 @@ export class MuseumOfFutureArts extends Building { //Unlocked by Quantum Computi
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 15; }
 
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 750; }
+
     override onLongTick(city: City): void {
         super.onLongTick(city);
         if (this.outputResources[0].amount > 150 && Math.random() < 0.1 * this.lastEfficiency && city.buildingTypes.find(p => p.type === getBuildingType(SandsOfTime))?.locked) {
@@ -3410,7 +3666,7 @@ export class SandsOfTime extends Building { //Unlocked by having Museum of Futur
             2, 2, 0,
             0.1,
         );
-        this.needsRoad = false;
+        this.needsWater = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.25)]);
@@ -3441,6 +3697,7 @@ export class Portal extends Building {
             2, 2, 0,
             0.4,
         );
+        this.needsWater = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.3)]);
@@ -3467,6 +3724,7 @@ export class PoliceBox extends Building {
             1, 1, 0,
             0.1
         );
+        this.needsWater = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.serviceAllocationType = "policeprotection";
@@ -3517,6 +3775,8 @@ export class PoliceStation extends Building {
             { type: "flunds", amount: 0.008 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
     }
 
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 350; }
+
     //Includes the city police budget allocation; the effect is squared so 80% budget is only 64% effectiveness and 90% budget is 81% effectiveness.
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
@@ -3531,6 +3791,7 @@ export class PoliceUAVHub extends Building {
             2, 2, 0,
             0.3,
         );
+        this.needsWater = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 12;
         this.serviceAllocationType = "policeprotection";
         this.upkeepScales = true;
@@ -3586,6 +3847,8 @@ export class FireBay extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 - (city.events.some(p => p.type === 'drought') ? 0.3 : 0); }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1200; }
 }
 
 export class FireStation extends Building {
@@ -3616,6 +3879,8 @@ export class FireStation extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 - (city.events.some(p => p.type === 'drought') ? 0.3 : 0); }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3000; }
 }
 
 export class Clinic extends Building {
@@ -3648,6 +3913,8 @@ export class Clinic extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 + 0.4 * (city.resources.get("foodhealth")!.amount - 0.75); }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1400; }
 }
 
 //TODO: Generate images for more. Police HQ, fire HQ, etc.
@@ -3683,6 +3950,8 @@ export class Hospital extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 24; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4000; }
 }
 
 export class Library extends Building {
@@ -3716,6 +3985,8 @@ export class Library extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 300; }
 }
 
 export class ElementarySchool extends Building { //TODO: Strongly consider splitting up education into lower, middle, and upper. Then all three school types could spread a wider area effect of 0.9 (since there are techs to upgrade them) and libraries could spread two or all three types of education with a smaller strength.
@@ -3749,6 +4020,8 @@ export class ElementarySchool extends Building { //TODO: Strongly consider split
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 500; }
 }
 
 export class HighSchool extends Building {
@@ -3782,6 +4055,8 @@ export class HighSchool extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 16; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 800; }
 }
 
 export class College extends Building {
@@ -3819,6 +4094,8 @@ export class College extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 22; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2000; }
 }
 
 export class CarbonCapturePlant extends Building {
@@ -3849,6 +4126,8 @@ export class CarbonCapturePlant extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 * (city.titles.get(TitleTypes.TheGreatFilter.id)?.attained ? 1.05 : 1); }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 600; }
 }
 
 export class Observatory extends Building {
@@ -3866,6 +4145,10 @@ export class Observatory extends Building {
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 780 }, { type: "steel", amount: 20 }, { type: "glass", amount: 15 }, { type: "electronics", amount: 10 }]; }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 7 * (atEfficiency || this.poweredTimeDuringLongTick) }]; }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 4; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 200; }
 }
 
 export class QuantumComputingLab extends Building {
@@ -3904,6 +4187,8 @@ export class QuantumComputingLab extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 10; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1000; }
 }
 
 export class WeatherControlMachine extends Building {
@@ -3940,6 +4225,8 @@ export class WeatherControlMachine extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 20; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2000; }
 }
 
 //# Obstacles to city areas (unlockable areas, effectively)
@@ -3951,7 +4238,7 @@ export class SmallBoulder extends Building {
             2, 2, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
         this.maxVariant = 1;
     }
@@ -3975,7 +4262,7 @@ export class MediumBoulder extends Building {
             3, 3, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
     }
 
@@ -3990,7 +4277,7 @@ export class BigBoulder extends Building {
             4, 4, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
     }
 
@@ -4005,7 +4292,7 @@ export class ObstructingGrove extends Building {
             4, 4, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
     }
 
@@ -4023,7 +4310,7 @@ export class Mountain extends Building {
         );
         this.stampFootprint[1][3] = FootprintType.MINE;
         this.stampFootprint[2][3] = FootprintType.MINE;
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
     }
 }
 
@@ -4036,7 +4323,7 @@ export class CrystalMountain extends Building {
             0,
         );
         this.stampFootprint[0][2] = FootprintType.GEM_MINE;
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.15)]);
@@ -4052,7 +4339,7 @@ export class LithiumPlateau extends Building {
             0,
         );
         this.stampFootprint[0][0] = this.stampFootprint[0][1] = this.stampFootprint[0][2] = this.stampFootprint[1][0] = this.stampFootprint[1][1] = this.stampFootprint[1][2] = this.stampFootprint[2][0] = this.stampFootprint[2][1] = this.stampFootprint[2][2] = FootprintType.LITHIUM_MINE;
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
     }
 }
 
@@ -4064,7 +4351,7 @@ export class PrettyPond extends Building {
             3, 3, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.3)]);
@@ -4080,7 +4367,7 @@ export class CleanPond extends Building {
             0,
         );
         this.stampFootprint[0][0] = this.stampFootprint[0][1] = this.stampFootprint[0][2] = this.stampFootprint[1][0] = this.stampFootprint[1][1] = this.stampFootprint[1][2] = this.stampFootprint[2][0] = this.stampFootprint[2][1] = this.stampFootprint[2][2] = FootprintType.SPECIAL;
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.3, "hasFilthDynamicEffect")]);
@@ -4101,7 +4388,7 @@ export class PondFilth extends Building {
             0,
         );
         this.checkFootprint[0][0] = this.checkFootprint[0][1] = this.checkFootprint[0][2] = this.checkFootprint[1][0] = this.checkFootprint[1][1] = this.checkFootprint[1][2] = this.checkFootprint[2][0] = this.checkFootprint[2][1] = this.checkFootprint[2][2] = FootprintType.SPECIAL;
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
     }
 
@@ -4117,7 +4404,7 @@ export class HotSpring extends Building {
             0,
         );
         this.stampFootprint[0][0] = this.stampFootprint[0][1] = this.stampFootprint[1][0] = this.stampFootprint[1][1] = FootprintType.HOT_SPRING;
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.25)]);
@@ -4133,7 +4420,7 @@ export class AlienMonolith extends Building {
             0,
         );
         this.stampFootprint[0][0] = this.stampFootprint[0][1] = this.stampFootprint[0][2] = this.stampFootprint[1][0] = this.stampFootprint[1][1] = this.stampFootprint[1][2] = this.stampFootprint[2][0] = this.stampFootprint[2][1] = this.stampFootprint[2][2] = FootprintType.SPECIAL;
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         //Note: gets set to 'owned' and has Tourists output added when the MysteriousRubble is removed from it.
     }
 
@@ -4152,7 +4439,7 @@ export class MysteriousRubble extends Building {
             0,
         );
         this.checkFootprint[0][0] = this.checkFootprint[0][1] = this.checkFootprint[0][2] = this.checkFootprint[1][0] = this.checkFootprint[1][1] = this.checkFootprint[1][2] = this.checkFootprint[2][0] = this.checkFootprint[2][1] = this.checkFootprint[2][2] = FootprintType.SPECIAL;
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
     }
 
@@ -4178,7 +4465,7 @@ export class OilSeep extends Building {
             0,
         );
         this.stampFootprint[0][0] = FootprintType.OIL_WELL;
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
     }
 }
 
@@ -4191,7 +4478,7 @@ export class GeothermalVent extends Building {
             0,
         );
         this.stampFootprint[0][0] = FootprintType.GEO_VENT;
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
     }
 
     override place(city: City, x: number, y: number): void {
@@ -4212,7 +4499,7 @@ export class SandBar extends Building {
             2, 2, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.stampFootprint[0][0] = this.stampFootprint[1][0] = this.stampFootprint[0][1] = this.stampFootprint[1][1] = FootprintType.SAND;
     }
 }
@@ -4227,7 +4514,7 @@ export class DryWoods extends Building {
             4, 4, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
         this.onlyAllowInRegions.push("volcanic");
     }
@@ -4245,7 +4532,7 @@ export class Ignimbrite extends Building {
             3, 3, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
         this.onlyAllowInRegions.push("volcanic");
     }
@@ -4264,7 +4551,7 @@ export class GemBoulder extends Building {
             3, 3, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.demolishAllowed = true;
         this.onlyAllowInRegions.push("volcanic");
     }
@@ -4283,7 +4570,7 @@ export class ActiveVolcano extends Building {
             4, 4, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([
@@ -4303,7 +4590,7 @@ export class LakeOfFire extends Building {
             3, 3, 0,
             0,
         );
-        this.owned = this.needsPower = this.needsRoad = false;
+        this.owned = this.needsWater = this.needsPower = this.needsRoad = false;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 4;
         this.areaIndicatorRounded = true;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.LandValue, 0.3)]);
@@ -4331,6 +4618,8 @@ export class TourksTrekkers extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2100; }
 }
 
 export class RedGreenhouse extends Building {
@@ -4363,6 +4652,8 @@ export class RedGreenhouse extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1200 * (5 - city.techManager.getAdoption('retainingsoil')); }
 }
 
 export class VerticalTreeFarm extends Building {
@@ -4387,6 +4678,8 @@ export class VerticalTreeFarm extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 240 * (5 - city.techManager.getAdoption('retainingsoil')); }
 }
 
 export class EnclosedRanch extends Building {
@@ -4419,6 +4712,8 @@ export class EnclosedRanch extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 10; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 900; }
 }
 
 export class ObsidianGatherer extends Building {
@@ -4429,6 +4724,7 @@ export class ObsidianGatherer extends Building {
             2, 2, 0,
             0.3,
         );
+        this.needsWater = false;
         this.outputResources.push(new Obsidian(0, 2));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
@@ -4455,6 +4751,7 @@ export class ObsidianCrusher extends Building {
             2, 2, 0,
             0.3,
         );
+        this.needsWater = false;
         this.inputResources.push(new Obsidian(0, 0, 1));
         this.outputResources.push(new Sand(0, 2.5));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
@@ -4498,6 +4795,8 @@ export class VolcanoIronMine extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 7; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 500; }
 }
 
 export class IgneousQuarry extends Building { //Very close to the same as Quarry, but smaller and produces Green Obsidian
@@ -4540,6 +4839,8 @@ export class IgneousQuarry extends Building { //Very close to the same as Quarry
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.techManager.getAdoption("advrobots") * 0.1 + super.getEfficiencyEffectMultiplier(city); }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 400; }
 }
 
 export class Tumbler extends Building {
@@ -4550,6 +4851,7 @@ export class Tumbler extends Building {
             2, 2, 0,
             0.3,
         );
+        this.needsWater = false;
         this.inputResources.push(new FireObsidian(0, 0, 1.5));
         this.outputResources.push(new Gemstones(0, 2.25));
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
@@ -4588,6 +4890,8 @@ export class PowderMill extends Building {
         return [{ type: "flunds", amount: 0.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250; }
 }
 
 export class Geolab extends Building {
@@ -4612,16 +4916,19 @@ export class Geolab extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 10; }
-} //TODO: Implement earthquake prediction in the events and BuildingInfoMenu - and it should reduce earthquake damage
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 350; }
+}
 
 export class HazmatStorage extends Building {
     constructor() {
-        super( //TODO: Implement in events
+        super(
             "hazmatstorage", "Hazmat Storage", "A storage facility for a particular breed of hazardous materials. Has an extra-high fire risk, and if it catches fire, it may do great damage to the surrounding buildings. Contains things that shouldn't be mixed, stored next to other things they shouldn't be mixed with.",
             BuildingCategory.INFRASTRUCTURE,
             2, 2, 0,
             0.5,
         );
+        this.needsWater = false;
         this.stores.push(new Sulfur(), new Lithium(), new Dynamite());
         this.storeAmount = 30;
         this.onlyAllowInRegions.push("volcanic");
@@ -4667,6 +4974,8 @@ export class PoliceRovers extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 200; }
 }
 
 export class DroneFireControl extends Building {
@@ -4698,6 +5007,8 @@ export class DroneFireControl extends Building {
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2 - (city.events.some(p => p.type === 'drought') ? 0.2 : 0); }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 800; }
 }
 
 export class DroneDoc extends Building {
@@ -4732,6 +5043,8 @@ export class DroneDoc extends Building {
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 16; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1000; }
 }
 
 
@@ -4749,6 +5062,7 @@ export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Industrial*/ MountainIronMine, Quarry, CementMill, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks, SiliconRefinery, CrystalMine, AssemblyHouse, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory, ToyManufacturer, Furnifactory, LithiumMine, MohoMine, Nanogigafactory, PharmaceuticalsLab, SpaceLaunchSite,
     /*Seasonal (also industrial)*/ MiracleWorkshop,
     /*Power*/ StarterSolarPanel, WindTurbine, SolarFarm, OilPowerPlant, OilTruck, GeothermalPowerPlant, CoalPowerPlant, CoalTruck, NuclearPowerPlant, NuclearFuelTruck, FusionPowerPlant, FusionFuelTruck,
+    /*Water*/ RainCollector, GroundwaterPump, WaterTower, WaterTreatmentPlant, //Copilot's ideas: WaterTruck, DesalinationPlant, WaterPipeline, WaterReservoir, WaterRecyclingPlant,
     /*Agriculture*/ TreeFarm, Farm, Ranch, FishFarm, AlgaeFarm, PlantMilkPlant, VerticalFarm, Carnicultivator,
     /*Infrastructure*/ Road, BikeRental, BusStation, ECarRental, TeleportationPod, Warehouse, Silo, OilTank, ColdStorage, SecureStorage, LogisticsCenter, FreeStuffTable, DataCenter, NuclearStorage,
     /*Government*/ CityHall, InformationCenter, PostOffice, DepartmentOfEnergy, EnvironmentalLab, MinigameMinilab,

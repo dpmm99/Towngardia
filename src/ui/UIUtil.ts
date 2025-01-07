@@ -11,6 +11,14 @@ export function humanizeFloor(value: number): string {
     return (Math.floor(value / 100000000000) / 10).toLocaleString() + "T";
 }
 
+export function humanizeCeil(value: number): string {
+    if (value < 1000) return (Math.ceil(value * 10) / 10).toLocaleString();
+    if (value < 1000000) return (Math.ceil(value / 100) / 10).toLocaleString() + "k";
+    if (value < 1000000000) return (Math.ceil(value / 100000) / 10).toLocaleString() + "M";
+    if (value < 1000000000000) return (Math.ceil(value / 100000000) / 10).toLocaleString() + "B";
+    return (Math.ceil(value / 100000000000) / 10).toLocaleString() + "T";
+}
+
 //Includes units, not just a letter indicating scale.
 export function humanizePowerFloor(value: number): string {
     if (value < 1000) return (Math.floor(value * 10) / 10).toLocaleString() + " MW";
@@ -23,12 +31,17 @@ export function humanizePowerCeil(value: number): string {
     return (Math.ceil(value / 100000) / 10).toLocaleString() + " TW";
 }
 
-export function humanizeCeil(value: number): string {
-    if (value < 1000) return (Math.ceil(value * 10) / 10).toLocaleString();
-    if (value < 1000000) return (Math.ceil(value / 100) / 10).toLocaleString() + "k";
-    if (value < 1000000000) return (Math.ceil(value / 100000) / 10).toLocaleString() + "M";
-    if (value < 1000000000000) return (Math.ceil(value / 100000000) / 10).toLocaleString() + "B";
-    return (Math.ceil(value / 100000000000) / 10).toLocaleString() + "T";
+export function humanizeWaterFloor(value: number): string {
+    if (value < 1000) return (Math.floor(value * 10) / 10).toLocaleString() + " L";
+    if (value < 1000000) return (Math.floor(value / 100) / 10).toLocaleString() + " kL";
+    if (value < 1000000000) return (Math.floor(value / 100000) / 10).toLocaleString() + " ML";
+    return (Math.floor(value / 100000000) / 10).toLocaleString() + " GL";
+}
+export function humanizeWaterCeil(value: number): string {
+    if (value < 1000) return (Math.ceil(value * 10) / 10).toLocaleString() + " L";
+    if (value < 1000000) return (Math.ceil(value / 100) / 10).toLocaleString() + " kL";
+    if (value < 1000000000) return (Math.ceil(value / 100000) / 10).toLocaleString() + " ML";
+    return (Math.ceil(value / 100000000) / 10).toLocaleString() + " GL";
 }
 
 //A function to convert a number of long ticks into a number of day(s) and hour(s), written properly with singular or plural and full words.

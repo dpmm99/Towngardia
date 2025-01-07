@@ -20,4 +20,6 @@ export enum CityFlags { //These values are SAVED in the database, so do not add 
     UnlockedMinigameLab,
     RemindedToCheckFireView,
     UnlockedAltitect,
+    WaterMatters,
+    WaterTreatmentMatters,
 }

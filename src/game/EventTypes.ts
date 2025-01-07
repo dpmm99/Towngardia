@@ -657,7 +657,8 @@ export class Epidemic extends CityEvent {
     }
 
     public getEpidemicChance(city: City): number {
-        return 0.005 * (10 - Math.round(10 * this.getAverageHealth(city)));
+        //A little water contamination goes a long way. +1% chance per tick for 1% untreated water, +3% chance for 9% untreated water.
+        return 0.005 * (10 - Math.round(10 * this.getAverageHealth(city))) + (city.flags.has(CityFlags.WaterTreatmentMatters) ? 0.1 * Math.sqrt(city.untreatedWaterPortion) : 0);
     }
 
     private getAverageHealth(city: City): number {

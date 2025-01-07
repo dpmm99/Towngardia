@@ -91,7 +91,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     //No longer loading all UI elements up front. Here's a narrowed down list--just the things that are visible as soon as you start the game... aaand some warnings and resource and danger backdrops because the placeholders would look really out-of-place.
     const otherSprites = [
         'friends', 'research', 'notifications', 'notificationson', 'titles', 'achievements', 'views', 'budget', 'resources', 'menu', 'progressbg', 'progressfg',
-        'noroad', 'nopower', 'outage', 'warningbackdrop', 'collectionbackdrop',
+        'noroad', 'nopower', 'outage', 'woutage', 'warningbackdrop', 'collectionbackdrop',
     ];
 
     for (const sprite of otherSprites) {
@@ -143,7 +143,7 @@ export function getLatePreloadSpriteURLs(): { [key: string]: string } {
         /*ContextMenu*/ 'info', 'move', 'remove', 'demolish', 'demolishnobg', 'buildcopy', 'switch', 'switchnobg', 'fastforward', 'fastforwardnobg', 'altitect',
         /*BudgetMenu*/ 'incometax', 'propertytax', 'salestax', 'budgetok', "fireprotection", "policeprotection", "healthcare", "education", "environment", "infrastructure", //Services might be resources, dunno
         /*TechTreeMenu*/ 'completeresearch', 'progressresearch', 'cannotresearch', 'adoptionrate',
-        /*NotificationsMenu*/ 'unread', 'notice', 'advisor', 'logistics', 'minigames',
+        /*NotificationsMenu*/ 'unread', 'notice', 'advisor', 'logistics', 'minigames', 'depro',
         /*Events (could be automatic/generic)*/ 'coldsnap', 'blackout', 'epidemic',
         /*Views bar*/ 'residentialdesirability', 'landvalue', 'luxury', 'businesspresence', 'pettycrime', 'organizedcrime', 'noise', 'particulatepollution', 'greenhousegases', 'placementgrid', 'efficiencyview', 'hidebuildings', 'fadebuildings', 'businessvalue', //Others Copilot spat out, some of which I likely do want: 'firehazard', 'healthhazard', 'unemployment', 'traffic', 'infrastructure', 'happiness', 'population'
         /*errors and view-specific icons on any building*/ 'fire', 'provision', 'cannotprovision', 'reopen', 'errorbackdrop', 'resourceborder', 'willupgrade', 'publictransport',

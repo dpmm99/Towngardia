@@ -86,7 +86,7 @@ export class Flunds extends Resource {
 }
 
 export class Water extends Resource {
-    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
+    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = 0) {
         super(
             "water", "Water",
             initialCount, productionRate, capacity, consumptionRate,
@@ -96,7 +96,7 @@ export class Water extends Resource {
 }
 
 export class Power extends Resource {
-    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
+    constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = 0) {
         super(
             "power", "Power",
             initialCount, productionRate, capacity, consumptionRate,

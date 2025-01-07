@@ -247,6 +247,7 @@ export class CanvasRenderer implements IRenderer {
             if (!building.roadConnected && building.needsRoad) drawWarning("noroad");
             else if (!building.powerConnected && building.needsPower) drawWarning("nopower");
             else if (!building.powered && building.needsPower && !building.isNew) drawWarning("outage");
+            else if (!building.watered && building.needsWater && !building.isNew) drawWarning("woutage");
         }
 
         let drewCollectibles = false;

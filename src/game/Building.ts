@@ -6,6 +6,7 @@ import { TitleTypes } from "./AchievementTypes.js";
 import { BuildingCategory } from "./BuildingCategory.js";
 import { BuildingEffects, EffectDefinition } from "./BuildingEffects.js";
 import { City } from "./City.js";
+import { CityFlags } from "./CityFlags.js";
 import { Effect } from "./Effect.js";
 import { FootprintType } from "./FootprintType.js";
 import { SHORT_TICKS_PER_LONG_TICK, SHORT_TICK_TIME } from "./FundamentalConstants.js";
@@ -20,6 +21,10 @@ export class Building implements IHasDrawable {
     powered = false; //Mainly for drawing
     powerConnected = false; //For city power network flood-fills and for drawing
     needsPower = true; //Most will, so just set it to false for parks and such. Power plants DO "need power" (because they need to be on the power network).
+    //Going to reuse powerConnected for water connectivity since they can both just go through roads and other adjacent buildings.
+    wateredTimeDuringLongTick: number = 0;
+    watered = false;
+    needsWater = true;
 
     roadConnected = false;
     needsRoad = true;
@@ -94,7 +99,7 @@ export class Building implements IHasDrawable {
         public inputResources: Resource[] = [], //Resources needed for production
         public checkFootprint: FootprintType[][] = Array(height).fill(null).map(() => Array(width).fill(FootprintType.EMPTY | FootprintType.RESIDENCE)),
         public stampFootprint: FootprintType[][] = Array(height).fill(null).map(() => Array(width).fill(FootprintType.OCCUPIED)),
-        public serviceAllocationType: "" | "fireprotection" | "policeprotection" | "healthcare" | "education" | "environment" | "infrastructure" | "power" = "",
+        public serviceAllocationType: "" | "fireprotection" | "policeprotection" | "healthcare" | "education" | "environment" | "infrastructure" | "power" | "water" = "",
     ) { }
 
     clone(id: number | null = null): Building {
@@ -253,8 +258,8 @@ export class Building implements IHasDrawable {
         this.effects?.applyEffects(this, city);
         if (this.upkeepScales) this.recalculateAffectingBuildings(city);
 
-        //Buildings with no needs may as well start at 100% efficiency. But upkeep and power costs have to be paid in advance for efficiency.
-        if (!this.needsPower && (!this.needsRoad || this.roadConnected) && !this.getUpkeep(city, 1).length && !this.inputResources.length) this.lastEfficiency = 1;
+        //Buildings with no needs may as well start at 100% efficiency. But upkeep, power, and water costs have to be paid in advance for efficiency.
+        if (!this.needsPower && !this.needsWater && (!this.needsRoad || this.roadConnected) && !this.getUpkeep(city, 1).length && !this.inputResources.length) this.lastEfficiency = 1;
     }
 
     //Called after adding to the city grid
@@ -332,6 +337,8 @@ export class Building implements IHasDrawable {
     //Any short tick-based resources need to be strictly in their own functions so that if the player fixes the issue, the fix can take effect immediately without doubling other resource costs for that time period.
     getPowerUpkeep(city: City, ideal: boolean = false): number { return 0; }
     getPowerProduction(city: City, ideal: boolean = false): number { return 0; }
+    getWaterUpkeep(city: City, ideal: boolean = false): number { return 0; }
+    getWaterProduction(city: City, ideal: boolean = false): number { return 0; }
 
     //This needs to consider earned titles, active events, and other effects (e.g., from surrounding buildings that apply a bonus).
     //By default, it's affected by the Culinary Capital title for restaurants and the Production Efficiency resource for any non-business that produces resources.
@@ -423,15 +430,16 @@ export class Building implements IHasDrawable {
 
     //Business presence is a fixed magnitude unless the business isn't properly connected or has failed.
     public dynamicEffectForBusiness(city: City, building: Building | null, x: number, y: number): number {
-        return this.x !== -1 && (this.businessFailed || (!this.roadConnected && this.needsRoad) || (!this.powerConnected && this.needsPower)) ? 0 : 1;
+        return this.x !== -1 && (this.businessFailed || (!this.roadConnected && this.needsRoad) || (!this.powerConnected && (this.needsPower || this.needsWater))) ? 0 : 1;
     }
 
     //Where you'd do stuff like produce resources
     onLongTick(city: City): void {
         //No work done if it needs a road and isn't connected to one
         if (this.upkeepEfficiency && this.poweredTimeDuringLongTick && (this.roadConnected || !this.needsRoad)) {
-            //Work rate depends on upkeep, powered time, and input resource sufficiency
-            this.lastEfficiency = Math.min(this.upkeepEfficiency * this.poweredTimeDuringLongTick * this.patronageEfficiency, this.getProvisionedFraction(), this.damagedEfficiency);
+            //Work rate depends on upkeep, powered time, watered time, and input resource sufficiency
+            const waterEffect = (this.needsWater && city.flags.has(CityFlags.WaterMatters)) ? 0.5 + 0.5 * Math.min(1, this.wateredTimeDuringLongTick) : 1; //Lack of water should only reduce efficiency by up to 50%
+            this.lastEfficiency = Math.min(this.upkeepEfficiency * this.poweredTimeDuringLongTick * waterEffect * this.patronageEfficiency, this.getProvisionedFraction(), this.damagedEfficiency);
 
             if (this.isRestaurant) { //Can be as much as a 20% debuff if the player grows no food.
                 this.lastEfficiency *= 0.8 + 0.2 * city.resources.get("foodsufficiency")!.amount;

@@ -29,9 +29,11 @@ export class CitySerializer {
             ri: o.regionID,
             rv: o.regionVersion,
             dp: o.desiredPower, //That's me!
+            dw: o.desiredWater,
             cd: o.createdDate,
             no: o.notifications.map(p => this.notification(p)),
             pc: o.lastImportedPowerCost,
+            wc: o.lastImportedWaterCost,
             cs: o.recentConstructionResourcesSold,
             pp: o.peakPopulation,
             nb: o.nextBuildingID,
@@ -61,6 +63,7 @@ export class CitySerializer {
             uo: [...o.unlockedMinigameOptions],
             tp: o.trafficPrecalculation,
             ru: o.roadUpkeepPrecalculation,
+            uw: o.untreatedWaterPortion,
             la: o.lastUserActionTimestamp,
             ls: o.lastSavedUserActionTimestamp,
             ap: o.altitectPlays,
@@ -200,6 +203,7 @@ export class CitySerializer {
                 le: o.lastEfficiency || undefined,
                 ue: o.upkeepEfficiency,
                 pt: o.poweredTimeDuringLongTick || undefined,
+                wt: o.wateredTimeDuringLongTick || undefined,
                 de: o.damagedEfficiency === 1 ? undefined : o.damagedEfficiency,
                 dc: o.damageCause === "" ? undefined : o.damageCause,
                 in: o.isNew || undefined, //would need to set to false explicitly on load, because the default is true for Building as a whole
@@ -216,6 +220,7 @@ export class CitySerializer {
                     ab: o.affectingBuildingCount, //could just recalculate by calling addBuilding during load
                     ac: o.affectingCitizenCount, //same
                     po: o.powered ? undefined : false, //I only want to store these if they're false, for storage efficiency reasons.
+                    wa: o.watered ? undefined : false,
                     pc: o.powerConnected ? undefined : false,
                     rc: o.roadConnected ? undefined : false,
                 });
@@ -277,14 +282,17 @@ export class CityDeserializer {
             techManager, budget, undefined, titles, grid, [...eventTypes.values()], effectGrid, buildings, o.lt, o.st, o.nb, o.ri, o.rv, o.fl ? new Set(o.fl) : new Set(), o._v ?? 0);
         if (o.ob && r.presentBuildingCount.size === 0) r.presentBuildingCount = new Map(o.ob); //Shim so players don't have to refresh the page just because I removed 'ob' from the save data.
         r.desiredPower = o.dp;
+        r.desiredWater = o.dw || r.desiredWater; //Don't overwrite with 0 so that ensureNewerUnlocks() can set it upon version upgrade.
         r.createdDate = new Date(o.cd);
         r.notifications = this.notifications(o.no, r);
         r.lastImportedPowerCost = o.pc;
+        r.lastImportedWaterCost = o.wc || 0;
         r.recentConstructionResourcesSold = o.cs;
         r.peakPopulation = o.pp;
         r.citizenDietSystem.lastDietComposition = dietComposition;
         r.trafficPrecalculation = o.tp || 0;
         r.roadUpkeepPrecalculation = o.ru || 0;
+        r.untreatedWaterPortion = o.uw || 0;
         r.altitectPlays = o.ap || 0;
 
         //Old defunct storage of some flags
@@ -448,6 +456,7 @@ export class CityDeserializer {
             r.lastEfficiency = o.le !== undefined ? o.le : 0;
             r.upkeepEfficiency = o.ue;
             r.poweredTimeDuringLongTick = o.pt !== undefined ? o.pt : 0;
+            r.wateredTimeDuringLongTick = o.wt !== undefined ? o.wt : 0;
             r.damagedEfficiency = o.de !== undefined ? o.de : 1;
             r.damageCause = o.dc || "";
             r.isNew = o.in || false;
@@ -460,6 +469,7 @@ export class CityDeserializer {
                 r.affectingCitizenCount = o.ac ?? 0;
                 r.powered = o.po ?? true; //Only stored if false, or if it's an old version of the data, so undefined -> true.
                 r.powerConnected = o.pc ?? true;
+                r.watered = o.wa ?? true;
                 r.roadConnected = o.rc ?? true;
             }
         }

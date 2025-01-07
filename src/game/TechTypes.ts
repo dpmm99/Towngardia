@@ -441,12 +441,12 @@ export class GMCrops extends Tech {
     }
 }
 
-export class RetainingSoil extends Tech { //TODO: the water usage part
+export class RetainingSoil extends Tech {
     constructor() {
         super(
             'retainingsoil',
             'Retaining Soil',
-            'Advanced soil management techniques that improve water retention and reduce the impact of droughts.',
+            'Advanced soil management techniques that improve water retention and reduce the impact of droughts on farms.',
             [{ type: 'research', amount: 60 }, { type: 'sand', amount: 200 }],
             0.05, 0.03,
             1820, 300,

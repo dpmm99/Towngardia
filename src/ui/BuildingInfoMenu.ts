@@ -1,6 +1,6 @@
 import { Building } from "../game/Building.js";
 import { BuildingCategory } from "../game/BuildingCategory.js";
-import { CityHall, DepartmentOfEnergy, EnvironmentalLab, FreeStuffTable, InformationCenter, MinigameMinilab, PostOffice, SandsOfTime } from "../game/BuildingTypes.js";
+import { CityHall, DepartmentOfEnergy, EnvironmentalLab, FreeStuffTable, InformationCenter, MinigameMinilab, PostOffice, SandsOfTime, WaterTreatmentPlant } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
 import { Effect } from "../game/Effect.js";
@@ -15,7 +15,7 @@ import { IOnResizeEvent } from "./IOnResizeEvent.js";
 import { StandardScroller } from "./StandardScroller.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { UIManager } from "./UIManager.js";
-import { humanizeCeil, humanizeFloor, humanizePowerCeil, humanizePowerFloor, longTicksToDaysAndHours } from "./UIUtil.js";
+import { humanizeCeil, humanizeFloor, humanizePowerCeil, humanizePowerFloor, humanizeWaterCeil, humanizeWaterFloor, longTicksToDaysAndHours } from "./UIUtil.js";
 
 export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
@@ -122,8 +122,10 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
         // Upkeep costs
         const powerUpkeep = building.getPowerUpkeep(this.city, true) * this.city.powerUsageMultiplier;
+        const waterUpkeep = building.getWaterUpkeep(this.city, true);
         const upkeepCosts = building.getUpkeep(this.city, 1);
-        if (powerUpkeep) upkeepCosts.unshift({ type: 'power', amount: powerUpkeep }); //Assumes getUpkeep returns a new copy each time
+        if (waterUpkeep) upkeepCosts.unshift({ type: 'water', amount: waterUpkeep }); //Assumes getUpkeep returns a new copy each time
+        if (powerUpkeep) upkeepCosts.unshift({ type: 'power', amount: powerUpkeep }); //Same
         if (upkeepCosts.length > 0) {
             infoDrawable.addChild(new Drawable({
                 x: padding,
@@ -151,7 +153,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                     y: nextY + 8,
                     width: (barWidth - padding * 2 - iconSize - 5) + "px",
                     height: iconSize + "px",
-                    text: cost.type === 'power' ? humanizePowerCeil(cost.amount) : `${humanizeCeil(cost.amount * LONG_TICKS_PER_DAY * displayFactor)} ${cost.type}/day`, //"5 MW" or "5 food/day"
+                    text: cost.type === 'power' ? humanizePowerCeil(cost.amount) :
+                        cost.type === 'water' ? `${humanizeWaterCeil(cost.amount * LONG_TICKS_PER_DAY)} water/day` :
+                        `${humanizeCeil(cost.amount * LONG_TICKS_PER_DAY * displayFactor)} ${cost.type}/day`, //"5 MW" or "5 food/day"
                     id: `${infoDrawable.id}.upkeep.${cost.type}.text`,
                 }));
                 nextY += iconSize + 5;
@@ -176,7 +180,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             nextY += padding - 5;
         }
 
-        // Input resources (never power)
+        // Input resources (never power/water)
         if (building.inputResources.length > 0) {
             infoDrawable.addChild(new Drawable({
                 x: padding,
@@ -216,7 +220,8 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
         // Output resources
         const idealPowerProduction = building.getPowerProduction(this.city, true);
-        if (building.outputResources.length || idealPowerProduction) {
+        const idealWaterProduction = building.getWaterProduction(this.city, true);
+        if (building.outputResources.length || idealPowerProduction || idealWaterProduction) {
             infoDrawable.addChild(new Drawable({
                 x: padding,
                 y: nextY,
@@ -267,7 +272,10 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
             if (building.outputResources.length) nextY += padding;
             //A bit of a mess, but do similar for power if idealPowerProduction is nonzero.
-            if (idealPowerProduction) nextY = this.addPowerProductionInfo(infoDrawable, padding, nextY, iconSize, building, barWidth, idealPowerProduction);
+            if (idealPowerProduction) nextY = this.addProductionInfo(infoDrawable, padding, nextY, iconSize, building, barWidth, idealPowerProduction,
+                "power", "getPowerProduction", "getPowerUpkeep", this.city.desiredPower, this.city.budget.powerImportLimit, this.city.getImportPowerRate());
+            if (idealWaterProduction) nextY = this.addProductionInfo(infoDrawable, padding, nextY, iconSize, building, barWidth, idealWaterProduction,
+                "water", "getWaterProduction", "getWaterUpkeep", this.city.desiredWater, this.city.budget.waterImportLimit, this.city.getImportWaterRate());
             if (building instanceof CityHall) nextY = this.addBudgetInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
         }
 
@@ -390,7 +398,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             nextY += 24 + padding;
         }
 
-        //TODO: Consider showing event-based info, such as the risk of epidemic if it's a healthcare facility.
+        if (building instanceof WaterTreatmentPlant) nextY = this.addWaterTreatmentInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
 
         //These apply to your own buildings excluding a few special cases
         if (building.x !== -1 && building.owned) {
@@ -428,7 +436,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             if (building.getFireHazard(this.city) > building.getHighestEffect(this.city, EffectType.FireProtection)) warnings.push({ icon: "fire", text: "At risk of fires" });
             if (building.needsRoad && !building.roadConnected) warnings.push({ icon: "noroad", text: "No road access" });
             if (!building.powerConnected && building.needsPower) warnings.push({ icon: "nopower", text: "No power connection" });
+            else if (!building.powerConnected && building.needsWater) warnings.push({ icon: "nopower", text: "No water connection" });
             if (!building.powered && building.needsPower && !building.isNew) warnings.push({ icon: "outage", text: "Not enough " + (idealPowerProduction && building.inputResources.length ? "fuel" : "power") });
+            if (!building.watered && building.needsWater && !building.isNew) warnings.push({ icon: "woutage", text: "Not enough water" });
             if (building.damagedEfficiency < 1) warnings.push({ icon: "fire", text: "Damaged by " + (building.damageCause || "N/A") + " (" + Math.ceil(100 * (1 - building.damagedEfficiency)) + "%)" });
             if (building.businessFailed) warnings.push({ icon: "reopen", text: "Business failed" });
 
@@ -540,12 +550,14 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
     }
 
     private addBuildingStorageStats(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: Building, barWidth: number): number {
+        const floorFunc = building.stores.length === 1 && building.stores[0].type === "water" ? humanizeWaterFloor :
+            building.stores.length === 1 && building.stores[0].type === "power" ? humanizePowerFloor : humanizeFloor;
         infoDrawable.addChild(new Drawable({
             x: padding,
             y: nextY,
             width: (barWidth - padding * 2) + "px",
             height: "24px",
-            text: `Stores ${humanizeFloor(building.storeAmount)} of:`,
+            text: `Stores ${floorFunc(building.storeAmount)} of:`,
             id: `${infoDrawable.id}.storageLabel`,
         }));
         nextY += 24 + 5;
@@ -573,35 +585,37 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         return nextY;
     }
 
-    private addPowerProductionInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: Building, barWidth: number, idealPowerProduction: number): number {
+    private addProductionInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: Building, barWidth: number, idealProd: number,
+        type: "power" | "water", getProduction: keyof Building, getUpkeep: keyof Building, desiredAmount: number, importLimit: number, importRate: number): number {
+        const floorFunc = type === "power" ? humanizePowerFloor : humanizeWaterFloor;
+        const ceilFunc = type === "power" ? humanizePowerCeil : humanizeWaterCeil; //TODO: All the water numbers should be per-day
         infoDrawable.addChild(new Drawable({
             x: padding,
             y: nextY,
             width: iconSize + "px",
             height: iconSize + "px",
-            image: new TextureInfo(iconSize, iconSize, `resource/power`),
-            id: `${infoDrawable.id}.output.power.icon`,
+            image: new TextureInfo(iconSize, iconSize, `resource/${type}`),
         }));
-        const actualPowerProduction = building.getPowerProduction(this.city);
+        const actualProd = (building[getProduction] as (city: City, ideal?: boolean) => number)(this.city) * (type === "water" ? LONG_TICKS_PER_DAY : 1);
+        const perDay = type === "water" ? "/day" : "";
         infoDrawable.addChild(new Drawable({
             x: padding + iconSize + 5,
             y: nextY + 8,
             width: (barWidth - padding * 2 - iconSize - 5) + "px",
             height: iconSize + "px",
-            text: humanizePowerFloor(actualPowerProduction) + (actualPowerProduction < idealPowerProduction ? ` (max ${humanizePowerFloor(idealPowerProduction)})` : ""),
-            id: `${infoDrawable.id}.output.power.text`,
+            text: floorFunc(actualProd) + (actualProd < idealProd ? `${perDay} (max ${floorFunc(idealProd)}${perDay})` : perDay),
         }));
         nextY += iconSize + padding;
 
-        const productionRate = this.city.resources.get('power')!.productionRate;
-        const consumptionRate = this.city.resources.get('power')!.consumptionRate;
+        const resource = this.city.resources.get(type)!;
+        const productionRate = resource.productionRate * (type === "water" ? SHORT_TICKS_PER_LONG_TICK : 1);
+        const consumptionRate = resource.consumptionRate * (type === "water" ? SHORT_TICKS_PER_LONG_TICK : 1);
         infoDrawable.addChild(new Drawable({
             x: padding,
             y: nextY,
             width: (barWidth - padding * 2) + "px",
             height: "24px",
-            text: "Citywide production: " + humanizePowerFloor(productionRate),
-            id: `${infoDrawable.id}.output.power.cityp`,
+            text: "Citywide production: " + floorFunc(productionRate) + perDay,
         }));
         nextY += 28;
         infoDrawable.addChild(new Drawable({
@@ -609,8 +623,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             y: nextY,
             width: (barWidth - padding * 2) + "px",
             height: "24px",
-            text: "Citywide consumption: " + humanizePowerCeil(consumptionRate),
-            id: `${infoDrawable.id}.output.power.cityc`,
+            text: "Citywide consumption: " + ceilFunc(consumptionRate) + perDay,
         }));
         nextY += 28;
         const surplus = productionRate - consumptionRate;
@@ -619,78 +632,101 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             y: nextY,
             width: (barWidth - padding * 2) + "px",
             height: "24px",
-            text: surplus < 0 ? "Deficit: " + humanizePowerCeil(-surplus) : ("Surplus: " + humanizePowerFloor(surplus)),
+            text: surplus < 0 ? "Deficit: " + ceilFunc(-surplus) : ("Surplus: " + floorFunc(surplus)) + perDay,
             reddize: surplus < 0,
-            id: `${infoDrawable.id}.output.power.citys`,
         }));
         nextY += 28;
 
-        //New buildings generally start at 0% efficiency and therefore 0 power demand, so we get 1 update to warn the player about the increasing demand. Exception: if a residence just spawned/upgraded and it upgrades at the end of this long tick.
-        const nextDemandIncrease = this.city.buildings.filter(p => p.isNew).reduce((acc, p) => acc + p.getPowerUpkeep(this.city, true) - p.getPowerUpkeep(this.city)
-            - p.getPowerProduction(this.city, true) + p.getPowerProduction(this.city), 0); //+ideal upkeep -current upkeep -ideal production +current production = expected change.
+        //New buildings generally start at 0% efficiency and therefore 0 power/water demand, so we get 1 update to warn the player about the increasing demand. Exception: if a residence just spawned/upgraded and it upgrades at the end of this long tick.
+        const nextDemandIncrease = this.city.buildings.filter(p => p.isNew).reduce((acc, p) => acc +
+            (p[getUpkeep] as (city: City, ideal?: boolean) => number)(this.city, true) - (p[getUpkeep] as (city: City, ideal?: boolean) => number)(this.city)
+            - (p[getProduction] as (city: City, ideal?: boolean) => number)(this.city, true) + (p[getProduction] as (city: City, ideal?: boolean) => number)(this.city), 0); //+ideal upkeep -current upkeep -ideal production +current production = expected change.
         if (nextDemandIncrease > 0) {
             infoDrawable.addChild(new Drawable({
                 x: padding,
                 y: nextY,
                 width: (barWidth - padding * 2) + "px",
                 height: "24px",
-                text: "Next demand increase: " + humanizePowerFloor(nextDemandIncrease),
-                id: `${infoDrawable.id}.output.power.cityn`,
+                text: "Next demand increase: " + floorFunc(nextDemandIncrease) + perDay,
                 reddize: nextDemandIncrease > surplus,
             }));
             nextY += 28;
         }
 
+        const importCap = type === "power" ? 0.5 : 1;
         infoDrawable.addChild(new Drawable({
             x: padding,
             y: nextY,
             width: (barWidth - padding * 2) + "px",
             height: "24px",
-            text: "Importable: " + humanizePowerFloor(this.city.desiredPower * 0.5),
-            id: `${infoDrawable.id}.output.power.cityi`,
+            text: "Importable: " + floorFunc(desiredAmount * importCap) + perDay,
         }));
         nextY += 28;
-        if (this.city.budget.powerImportLimit < 0.5) {
+        if (importLimit < importCap) {
             infoDrawable.addChild(new Drawable({
                 x: padding,
                 y: nextY,
                 width: (barWidth - padding * 2) + "px",
                 height: "24px",
-                text: "(Limit in budget: " + humanizePowerFloor(this.city.desiredPower * this.city.budget.powerImportLimit) + ")",
+                text: "(Limit in budget: " + floorFunc(desiredAmount * importLimit) + perDay + ")",
             }));
             nextY += 28;
         }
-        //One more: the import cost per day if there's a deficit. City has a getImportPowerRate function for that.
+        //One more: the import cost per day if there's a deficit. City has a getImportPowerRate/getImportWaterRate function for that.
         if (surplus < 0) {
-            const importCost = Math.min(this.city.desiredPower * this.city.budget.powerImportLimit, -surplus) * this.city.getImportPowerRate() * SHORT_TICKS_PER_LONG_TICK * LONG_TICKS_PER_DAY;
+            const importCost = Math.min(desiredAmount * importLimit, -surplus) * importRate * SHORT_TICKS_PER_LONG_TICK * LONG_TICKS_PER_DAY;
             infoDrawable.addChild(new Drawable({
                 x: padding,
                 y: nextY,
                 width: (barWidth - padding * 2) + "px",
                 height: "24px",
                 text: "Import cost: " + humanizeCeil(importCost) + " flunds/day",
-                id: `${infoDrawable.id}.output.power.cityic`,
             }));
             nextY += 28;
-            if (this.city.desiredPower * this.city.budget.powerImportLimit < -surplus) {
+            if (desiredAmount * importLimit < -surplus) {
                 infoDrawable.addChild(new Drawable({
                     x: padding,
                     y: nextY,
                     width: iconSize + "px",
                     height: iconSize + "px",
-                    image: new TextureInfo(iconSize, iconSize, `ui/outage`),
+                    image: new TextureInfo(iconSize, iconSize, `ui/${type === "power" ? "" : "w"}outage`),
                 }));
                 infoDrawable.addChild(new Drawable({
                     x: padding + iconSize + 5,
                     y: nextY + 8,
                     width: (barWidth - padding * 2 - iconSize - 5) + "px",
                     height: iconSize + "px",
-                    text: "Rolling blackouts",
+                    text: type === "power" ? "Rolling blackouts" : "Water outage",
                     reddize: true,
                 }));
                 nextY += iconSize + 5;
             }
         }
+
+        if (resource.capacity) { //If there's any storage, show the total city current amount and storage capacity
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: "Stored citywide: " + floorFunc(resource.amount) + "/" + floorFunc(resource.capacity),
+            }));
+            nextY += 28;
+        }
+
+        const dirtyWaterEpidemicChance = 0.1 * Math.sqrt(this.city.untreatedWaterPortion);
+        if (type === "water" && this.city.flags.has(CityFlags.WaterTreatmentMatters) && dirtyWaterEpidemicChance > 0) {
+            nextY = this.addHealthInfo(infoDrawable, padding, nextY, iconSize, barWidth);
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: "From untreated water: " + Math.round(dirtyWaterEpidemicChance * 1000) / 10 + "%/day",
+            }));
+            nextY += 28;
+        }
+
         return nextY + padding;
     }
 
@@ -992,6 +1028,20 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             nextY += 30 + padding;
         }
 
+        return nextY;
+    }
+
+    private addWaterTreatmentInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: WaterTreatmentPlant, barWidth: number): number {
+        const maxTreated = 1900000 * 4;
+        const treated = (building.x !== -1 ? building.lastEfficiency : 1) * maxTreated;
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: "24px",
+            text: "Treats " + humanizeWaterFloor(treated) + "/day" + (treated < maxTreated ? `(max ${humanizeWaterFloor(maxTreated)}/day)` : ""),
+        }));
+        nextY += 24 + padding;
         return nextY;
     }
 

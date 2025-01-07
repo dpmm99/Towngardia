@@ -183,22 +183,41 @@ export class HappinessCalculator {
     private calculateResidentialPenalties(): number {
         let totalPowerNeeded = 0;
         let totalPowerReceived = 0;
+        let totalWaterNeeded = 0;
+        let totalWaterReceived = 0;
         let totalResidences = 0;
         let totalRepair = 0;
 
         this.city.buildings.forEach(building => {
             if (building.isResidence) {
-                if (building.needsPower && !building.isNew) { //Don't count "power outages" for newly placed buildings--they wouldn't be at 100% if not placed during the first short tick after a long tick, anyway.
-                    totalPowerNeeded += 1;
-                    totalPowerReceived += building.poweredTimeDuringLongTick;
+                if (!building.isNew) { //Don't count "power outages" for newly placed buildings--they wouldn't be at 100% if not placed during the first short tick after a long tick, anyway.
+                    if (building.needsPower) {
+                        totalPowerNeeded += 1;
+                        totalPowerReceived += building.poweredTimeDuringLongTick;
+                    }
+                    if (building.needsWater) {
+                        totalWaterNeeded += 1;
+                        totalWaterReceived += building.wateredTimeDuringLongTick;
+                    }
                 }
                 totalResidences++;
                 totalRepair += building.damagedEfficiency;
             }
         });
 
+        if (this.city.flags.has(CityFlags.WaterTreatmentMatters)) {
+            const untreatedWaterPenalty = -0.5 * Math.sqrt(this.city.untreatedWaterPortion); //Lose 5% happiness for the first 1% untreated water, 15% for 9%.
+            this.setDisplayStats("Untreated water", untreatedWaterPenalty, 0);
+        }
+
         const blackoutPenalty = totalPowerNeeded > 0 ? 0.75 * (totalPowerReceived / totalPowerNeeded - 1) : 0;
         this.setDisplayStats("Power outages", blackoutPenalty, 0);
+
+        if (this.city.flags.has(CityFlags.WaterMatters)) {
+            const waterOutagePenalty = totalWaterNeeded > 0 ? 0.75 * (totalWaterReceived / totalWaterNeeded - 1) : 0;
+            this.setDisplayStats("Water outages", waterOutagePenalty, 0);
+        }
+
         const damagePenalty = totalResidences > 0 ? 0.75 * (totalRepair / totalResidences - 1) : 0;
         this.setDisplayStats("Residence damage", damagePenalty, 0);
         return blackoutPenalty + damagePenalty;

@@ -5,12 +5,12 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GregsGrogBarr, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, PostOffice, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GregsGrogBarr, GroundwaterPump, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, PostOffice, RainCollector, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, WaterTower, WaterTreatmentPlant, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
 import { Effect } from "./Effect.js";
-import { EVENT_TYPES, EmergencyPowerAid, Epidemic, PowerOutage, ResearchReward } from "./EventTypes.js";
+import { Drought, EVENT_TYPES, EmergencyPowerAid, Epidemic, PowerOutage, ResearchReward } from "./EventTypes.js";
 import { FootprintType } from "./FootprintType.js";
 import { LONG_TICKS_PER_DAY, SHORT_TICKS_PER_LONG_TICK } from "./FundamentalConstants.js";
 import { GameState } from "./GameState.js";
@@ -28,7 +28,7 @@ import { GIFT_TYPES } from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
 import { ARShopping, FoodServiceRobots, SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
 
-const CITY_DATA_VERSION = 6; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
+const CITY_DATA_VERSION = 7; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
     //Not serialized
     public uiManager: UIManager | null = null;
@@ -50,9 +50,11 @@ export class City {
     //These really matter
     public trafficPrecalculation: number = 0;
     public roadUpkeepPrecalculation: number = 0;
+    public untreatedWaterPortion: number = 0; //Could have been a resource; oh well.
     public presentBuildingCount: Map<string, number> = new Map(); //Number of buildings of each type that the player has built (or that naturally formed) but has not demolished.
     public resources: Map<string, Resource> = new Map();
     public desiredPower: number = 50; //Used for buying enough power for a fraction of your buildings. Initialized to 50 so you can always import up to 25 MW if needed and if you have the money.
+    public desiredWater: number = 0;
     public createdDate: Date = new Date(); //Could be used for certain fixed events--like the first earthquake that makes geothermal power available to research
     public notifications: Notification[] = [];
     public assists: Assist[] = [];
@@ -63,6 +65,7 @@ export class City {
     public altitectPlays: number = 0;
 
     public lastImportedPowerCost: number = 0;
+    public lastImportedWaterCost: number = 0;
     public recentConstructionResourcesSold: number = 0;
     public peakPopulation: number = 1;
 
@@ -122,15 +125,14 @@ export class City {
         //Double check the unlocked buildings in case someone's tutorial "finished" state didn't get updated at the player level but their city did get reset to step index -1.
         if (!this.buildingTypes.find(p => p.type === getBuildingType(Bar))!.locked) this.player.finishedTutorial = true;
 
-        //Make sure all later-developed unlocks get unlocked, e.g., in case I add new ones after players have started their cities.
-        this.ensureNewerUnlocks();
-        
         this.resources = new Map(ResourceTypes.RESOURCE_TYPES.map(p => p.clone()).map(p => [p.type, p]));
         resources.forEach(r => this.resources.set(r.type, r)); //Override amounts and such based on the passed-in array
 
+        //Make sure all later-developed unlocks get unlocked, e.g., in case I add new ones after players have started their cities.
+        this.ensureNewerUnlocks();
+        
         this.flunds = this.resources.get("flunds")!; //Used a lot so we'll keep a direct reference
         this.flunds.capacity = Number.MAX_SAFE_INTEGER;
-        this.resources.get("power")!.capacity = Number.MAX_SAFE_INTEGER; //Can't actually be stored, but we're using 'amount' and we don't want it to zero out randomly
 
         if (!this.effectGrid.length) this.effectGrid = Array(height).fill(null).map(() => Array(width).fill(null).map(() => []));
         this.residenceSpawner = residenceSpawner ?? new ResidenceSpawningSystem(this);
@@ -261,6 +263,14 @@ export class City {
             }
             this.dataVersion = 6;
         }
+        if (this.dataVersion < 7) {
+            if (this.resources.get("population")!.amount > 1100) this.buildings.forEach(p => p.wateredTimeDuringLongTick = p.poweredTimeDuringLongTick); //in case they're mid-long-tick
+            this.desiredWater = this.buildings.reduce((acc, building) => acc + building.getWaterUpkeep(this, true), 0); //already-placed buildings; this is normally summed upon placement
+            this.resources.get("water")!.capacity = this.resources.get("water")!.amount = 0;
+            this.resources.get("power")!.capacity = this.resources.get("power")!.amount = 0; //Had a default before, but I decided there's actually a possibility of storing power since I added water storage.
+            this.budget.lastServiceCosts["water"] = 0;
+            this.dataVersion = 7;
+        }
     }
 
     enableResourceConstruction() { //NOT for normal players. :)
@@ -284,15 +294,11 @@ export class City {
         this.networkRoot.x = 0;
         this.networkRoot.y = 0;
         this.networkRoot.owned = false; //Player can't move/remove it
-        this.networkRoot.roadConnected = true;
-        this.networkRoot.powerConnected = true;
         this.addBuilding(this.networkRoot);
 
         this.cityHall = new CityHall();
         this.cityHall.x = 1;
         this.cityHall.y = 0;
-        this.cityHall.roadConnected = true;
-        this.cityHall.powerConnected = true;
         this.addBuilding(this.cityHall);
 
         //Add some freebies to get the player started.
@@ -313,7 +319,7 @@ export class City {
         this.resources.get("concrete")!.buyableAmount = 10;
         this.resources.get("wood")!.capacity = 30;
         this.resources.get("wood")!.buyableAmount = 10;
-        this.buildings.forEach(building => building.powerConnected = building.roadConnected = building.powered = true);
+        this.buildings.forEach(building => building.powerConnected = building.roadConnected = building.powered = building.watered = true);
         this.spreadEffect(new Effect(EffectType.LandValue, 0.5), 5, 5, true, 2, 2); //Some higher land value in the starting corner or it'll be too hard for players to pick up momentum.
 
         if (this.regionID === "volcanic") {
@@ -591,6 +597,13 @@ export class City {
         const production = multiplier * building.getPowerProduction(this); //Considered using productionRate, but if power is variable...
         power.amount += production; //To make it apply more quickly when you place a new power producer.
         power.productionRate += production;
+
+        //Same for water
+        const water = this.resources.get('water')!;
+        this.desiredWater += multiplier * building.getWaterUpkeep(this, true);
+        const waterProduction = multiplier * building.getWaterProduction(this);
+        water.amount += waterProduction;
+        power.productionRate += waterProduction;
     }
 
     //Also notifies the player
@@ -917,7 +930,7 @@ export class City {
             }
         }
 
-        this.setRoadConnected(building, building.powerConnected = (building === this.networkRoot));
+        this.setRoadConnected(building, building.powerConnected = (building === this.networkRoot)); //also used for water connectivity since they use the same rules
 
         //Get the cardinal-direction-adjacent buildings for the road and power connectivity checks
         const adjacentBuildings = this.getBuildingsInArea(building.x, building.y, building.width, building.height, 1, 1, true);
@@ -1049,7 +1062,7 @@ export class City {
             }
         }
 
-        //Similar for buildings not connected to the power network. Owned buildings and unowned roads (namely, the network root, but also any other nonremovable roads) carry power. Basically, not foliage and stuff.
+        //Similar for buildings not connected to the power/water network. Owned buildings and unowned roads (namely, the network root, but also any other nonremovable roads) carry power. Basically, not foliage and stuff.
         const powerConnected = new Set<number>();
         this.dfs((building: Building) => building.owned || building.isRoad, this.networkRoot.x, this.networkRoot.y, powerConnected);
         for (let y = 0; y < this.height; y++) {
@@ -1348,7 +1361,7 @@ export class City {
         if (timeMonuments.length) this.resources.get(new ResourceTypes.Timeslips().type)!.produce(0.05 * timeMonuments[0].lastEfficiency);
 
         //Go back and reset the amount of power consumed during the long tick for each building; this is likely used in efficiency calculations
-        this.buildings.forEach(building => building.poweredTimeDuringLongTick = 0);
+        this.buildings.forEach(building => { building.poweredTimeDuringLongTick = 0; building.wateredTimeDuringLongTick = 0; });
 
         //Auto-buy all resources as flunds permit (no debt allowed) up to the requested amounts.
         const beforeAutoBuys = this.flunds.amount;
@@ -1382,8 +1395,9 @@ export class City {
         this.recentConstructionResourcesSold = Math.max(0, Math.min(this.recentConstructionResourcesSold * 0.95, this.recentConstructionResourcesSold - 1));
 
         //Calculate expenses, step 2
-        this.flunds.consumptionRate = Math.max(0, expectedTotalFlunds - this.flunds.amount + SHORT_TICKS_PER_LONG_TICK * this.lastImportedPowerCost);
+        this.flunds.consumptionRate = Math.max(0, expectedTotalFlunds - this.flunds.amount + SHORT_TICKS_PER_LONG_TICK * (this.lastImportedPowerCost + this.lastImportedWaterCost));
         this.budget.lastServiceCosts["power"] = this.lastImportedPowerCost * SHORT_TICKS_PER_LONG_TICK;
+        this.budget.lastServiceCosts["waterimport"] = this.lastImportedWaterCost * SHORT_TICKS_PER_LONG_TICK;
 
         //Deduct from City Hall first, step 3
         if (this.flunds.amount > cityFlundsBefore) {
@@ -1421,54 +1435,84 @@ export class City {
         if (!this.timeFreeze) this.checkStartEvents(); //Events won't start if the tutorial is running
     }
 
-    onShortTick(): void {
-        const power = this.resources.get('power');
-        if (!power) throw new Error("power resource is missing from city"); //would be a serious bug
+    private distributeResource(resourceType: "power" | "water", desiredAmount: number, importLimit: number,
+        getUpkeep: (building: Building) => number, getProduction: (building: Building) => number,
+        usageMultiplier: number, needMetField: keyof Building, needMetTimeField: keyof Building, importRate: number, setImportCost: (cost: number) => void): void {
+        const resource = this.resources.get(resourceType);
+        if (!resource) throw new Error(`${resourceType} resource is missing from city`); //would be a serious bug
 
-        //If power goes negative, you can buy *some* from other cities.
-        const totalImportablePower = this.desiredPower * this.budget.powerImportLimit;
-        let importablePower = totalImportablePower;
-        power.consumptionRate = 0;
+        //If power/water goes negative, you can buy *some* from other cities.
+        const totalImportable = desiredAmount * importLimit;
+        let importable = totalImportable;
+        resource.consumptionRate = 0;
+        let wasStored = resource.amount; //Note: to get stored power/water, just look at amount.
+        resource.amount += resource.productionRate; //Power/water produced in the last short tick is ready to use
 
-        //Random order to allow rolling blackouts if the city can't even buy enough power. Entirely ignore buildings that need but lack a road connection.
+        //Random order to allow rolling blackouts/outages if the city can't even buy enough power/water. Entirely ignore buildings that need but lack a road connection.
         const connectedBuildings = this.buildings.filter(p => p.powerConnected && (!p.needsRoad || p.roadConnected));
         inPlaceShuffle(connectedBuildings).forEach(building => {
-            let powerNeeded = building.getPowerUpkeep(this) * this.powerUsageMultiplier;
-            power.consumptionRate += powerNeeded;
-            building.powered = power.amount + importablePower >= powerNeeded || powerNeeded === 0; //Buildings will be unpowered if they need more power than is available even via trading
-            if (building.powered) {
-                if (power.amount < powerNeeded) {
-                    importablePower -= powerNeeded - Math.max(0, power.amount); //Start taking from importablePower as soon as power.amount is about to go negative
-                    powerNeeded = power.amount; //Because consume() doesn't stop at 0
+            let needed = getUpkeep(building) * usageMultiplier;
+            resource.consumptionRate += needed;
+            (building[needMetField] as boolean) = resource.amount + importable >= needed || needed === 0; //Buildings will be unpowered/unwatered if they need more power/water than is available even via trading
+            if (building[needMetField]) {
+                if (resource.amount < needed) {
+                    importable -= needed - Math.max(0, resource.amount); //Start taking from importable as soon as resource.amount is about to go negative
+                    needed = resource.amount; //Because consume() doesn't stop at 0
                 }
-                power.consume(powerNeeded); //Will represent the total requested power; may not be the same as desiredPower if efficiency is down for other reasons
-                building.poweredTimeDuringLongTick += 1 / SHORT_TICKS_PER_LONG_TICK;
-                if (building.poweredTimeDuringLongTick > 0.99) building.poweredTimeDuringLongTick = 1;
+                resource.consume(needed); //Will represent the total requested power/water; may not be the same as desiredAmount if efficiency is down for other reasons
+                (building[needMetTimeField] as number) += 1 / SHORT_TICKS_PER_LONG_TICK;
+                if ((building[needMetTimeField] as number) > 0.99) (building[needMetTimeField] as number) = 1;
             }
         });
 
-        //power.amount needs fully *reset* to the total power production for the city each short tick (don't just add to power.amount unless maybe if we implement batteries, but that'd take more coding here)
-        //This is also updated immediately when placing or removing a power producer, so that the new power or power loss takes place on the next short tick.
-        //Note: took about 11% of the run time when I ran 30 days' worth of ticks at once.
-        power.amount = power.productionRate = connectedBuildings.reduce((total, building) => total + building.getPowerProduction(this), 0);
+        //This is also updated immediately when placing or removing a power/water producer, so that the new power/water or power/water loss takes place on the next short tick.
+        //Note: took about 11% of the run time when I ran 30 days' worth of ticks at once back when this code was only for power.
+        resource.productionRate = connectedBuildings.reduce((total, building) => total + getProduction(building), 0);
 
-        if (totalImportablePower === importablePower) { //The city had enough power for itself OR wasn't allowed to import any, so no need to deduct anything.
-            this.lastImportedPowerCost = 0;
-            this.checkAndAwardAchievement(AchievementTypes.WattsUpDoc.id);
+        if (resource.amount < wasStored) resource.amount = Math.max(0, resource.amount); //Used some of the stored amount; don't go below 0
+        else if (resource.productionRate > resource.consumptionRate) resource.produce(resource.productionRate - resource.consumptionRate); //Produced excess--has a capacity check
+
+        if (totalImportable === importable) { //The city had enough power/water for itself OR wasn't allowed to import any, so no need to deduct anything.
+            setImportCost(0);
+            if (resourceType === 'power') this.checkAndAwardAchievement(AchievementTypes.WattsUpDoc.id);
             return;
         }
 
-        this.checkAndAwardAchievement(AchievementTypes.PartyThroughBlackout.id);
+        if (resourceType === 'power') this.checkAndAwardAchievement(AchievementTypes.PartyThroughBlackout.id);
 
-        this.lastImportedPowerCost = Math.max(0, totalImportablePower - importablePower) * this.getImportPowerRate();
-        if (this.lastImportedPowerCost) this.resourceEvents.push({ type: "power", event: "buy", amount: totalImportablePower - importablePower }); //At least one achievement cares about power imports
-        this.budget.lastServiceCosts["power"] = this.lastImportedPowerCost * SHORT_TICKS_PER_LONG_TICK;
+        const importCost = Math.max(0, totalImportable - importable) * importRate;
+        setImportCost(importCost);
+        if (importCost) this.resourceEvents.push({ type: resourceType, event: "buy", amount: totalImportable - importable });
+        this.budget.lastServiceCosts[resourceType === "water" ? "waterimport" : "power"] = importCost * SHORT_TICKS_PER_LONG_TICK; //Changed how I referred to water import costs vs. water structures as compared to power import costs ("power") vs. power structures ("powerprod")
 
         //Deduct from City Hall first.
-        const remainingCost = Math.max(0, this.lastImportedPowerCost - this.cityHall.flunds.amount);
-        this.cityHall.flunds.amount = Math.max(0, this.cityHall.flunds.amount - this.lastImportedPowerCost);
+        const remainingCost = Math.max(0, importCost - this.cityHall.flunds.amount);
+        this.cityHall.flunds.amount = Math.max(0, this.cityHall.flunds.amount - importCost);
         this.flunds.consume(remainingCost);
     }
+
+    onShortTick(): void {
+        this.distributeResource("power", this.desiredPower, this.budget.powerImportLimit,
+            (building: Building) => building.getPowerUpkeep(this), (building: Building) => building.getPowerProduction(this),
+            this.powerUsageMultiplier, "powered", "poweredTimeDuringLongTick", this.getImportPowerRate(), (cost: number) => this.lastImportedPowerCost = cost);
+
+        //TODO: I screwed up. All my water numbers were per-long-tick, but the logic was per-short-tick, so costs are 72x too high and storage is 72x too low. Is it okay if I just fix it here?
+        if (this.flags.has(CityFlags.WaterMatters)) //else... watered defaults to true anyway, and Building's onLongTick takes care of the wateredTimeDuringLongTick part.
+            this.distributeResource("water", this.desiredWater / SHORT_TICKS_PER_LONG_TICK, this.budget.waterImportLimit,
+                (building: Building) => building.getWaterUpkeep(this) / SHORT_TICKS_PER_LONG_TICK, (building: Building) => building.getWaterProduction(this) / SHORT_TICKS_PER_LONG_TICK,
+                1, "watered", "wateredTimeDuringLongTick", this.getImportWaterRate() * SHORT_TICKS_PER_LONG_TICK, (cost: number) => this.lastImportedWaterCost = cost);
+
+        if (this.flags.has(CityFlags.WaterTreatmentMatters)) {
+            const water = this.resources.get("water")!;
+            const waterTreatmentQuantity = this.buildings.filter(p => p instanceof WaterTreatmentPlant).reduce((a, b) => a + b.lastEfficiency, 0) * 1900000; //Treats 76 megaliters per plant *per day* (x4) for now--enough for 5100 citizens, so you need 4 for a city with ~30k citizens.
+
+            //I considered a moving average so one bad short tick doesn't immediately skyrocket the epidemic chance, but it seemed too gross
+            //Imported water doesn't need treated, so I use the lesser of production rate and consumption rate.
+            if (water.productionRate === 0 || water.consumptionRate === 0) this.untreatedWaterPortion = 0;
+            else this.untreatedWaterPortion = Math.max(0, waterTreatmentQuantity / Math.min(water.productionRate, water.consumptionRate));
+        }
+    }
+
     frozenAdvanceLongTick(): void {
         for (let i = 0; i < SHORT_TICKS_PER_LONG_TICK; i++) {
             this.onShortTick();
@@ -1484,6 +1528,12 @@ export class City {
         else if (this.events.some(e => e instanceof EmergencyPowerAid)) rate *= 0.4; //This would be an event if the player is in a position to receive aid--brings it just under the upkeep cost of wind power
 
         return rate * this.resources.get(ResourceTypes.getResourceType(ResourceTypes.PowerCosts))!.amount;
+    }
+
+    getImportWaterRate(): number {
+        let rate = 0.0000017; //also multiplied by 72x4=288 flunds per 1 unit of water--so 0.4896 a day per kL, and we'll make one house use 1kL a day. Factories should also generally use <=1kL at that rate. Factories will use VERY little compared to reality.
+        if (this.events.some(e => e instanceof Drought)) rate *= 1.4;
+        return rate;
     }
 
     updateMinigamePlays() {
@@ -1798,12 +1848,34 @@ export class City {
             this.unlock(getBuildingType(FreeStuffTable));
             this.flags.add(CityFlags.UnlockedLogisticsCenter);
         }
+        if (this.peakPopulation >= 1100 && !this.flags.has(CityFlags.WaterMatters)) {
+            this.notify(new Notification("Thirsty Work", "You've reached a population of 1100! You can now build rainwater collectors, groundwater pumps, and water towers to ensure your citizens remain squishy and moist. Otherwise, you can just import all the water you need, but there's a pretty high overhead cost. I mean, high cost, not high over your head like most of my jokes and references probably go. Whooooosh. See Tutorials in the main menu for more info. (About the water, not the jokes.)", "water"));
+            this.unlock(getBuildingType(RainCollector));
+            this.unlock(getBuildingType(WaterTower));
+            this.unlock(getBuildingType(GroundwaterPump));
+            this.flags.add(CityFlags.WaterMatters);
+            this.uiManager?.updateTutorialSteps();
+
+            if (this.peakPopulation > 1500) { //Would be in ensureNewerUnlocks() except peakPopulation isn't set at that point. :)
+                this.notify(new Notification("New System!", "See that notification about water? That didn't exist before! And the system is a bit expensive, so it probably sucks that I added it when you already have a city this size. So, to make up for that, I've granted you some flunds to help out a bit. That is, unless your name is Eabrace, in which case you get NOTHING, and good day, SIR!", "depro"));
+                if (this.player.name !== "eabrace") {
+                    this.flunds.produce(this.peakPopulation / 2);
+                    this.resources.get("steel")!.produce(20);
+                }
+            }
+        }
         if (this.peakPopulation >= 1400 && !this.flags.has(CityFlags.HealthcareMatters)) {
             this.notify(new Notification("Cough, cough", "You've reached a population of 1400! You can now build healthcare facilities to keep your citizens happy and productive. Diet also affects healthcare effectiveness, so farm wisely! See Tutorials in the main menu for more info.", "healthcare"));
             this.unlock(getBuildingType(Clinic));
             this.unlock(getBuildingType(Hospital));
             this.unlock(getBuildingType(DroneDoc)); //Volcanic region
             this.flags.add(CityFlags.HealthcareMatters);
+            this.uiManager?.updateTutorialSteps();
+        }
+        if (this.peakPopulation >= 1600 && !this.flags.has(CityFlags.WaterTreatmentMatters)) {
+            this.notify(new Notification("Wet 'n' Woozy", "You've reached a population of 1600 and unlocked the Water Treatment Plant! Yeah, all this time, your citizens have been drinking the nastiest imaginable recycled plant sweat--no wonder I was coughing when I brought up healthcare. Keep 100% of your home-grown water properly treated, or your citizens will be both unhappy and prone to plague--though any water you import is already treated. That's probably why there hasn't been a dysentery outbreak yet. Yet.", "water"));
+            this.unlock(getBuildingType(WaterTreatmentPlant));
+            this.flags.add(CityFlags.WaterTreatmentMatters);
             this.uiManager?.updateTutorialSteps();
         }
         if (this.peakPopulation >= 1800 && !this.flags.has(CityFlags.B12Matters)) {

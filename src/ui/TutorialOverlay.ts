@@ -755,7 +755,15 @@ export class TutorialOverlay implements IHasDrawable {
                     text: "Education is a key factor in your citizens' happiness, but on top of that, the higher the average education level, the more research points the city earns each day. Furthermore, many high-tech buildings require a high-quality education--try to get a fully-funded College covering at least " + (Math.ceil(HIGH_TECH_UNLOCK_EDU * 100) / 100) + "% of your residences, for example, and your construction options will expand immensely.",
                 }
             });
-
+        }
+        if (this.city.flags.has(CityFlags.WaterMatters)) {
+            steps.push({
+                ...fieldsNotNeededForExtras,
+                title: "Water",
+                content: {
+                    text: "You remember how power works, right? Water works pretty much the same way. Pipes come with every building and road tile for free, it's expensive to import but takes space to produce at home, and your citizens and buildings won't behave if you don't supply them with enough. On the other hand, unlike power, you can import all the water your city needs, and your production is reduced during droughts. In fact, Rain Collectors quit working entirely during droughts, so you should have a few water towers to keep the import costs down--costs that also increase during droughts.",
+                }
+            });
         }
         if (this.city.flags.has(CityFlags.HealthcareMatters)) {
             steps.push({

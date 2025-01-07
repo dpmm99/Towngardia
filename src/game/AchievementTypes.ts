@@ -99,6 +99,7 @@ const AchievementTypes =
         if (city.flunds.consumptionRate > city.flunds.productionRate //Balanced budget check. Doesn't count whatever they sell off between ticks, but it's not too important, and it's probably better that way because constructing shouldn't count as the budget being imbalanced.
             || Object.values(city.budget.serviceAllocations).some(p => p < 1) //All budget allocations at max
             || city.lastImportedPowerCost > 0 //No power imported
+            || city.lastImportedWaterCost > 0
         ) {
             me.dataPoints = [];
             return 0;
