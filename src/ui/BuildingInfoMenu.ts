@@ -275,7 +275,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             //A bit of a mess, but do similar for power if idealPowerProduction is nonzero.
             if (idealPowerProduction) nextY = this.addProductionInfo(infoDrawable, padding, nextY, iconSize, building, barWidth, idealPowerProduction,
                 "power", "getPowerProduction", "getPowerUpkeep", this.city.desiredPower, this.city.budget.powerImportLimit, this.city.getImportPowerRate());
-            if (showWaterInfo) nextY = this.addProductionInfo(infoDrawable, padding, nextY, iconSize, building, barWidth, idealWaterProduction,
+            if (showWaterInfo) nextY = this.addProductionInfo(infoDrawable, padding, nextY, iconSize, building, barWidth, idealWaterProduction * LONG_TICKS_PER_DAY,
                 "water", "getWaterProduction", "getWaterUpkeep", this.city.desiredWater * LONG_TICKS_PER_DAY, this.city.budget.waterImportLimit, this.city.getImportWaterRate());
             if (building instanceof CityHall) nextY = this.addBudgetInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
         }
