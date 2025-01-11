@@ -122,7 +122,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
         // Upkeep costs
         const powerUpkeep = building.getPowerUpkeep(this.city, true) * this.city.powerUsageMultiplier;
-        const waterUpkeep = building.getWaterUpkeep(this.city, true);
+        const waterUpkeep = this.city.flags.has(CityFlags.WaterMatters) && building.getWaterUpkeep(this.city, true);
         const upkeepCosts = building.getUpkeep(this.city, 1);
         if (waterUpkeep) upkeepCosts.unshift({ type: 'water', amount: waterUpkeep }); //Assumes getUpkeep returns a new copy each time
         if (powerUpkeep) upkeepCosts.unshift({ type: 'power', amount: powerUpkeep }); //Same
@@ -176,6 +176,21 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                     nextY += 24 + 5;
                 }
             }
+            if (building.upkeepScales && building.x === -1) { //Show the minimum upkeep by making a new copy of the building with affectingBuildingCount and affectingCitizenCount set to 0.
+                const minBldg = building.clone();
+                minBldg.affectingBuildingCount = minBldg.affectingCitizenCount = 0;
+                const minUpkeepCosts = minBldg.getUpkeep(this.city, 1).find(p => p.type === "flunds");
+                if (minUpkeepCosts) {
+                    infoDrawable.addChild(new Drawable({
+                        x: padding,
+                        y: nextY,
+                        width: (barWidth - padding * 2) + "px",
+                        height: "24px",
+                        text: `(Minimum ${humanizeCeil(minUpkeepCosts.amount * LONG_TICKS_PER_DAY)} flunds/day)`,
+                    }));
+                    nextY += 24 + 5;
+                }
+            }
 
             nextY += padding - 5;
         }
@@ -221,7 +236,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         // Output resources
         const idealPowerProduction = building.getPowerProduction(this.city, true);
         const idealWaterProduction = building.getWaterProduction(this.city, true);
-        const showWaterInfo = idealWaterProduction || building.stores.some(p => p.type === getResourceType(Water));
+        const showWaterInfo = this.city.flags.has(CityFlags.WaterMatters) && (idealWaterProduction || building.stores.some(p => p.type === getResourceType(Water)));
         if (building.outputResources.length || idealPowerProduction || showWaterInfo) {
             infoDrawable.addChild(new Drawable({
                 x: padding,
@@ -434,12 +449,12 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
             //Warnings
             const warnings: { icon: string, text: string }[] = [];
-            if (building.getFireHazard(this.city) > building.getHighestEffect(this.city, EffectType.FireProtection)) warnings.push({ icon: "fire", text: "At risk of fires" });
+            if (this.city.flags.has(CityFlags.FireProtectionMatters) && building.getFireHazard(this.city) > building.getHighestEffect(this.city, EffectType.FireProtection)) warnings.push({ icon: "fire", text: "At risk of fires" });
             if (building.needsRoad && !building.roadConnected) warnings.push({ icon: "noroad", text: "No road access" });
             if (!building.powerConnected && building.needsPower) warnings.push({ icon: "nopower", text: "No power connection" });
-            else if (!building.powerConnected && building.needsWater) warnings.push({ icon: "nopower", text: "No water connection" });
+            else if (this.city.flags.has(CityFlags.WaterMatters) && !building.powerConnected && building.needsWater) warnings.push({ icon: "nopower", text: "No water connection" });
             if (!building.powered && building.needsPower && !building.isNew) warnings.push({ icon: "outage", text: "Not enough " + (idealPowerProduction && building.inputResources.length ? "fuel" : "power") });
-            if (!building.watered && building.needsWater && !building.isNew) warnings.push({ icon: "woutage", text: "Not enough water" });
+            if (this.city.flags.has(CityFlags.WaterMatters) && !building.watered && building.needsWater && !building.isNew) warnings.push({ icon: "woutage", text: "Not enough water" });
             if (building.damagedEfficiency < 1) warnings.push({ icon: "fire", text: "Damaged by " + (building.damageCause || "N/A") + " (" + Math.ceil(100 * (1 - building.damagedEfficiency)) + "%)" });
             if (building.businessFailed) warnings.push({ icon: "reopen", text: "Business failed" });
 

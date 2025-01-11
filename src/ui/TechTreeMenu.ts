@@ -16,6 +16,7 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
     private shown: boolean = false;
     private scrollerX = new StandardScroller(false, false);
     private scrollerY = new StandardScroller(false, true);
+    private descScroller = new StandardScroller(true, true);
     private techIconSize = 64;
     private techPadding = 20;
     private outerExtremesPadding = 200;
@@ -27,7 +28,7 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
         this.techManager = city.techManager;
     }
 
-    onResize(): void { this.scrollerX.onResize(); this.scrollerY.onResize(); }
+    onResize(): void { this.scrollerX.onResize(); this.scrollerY.onResize(); this.descScroller.onResize(); }
 
     asDrawable(): Drawable {
         if (!this.shown) return this.lastDrawable = new Drawable({ width: "0px" }); //Nothing
@@ -163,10 +164,17 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
             onClick: () => this.uiManager.hideTechMenu(),
         }));
 
-        techTreeDrawable.addChild(this.generateBottomBar());
+        const container = new Drawable({ //Separate 'parent' container makes it possible for the description to have its own scrolling
+            x: 0,
+            y: 0,
+            width: "100%",
+            height: "100%",
+            fallbackColor: '#00000000',
+        });
+        container.addChild(techTreeDrawable);
+        container.addChild(this.generateBottomBar());
         
-        this.lastDrawable = techTreeDrawable;
-        return techTreeDrawable;
+        return this.lastDrawable = container;
     }
 
     getLastDrawable(): Drawable | null {
@@ -248,12 +256,15 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
         const bar = new Drawable({
             anchors: ['bottom'],
             x: 0,
-            y: 0,
+            y: -200 + this.descScroller.getScroll(),
             width: "100%",
-            height: "200px",
+            height: "400px",
             fallbackColor: '#333333',
             id: "tech.description",
             biggerOnMobile: true,
+            scaleYOnMobile: true, //For the scrolling
+            onDrag: (x: number, y: number) => this.descScroller.handleDrag(y, bar.screenArea),
+            onDragEnd: () => this.descScroller.resetDrag(),
         });
 
         if (this.selectedTech && !this.selectedTech.researched && this.uiManager.isMyCity) {
@@ -320,6 +331,8 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
             biggerOnMobile: true,
             scaleYOnMobile: true,
         }));
+
+        this.descScroller.setChildrenSize(600); //Random guess since I don't (think I) have a way to measure the text
 
         return bar;
     }

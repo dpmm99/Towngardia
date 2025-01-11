@@ -270,7 +270,7 @@ export class AILogistics extends Tech {
         super(
             'ailogistics',
             'AI-Driven Logistics',
-            'AI systems that optimize warehouse operations, improving storage efficiency for complex goods. Requires a Data Center.',
+            'AI systems that optimize warehouse operations, improving storage efficiency for complex goods. Requires a Data Center with >50% efficiency.',
             [{ type: 'research', amount: 70 }, { type: 'electronics', amount: 80 }],
             0.03, 0.03,
             1240, 0,
@@ -278,7 +278,7 @@ export class AILogistics extends Tech {
         );
     }
     override isUnavailable(city: City): boolean {
-        return !city.buildings.some(p => p instanceof DataCenter && p.poweredTimeDuringLongTick > 0.5);
+        return !city.buildings.some(p => p instanceof DataCenter && p.lastEfficiency > 0.5);
     }
 
     override applyEffects(city: City) {
@@ -294,7 +294,7 @@ export class ThreeDPrinting extends Tech {
         super(
             '3dprinting',
             '3D Printing Facilities',
-            'Advanced manufacturing facilities that use additive processes, reducing plastic waste in production.',
+            'Advanced manufacturing facilities that use additive processes, reducing plastic waste in production and steel needs in construction.',
             [{ type: 'research', amount: 65 }, { type: 'plastics', amount: 100 }],
             0.04, 0.03,
             1000, 180,
@@ -492,7 +492,7 @@ export class ARShopping extends Tech {
         super(
             'arshopping',
             'AR Shopping Experiences',
-            'Augmented reality systems that enhance retail experiences, boosting sales and customer capacity.',
+            'Augmented reality systems that enhance retail experiences, boosting sales and customer capacity. (Note: reduces value per patron, but increases max value per tile.)',
             [{ type: 'research', amount: 65 }, { type: 'electronics', amount: 80 }],
             0.03, 0.02,
             1520, 0,
@@ -503,8 +503,8 @@ export class ARShopping extends Tech {
     applyEffects(city: City) {
         //Affects placed, unplaced, AND template buildings directly.
         for (const building of city.buildings.concat(city.unplacedBuildings).concat(city.buildingTypes).filter(p => !p.isRestaurant)) {
-            if (building.businessPatronCap !== -1) building.businessPatronCap *= 1.1;
-            building.businessValue *= 1.15;
+            if (building.businessPatronCap !== -1) building.businessPatronCap *= 1.6;
+            building.businessValue *= 1.3;
         }
     }
 }
@@ -514,7 +514,7 @@ export class FoodServiceRobots extends Tech {
         super(
             'foodbots',
             'Food Service Robots',
-            'Automated systems for food preparation and service, increasing efficiency in restaurants.',
+            'Automated systems for food preparation and service, greatly increasing efficiency in restaurants. (Note: reduces value per patron, but increases max value per tile.)',
             [{ type: 'research', amount: 75 }, { type: 'electronics', amount: 100 }],
             0.02, 0.02,
             1000, 60,
@@ -526,8 +526,8 @@ export class FoodServiceRobots extends Tech {
         //TODO: Move to a city.globalBuildingUpgrade function. Not sure about making it take effect over time with adoption rates. Could just pick random buildings each long tick until it reaches max adoption rate.
         //Affects placed, unplaced, AND template buildings directly.
         for (const building of city.buildings.concat(city.unplacedBuildings).concat(city.buildingTypes).filter(p => p.isRestaurant)) {
-            if (building.businessPatronCap !== -1) building.businessPatronCap *= 1.1;
-            building.businessValue *= 1.15;
+            if (building.businessPatronCap !== -1) building.businessPatronCap *= 1.4;
+            building.businessValue *= 1.25; //Not a valuable tech early in the game when your businesses can handle all your patrons, but it still comes out to a 30% increase when all the businesses are maxed. In return, diminishes the "10% of tourism can exceed patronage caps" value a bit.
         }
     }
 }
@@ -598,7 +598,7 @@ export class AIDiagnostics extends Tech {
         super(
             'aidiagnostics',
             'AI Diagnostics',
-            'Machine learning systems that improve diagnostic accuracy and reduce healthcare facility costs. Requires a Data Center.',
+            'Machine learning systems that improve diagnostic accuracy and reduce healthcare facility costs. Requires a Data Center with >50% efficiency.',
             [{ type: 'research', amount: 90 }, { type: 'electronics', amount: 100 }],
             0.02, 0.025,
             1520, 720,
@@ -606,7 +606,7 @@ export class AIDiagnostics extends Tech {
         );
     }
     override isUnavailable(city: City): boolean {
-        return !city.buildings.some(p => p instanceof DataCenter && p.poweredTimeDuringLongTick > 0.5);
+        return !city.buildings.some(p => p instanceof DataCenter && p.lastEfficiency > 0.5);
     }
 }
 
@@ -661,7 +661,7 @@ export class CloudSeeding extends Tech {
         super(
             'cloudseeding',
             'Cloud Seeding',
-            'Building unlock: Weather modification technique that can induce rainfall, shortening the duration of droughts and heatwaves.',
+            'Building unlock: Weather modification technique that can induce rainfall, shortening the duration of droughts, heatwaves, and cold snaps.',
             [{ type: 'research', amount: 100 }],
             1, 1,
             2120, 300,

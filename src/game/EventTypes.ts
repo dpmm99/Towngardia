@@ -603,6 +603,7 @@ export class EconomicBoom extends CityEvent {
         if (shouldStart) {
             //Pick random resources based on the player's in-stock amounts with chance based on weighted average of quantity, so it's a positive event (gives them a reason to sell off).
             this.chosenOnes = [];
+            const chosenOnesNames: string[] = [];
             const resources = Array.from(city.resources.values()).filter(p => p.capacity !== 0 && !p.isSpecial).sort((a, b) => b.amount - a.amount);
             let totalAmount = resources.reduce((sum, p) => sum + p.amount, 0);
             for (let i = 0; i < 3; i++) {
@@ -611,6 +612,7 @@ export class EconomicBoom extends CityEvent {
                     target -= resource.amount;
                     if (target <= 0) {
                         this.chosenOnes.push(resource.type);
+                        chosenOnesNames.push(resource.displayName);
                         totalAmount -= resource.amount; //Don't pick the same one twice
                         resources.splice(resources.indexOf(resource), 1);
                         break;
@@ -619,7 +621,7 @@ export class EconomicBoom extends CityEvent {
             }
 
             //Update the start message with specifics if it triggers.
-            this.startMessage = new EconomicBoom().startMessage + this.chosenOnes.join(", ") + ".";
+            this.startMessage = new EconomicBoom().startMessage + chosenOnesNames.join(", ") + ".";
         }
 
         return shouldStart;

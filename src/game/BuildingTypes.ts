@@ -265,7 +265,7 @@ export class ColdStorage extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 140 }, { type: "steel", amount: 20 }];
+        return [{ type: "flunds", amount: 140 }, { type: "steel", amount: 20 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -313,7 +313,7 @@ export class OilTank extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 90 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 90 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -367,7 +367,7 @@ export class DataCenter extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 3500 }, { type: "electronics", amount: 60 }, { type: "steel", amount: 20 }];
+        return [{ type: "flunds", amount: 3500 }, { type: "electronics", amount: 60 }, { type: "steel", amount: 20 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -398,7 +398,7 @@ export class NuclearStorage extends Building { //Should probably be required bef
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 550 }, { type: "concrete", amount: 70 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 550 }, { type: "concrete", amount: 70 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
@@ -476,7 +476,7 @@ export class CityHall extends Building {
 
         // Assign tourists and residents to businesses
         const totalPeople = population + tourists;
-        this.assignPeopleToBusinesses(city, businesses, totalPeople);
+        this.assignPeopleToBusinesses(city, businesses, totalPeople, tourists);
 
         // Calculate total revenue and update business failure counters
         let totalRevenue = 0;
@@ -495,7 +495,7 @@ export class CityHall extends Building {
         return totalRevenue;
     }
 
-    private assignPeopleToBusinesses(city: City, businesses: Business[], totalPeople: number): void {
+    private assignPeopleToBusinesses(city: City, businesses: Business[], totalPeople: number, tourists: number): void {
         let remainingPeople = totalPeople;
         const totalBusinessValue = businesses.reduce((sum, b) => sum + b.building.businessValue * b.connectedPoweredAndUpkeepEfficiency, 0);
         if (totalBusinessValue === 0 && businesses.length) throw new Error("Total business value 0 but there are businesses.");
@@ -518,6 +518,18 @@ export class CityHall extends Building {
                 remainingPeople -= additionalAssigned;
                 if (remainingPeople <= 0) break;
             }
+        }
+
+        //Third pass: assign 10% of excess tourists (assume they're assigned last) to all businesses with even proportioning PAST the patron caps.
+        let excessTouristsRemaining = Math.min(tourists, remainingPeople) * 0.1;
+        const excessTouristsTotal = excessTouristsRemaining;
+        for (const business of businesses) {
+            if (excessTouristsRemaining <= 0) break;
+            const share = (business.building.businessValue * business.connectedPoweredAndUpkeepEfficiency) / totalBusinessValue;
+            const assigned = Math.min(excessTouristsRemaining, Math.floor(excessTouristsTotal * share));
+            business.totalAssigned += assigned;
+            excessTouristsRemaining -= assigned;
+            remainingPeople -= assigned;
         }
 
         //Store the untapped business potential somewhere
@@ -614,7 +626,7 @@ export class LogisticsCenter extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 400 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 15 }];
+        return [{ type: "flunds", amount: 400 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 15 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
@@ -710,7 +722,7 @@ export class EnvironmentalLab extends Building { //Unlocked by a tech. Decreases
         this.serviceAllocationType = "environment";
     }
 
-    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1400 }, { type: "concrete", amount: 20 }, { type: "steel", amount: 10 }]; }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1400 }, { type: "concrete", amount: 20 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }]; }
 
     override isBuyable(city: City, bySpawner: boolean = false): boolean {
         //Can only have one
@@ -1000,7 +1012,7 @@ export class Dorm extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 350 }, { type: "concrete", amount: 10 }, { type: "steel", amount: 5 }];
+        return [{ type: "flunds", amount: 350 }, { type: "concrete", amount: 10 }, { type: "steel", amount: 5 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
@@ -1166,7 +1178,7 @@ export class OilPowerPlant extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 280 }, { type: "concrete", amount: 20 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 280 }, { type: "concrete", amount: 20 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -1193,7 +1205,7 @@ export class OilTruck extends Building {
         this.checkFootprint[0][0] = FootprintType.OIL_PLANT; //Must be placed on the rightmost tile of an oil power plant
     }
 
-    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 80 }, { type: "steel", amount: 5 }]; }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 80 }, { type: "steel", amount: 5 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }]; }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1.5 * (atEfficiency || city.resources.get(getResourceType(PowerCosts))!.amount) }]; }
 
@@ -1244,7 +1256,7 @@ export class CoalPowerPlant extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 400 }, { type: "concrete", amount: 25 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 400 }, { type: "concrete", amount: 25 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -1272,7 +1284,7 @@ export class CoalTruck extends Building {
         this.checkFootprint[0][0] = FootprintType.COAL_PLANT; //Must be placed on the leftmost tile of a coal power plant
     }
 
-    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 70 }, { type: "steel", amount: 3 }]; }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 70 }, { type: "steel", amount: 3 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }]; }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 1.5 * (atEfficiency || city.resources.get(getResourceType(PowerCosts))!.amount) }]; }
 
@@ -1319,7 +1331,7 @@ export class NuclearPowerPlant extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 4500 }, { type: "concrete", amount: 40 }, { type: "steel", amount: 15 }];
+        return [{ type: "flunds", amount: 4500 }, { type: "concrete", amount: 40 }, { type: "steel", amount: 15 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -1346,7 +1358,7 @@ export class NuclearFuelTruck extends Building {
         this.checkFootprint[0][0] = FootprintType.NUCLEAR_PLANT; //Must be placed on the bottom-left tile of a nuclear power plant
     }
 
-    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 180 }, { type: "concrete", amount: 5 }, { type: "steel", amount: 5 }]; }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 180 }, { type: "concrete", amount: 5 }, { type: "steel", amount: 5 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }]; }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 2.5 * (atEfficiency || city.resources.get(getResourceType(PowerCosts))!.amount) }]; }
 
@@ -1389,7 +1401,7 @@ export class FusionPowerPlant extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 7000 }, { type: "steel", amount: 50 }, { type: "electronics", amount: 20 }, { type: "lithium", amount: 10 }];
+        return [{ type: "flunds", amount: 7000 }, { type: "steel", amount: 50 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "electronics", amount: 20 }, { type: "lithium", amount: 10 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -1417,7 +1429,7 @@ export class FusionFuelTruck extends Building {
         this.checkFootprint[0][0] = FootprintType.FUSION_PLANT; //Must be placed on the rightmost tile of a fusion power plant
     }
 
-    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 150 }, { type: "steel", amount: 5 }]; }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 150 }, { type: "steel", amount: 5 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }]; }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 2 * (atEfficiency || city.resources.get(getResourceType(PowerCosts))!.amount) }]; }
 
@@ -1458,7 +1470,7 @@ export class RainCollector extends Building {
             true,
         );
         this.needsPower = this.needsRoad = false; //Not setting needsWater to false because it does at least need to be connected
-        this.storeAmount = 160000;
+        this.storeAmount = 200000;
         this.stores = [new Water(0, 0, 0, this.storeAmount)];
         this.serviceAllocationType = "water";
     }
@@ -1466,11 +1478,11 @@ export class RainCollector extends Building {
     override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 60 }, { type: "concrete", amount: 8 }]; }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
+        return [{ type: "flunds", amount: 0.75 * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
-    //Doesn't produce ANY water during a drought. Produces enough for about 32 houses (192 citizens) otherwise.
-    getWaterProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency * (city.events.some(p => p.type === "drought") ? 0 : 1)) * 8000; }
+    //Doesn't produce ANY water during a drought. Produces enough for about 40 houses (240 citizens) otherwise.
+    getWaterProduction(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency * (city.events.some(p => p.type === "drought") ? 0 : 1)) * 10000; }
 
     override onLongTick(city: City): void {
         if (city.events.some(p => p.type === "drought")) this.poweredTimeDuringLongTick = 0;
@@ -1487,15 +1499,15 @@ export class WaterTreatmentPlant extends Building {
             0.1,
             true,
         );
-        this.storeAmount = 150000; //We'll call it a little buffer
+        this.storeAmount = 200000; //We'll call it a little buffer
         this.stores = [new Water(0, 0, 0, this.storeAmount)];
         this.serviceAllocationType = "water";
     }
 
-    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 700 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 15 }]; }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 700 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 15 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }]; }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 4.25 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Intentionally negligible considering how much water it treats and how water is used by everything
+        return [{ type: "flunds", amount: 9 * (atEfficiency || this.poweredTimeDuringLongTick) }]; //Intentionally negligible considering how much water it treats and how water is used by everything
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
@@ -1511,12 +1523,12 @@ export class WaterTower extends Building {
             true,
         );
         this.needsPower = this.needsRoad = false; //Not setting needsWater to false because it does at least need to be connected
-        this.storeAmount = 720000; //enough for 864 citizens for 5 days, or 617 citizens for the duration of a drought, so 49 1x1 water towers can get 30k citizens through a drought. In reality, you probably need 1/5 that many, or 10.
+        this.storeAmount = 835000; //enough for 1k citizens for 5 days, or 714 citizens for the duration of a drought, so 43 1x1 water towers can get 30k citizens through a drought. In reality, you probably need 1/5 that many, or 9.
         this.stores = [new Water(0, 0, 0, this.storeAmount)];
         this.serviceAllocationType = "water";
     }
 
-    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 230 }, { type: "concrete", amount: 15 }, { type: "steel", amount: 5 }]; }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 230 }, { type: "concrete", amount: 15 }, { type: "steel", amount: 5 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }]; }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 0.25 * (atEfficiency || this.poweredTimeDuringLongTick) }];
@@ -1535,7 +1547,7 @@ export class GroundwaterPump extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 520 }, { type: "steel", amount: 30 }, { type: "copper", amount: 20 }];
+        return [{ type: "flunds", amount: 520 }, { type: "steel", amount: 30 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "copper", amount: 20 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -1767,7 +1779,7 @@ export class PlantMilkPlant extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 175 }, city.regionID === "volcanic" ? { type: "concrete", amount: 10 } : { type: "wood", amount: 10 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 175 }, city.regionID === "volcanic" ? { type: "concrete", amount: 10 } : { type: "wood", amount: 10 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -1790,7 +1802,7 @@ export class VerticalFarm extends Building {
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 3;
         this.areaIndicatorRounded = true;
-        this.outputResourceOptions = [Grain, RootVegetables, Berries, LeafyGreens, Legumes].map(foodType => new foodType(0, 5)); //NOTE: Production rate gets reset in onLongTick
+        this.outputResourceOptions = [Grain, RootVegetables, Apples, Berries, LeafyGreens, Legumes].map(foodType => new foodType(0, 5)); //NOTE: Production rate gets reset in onLongTick
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, -0.04)]);
         this.onlyAllowInRegions.push("plains");
     }
@@ -1821,7 +1833,7 @@ export class VerticalFarm extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 150 }, { type: "wood", amount: 15 }, { type: "steel", amount: 15 }];
+        return [{ type: "flunds", amount: 150 }, { type: "wood", amount: 15 }, { type: "steel", amount: 15 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -1850,11 +1862,11 @@ export class Carnicultivator extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 650 }, city.regionID === "volcanic" ? { type: "concrete", amount: 15 } : { type: "wood", amount: 20 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 650 }, city.regionID === "volcanic" ? { type: "concrete", amount: 15 } : { type: "wood", amount: 20 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: (3 + 1.5 * city.techManager.getAdoption('incubators')) * (atEfficiency || this.poweredTimeDuringLongTick) }];  // Example upkeep: efficiency multiplier if the population is low or the power is off
+        return [{ type: "flunds", amount: (3 + 1.5 * city.techManager.getAdoption('incubators')) * (atEfficiency || this.poweredTimeDuringLongTick) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * (6 + 8 * city.techManager.getAdoption('incubators')); }
@@ -1973,7 +1985,7 @@ export class ShaftCoalMine extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 120 }, { type: "steel", amount: 8 }];
+        return [{ type: "flunds", amount: 120 }, { type: "steel", amount: 8 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -1997,7 +2009,7 @@ export class VerticalCopperMine extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 150 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 150 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -2100,7 +2112,7 @@ export class CrystalMine extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 180 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 180 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -2124,7 +2136,7 @@ export class AssemblyHouse extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 370 }, { type: "concrete", amount: 15 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 370 }, { type: "concrete", amount: 15 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -2207,7 +2219,7 @@ export class ApparelFactory extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 200 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 200 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -2276,7 +2288,7 @@ export class PlasticsFactory extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 350 }, { type: "steel", amount: 15 }];
+        return [{ type: "flunds", amount: 350 }, { type: "steel", amount: 15 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -2307,7 +2319,7 @@ export class ToyManufacturer extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 280 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 280 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -2338,7 +2350,7 @@ export class Furnifactory extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 320 }, { type: "wood", amount: 35 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 320 }, { type: "wood", amount: 35 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -2398,7 +2410,7 @@ export class MohoMine extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1600 }, { type: "steel", amount: 40 }];
+        return [{ type: "flunds", amount: 1600 }, { type: "steel", amount: 40 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 12; }
@@ -2434,7 +2446,7 @@ export class Nanogigafactory extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 400 }, { type: "steel", amount: 15 }];
+        return [{ type: "flunds", amount: 400 }, { type: "steel", amount: 15 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -2465,7 +2477,7 @@ export class PharmaceuticalsLab extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 550 }, { type: "steel", amount: 15 }, { type: "glass", amount: 10 }];
+        return [{ type: "flunds", amount: 550 }, { type: "steel", amount: 15 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "glass", amount: 10 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -2509,7 +2521,7 @@ export class SpaceLaunchSite extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 11000 }, { type: "steel", amount: 30 }, { type: "electronics", amount: 40 }];
+        return [{ type: "flunds", amount: 11000 }, { type: "steel", amount: 30 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "electronics", amount: 40 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -2942,7 +2954,7 @@ export class CartersCars extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 700 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 20 }, { type: "glass", amount: 10 }];
+        return [{ type: "flunds", amount: 700 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 20 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "glass", amount: 10 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
@@ -2968,7 +2980,7 @@ export class GameDevStudio extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 700 }, { type: "steel", amount: 30 }, { type: "electronics", amount: 20 }];
+        return [{ type: "flunds", amount: 700 }, { type: "steel", amount: 30 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "electronics", amount: 20 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 16; }
@@ -2993,7 +3005,7 @@ export class BlankCheckBank extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 980 }, { type: "stone", amount: 25 }, { type: "steel", amount: 15 }];
+        return [{ type: "flunds", amount: 980 }, { type: "stone", amount: 25 }, { type: "steel", amount: 15 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
@@ -3024,7 +3036,7 @@ export class ResortHotel extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1500 }, { type: "steel", amount: 25 }, { type: "glass", amount: 15 }];
+        return [{ type: "flunds", amount: 1500 }, { type: "steel", amount: 25 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "glass", amount: 15 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 35; }
@@ -3089,7 +3101,7 @@ export class ConventionCenter extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 2200 }, { type: "steel", amount: 30 }, { type: "glass", amount: 20 }];
+        return [{ type: "flunds", amount: 2200 }, { type: "steel", amount: 30 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "glass", amount: 20 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 22; }
@@ -3708,7 +3720,7 @@ export class Portal extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 16000 }, { type: "steel", amount: 80 }, { type: "electronics", amount: 50 }, { type: "gemstones", amount: 50 }]; 
+        return [{ type: "flunds", amount: 16000 }, { type: "steel", amount: 80 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "electronics", amount: 50 }, { type: "gemstones", amount: 50 }]; 
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 250; }
@@ -3804,7 +3816,7 @@ export class PoliceUAVHub extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 620 }, { type: "batteries", amount: 15 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 620 }, { type: "batteries", amount: 15 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     //Doesn't cost the maximum amount of upkeep unless there are 10 buildings in the area.
@@ -4087,8 +4099,8 @@ export class College extends Building {
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         const budgetAndEfficiency = city.budget.serviceAllocations[this.serviceAllocationType] * (atEfficiency || this.poweredTimeDuringLongTick);
-        return [{ type: "flunds", amount: 0.08 * budgetAndEfficiency * Math.max(1, this.affectingBuildingCount) },
-            { type: "flunds", amount: 0.006 * budgetAndEfficiency * Math.max(1, this.affectingCitizenCount) }];
+        return [{ type: "flunds", amount: 0.08 * budgetAndEfficiency * Math.max(25, this.affectingBuildingCount) },
+            { type: "flunds", amount: 0.006 * budgetAndEfficiency * Math.max(2000, this.affectingCitizenCount) }];
     }
 
     override getEfficiencyEffectMultiplier(city: City): number { return city.budget.serviceAllocations[this.serviceAllocationType] ** 2; }
@@ -4146,7 +4158,7 @@ export class Observatory extends Building {
         this.outputResources.push(new Research(0, 0.0375)); //0.15 a day
     }
 
-    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 780 }, { type: "steel", amount: 20 }, { type: "glass", amount: 15 }, { type: "electronics", amount: 10 }]; }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 780 }, { type: "steel", amount: 20 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "glass", amount: 15 }, { type: "electronics", amount: 10 }]; }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] { return [{ type: "flunds", amount: 7 * (atEfficiency || this.poweredTimeDuringLongTick) }]; }
 
@@ -4183,7 +4195,7 @@ export class QuantumComputingLab extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1400 }, { type: "steel", amount: 30 }, { type: "electronics", amount: 30 }];
+        return [{ type: "flunds", amount: 1400 }, { type: "steel", amount: 30 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "electronics", amount: 30 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -4208,7 +4220,7 @@ export class WeatherControlMachine extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 2400 }, { type: "electronics", amount: 50 }, { type: "steel", amount: 30 }, { type: "copper", amount: 30 }];
+        return [{ type: "flunds", amount: 2400 }, { type: "electronics", amount: 50 }, { type: "steel", amount: 30 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "copper", amount: 30 }];
     }
 
     override onLongTick(city: City): void {
@@ -4618,7 +4630,7 @@ export class TourksTrekkers extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 750 }, { type: "steel", amount: 25 }, { type: "concrete", amount: 20 }, { type: "glass", amount: 15 }];
+        return [{ type: "flunds", amount: 750 }, { type: "steel", amount: 25 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "concrete", amount: 20 }, { type: "glass", amount: 15 }];
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
@@ -4648,7 +4660,7 @@ export class RedGreenhouse extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 300 }, { type: "wood", amount: 20 }, { type: "steel", amount: 20 }];
+        return [{ type: "flunds", amount: 300 }, { type: "wood", amount: 20 }, { type: "steel", amount: 20 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -4674,7 +4686,7 @@ export class VerticalTreeFarm extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 400 }, { type: "wood", amount: 30 }, { type: "steel", amount: 20 }, { type: "sulfur", amount: 10 }];
+        return [{ type: "flunds", amount: 400 }, { type: "wood", amount: 30 }, { type: "steel", amount: 20 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "sulfur", amount: 10 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -4708,7 +4720,7 @@ export class EnclosedRanch extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 500 }, { type: "wood", amount: 40 }, { type: "steel", amount: 30 }];
+        return [{ type: "flunds", amount: 500 }, { type: "wood", amount: 40 }, { type: "steel", amount: 30 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -4791,7 +4803,7 @@ export class VolcanoIronMine extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 300 }, { type: "steel", amount: 20 }];
+        return [{ type: "flunds", amount: 300 }, { type: "steel", amount: 20 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -4865,7 +4877,7 @@ export class Tumbler extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 350 }, { type: "steel", amount: 25 }];
+        return [{ type: "flunds", amount: 350 }, { type: "steel", amount: 25 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -4888,7 +4900,7 @@ export class PowderMill extends Building {
         this.onlyAllowInRegions.push("volcanic");
     }
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 430 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 10 }];
+        return [{ type: "flunds", amount: 430 }, { type: "concrete", amount: 30 }, { type: "steel", amount: 10 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
         return [{ type: "flunds", amount: 0.5 * (atEfficiency || this.poweredTimeDuringLongTick) }];
@@ -4912,7 +4924,7 @@ export class Geolab extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 1000 }, { type: "steel", amount: 30 }, { type: "electronics", amount: 20 }];
+        return [{ type: "flunds", amount: 1000 }, { type: "steel", amount: 30 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "electronics", amount: 20 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -4939,7 +4951,7 @@ export class HazmatStorage extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 500 }, { type: "steel", amount: 20 }];
+        return [{ type: "flunds", amount: 500 }, { type: "steel", amount: 20 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {
@@ -5031,7 +5043,7 @@ export class DroneDoc extends Building {
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
-        return [{ type: "flunds", amount: 400 }, { type: "steel", amount: 20 }, { type: "electronics", amount: 10 }];
+        return [{ type: "flunds", amount: 400 }, { type: "steel", amount: 20 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "electronics", amount: 10 }];
     }
 
     override getUpkeep(city: City, atEfficiency: number = 0): { type: string, amount: number }[] {

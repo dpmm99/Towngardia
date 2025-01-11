@@ -347,6 +347,7 @@ export class Database implements IStorage {
 
     async assistFriend(playerId: string, friendId: string, assists: Assist[]): Promise<void> { //Note: NOT an atomic operation. Some data could be lost (but unlikely due to the sub-second completion time)
         const existingAssists = await this.getAssistsToUpdate(playerId, friendId);
+        if (existingAssists.length > 25) return; //Stop queueing up assists if that player isn't playing.
         existingAssists.push(...assists);
         await this.replaceAssists(playerId, friendId, existingAssists);
     }

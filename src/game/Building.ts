@@ -450,7 +450,7 @@ export class Building implements IHasDrawable {
             //Consume the necessary amount from inputs.
             this.inputResources.forEach(resource => {
                 let amount = resource.consumptionRate * this.lastEfficiency;
-                if (resource.type === "plastics") amount *= 1 - 0.2 * city.techManager.getAdoption("3dprinting");
+                if (resource.type === "plastics") amount *= 1 - 0.5 * city.techManager.getAdoption("3dprinting");
                 resource.consume(amount);
             });
 

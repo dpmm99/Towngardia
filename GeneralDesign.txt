@@ -47,10 +47,9 @@ Otherwise, I'm pretty well down to just making buildings, events, techs, and tit
 
 Coolest open ideas:
 Sort businesses by patron value (or maybe do a fixed sort order for all building types, but need an indicator to show which ones are newly unlocked). Also, nothing shows the buff sources.
-In medium to large cities (>~15% map coverage), I really need tourism to be more meaningful and taxes to have some diminishing returns--after playing for 1.5 months, I'm earning a surplus of 2k a day but have >1700 citizens with nowhere to shop, not to mention the completely untapped tourists. Current ideas for fixing that:
+In medium to large cities (>~15% map coverage), I really need taxes to have some diminishing returns--after playing for 1.5 months, I'm earning a surplus of 2k a day but have >1700 citizens with nowhere to shop. Current ideas for fixing that:
 	a "basements" tech to further increase businesses' customer capacities (and value, but not quite proportionally, maybe like 0.5x-0.8x as much)
 	apply a diminishing returns formula to income tax (maybe the first residents are all rich and the later immigrants get more and more poor and there's a standard deduction ;))
-	give tourism a second effect, like increasing patronage caps a bit or allowing a fraction of tourism to exceed the patronage caps
 	make research also cost a lot of flunds, like 100x the research points for early techs and 1000x for later techs
 	more negative events, such as implementing the mechanical failures idea I listed below
 	could also make some techs decrease the spawn chance/limit and increase costs (at least those that aren't specifically meant to do the opposite):
@@ -60,7 +59,7 @@ In medium to large cities (>~15% map coverage), I really need tourism to be more
 		Food Service Robots would increase patron cap (and could also increase business presence) but increase value less than proportionally
 		AI Driven Logistics would increase warehouse power usage and upkeep
 		Telemedicine Infrastructure, VR Classrooms, Nanomedicine Research, Brain-Computer Interface could all increase service upkeep costs
-			However, I'm filling the map MUCH faster than I'm able to research techs... actually might raise construction costs (maybe including resources) to slow down the building a bit. I have 9 researched at 17k population with a 3.2k flunds surplus and 8k untapped patronage right now.
+			However, I'm filling the map MUCH faster than I'm able to research techs... actually might raise construction costs (maybe including resources) to slow down the building a bit. I have 9 researched at 17k population with a 3.2k flunds surplus and 8k untapped patronage right now. (Part of that was caused by a few research rate bugs.)
 	minigame reward upgrades--spend a lot of flunds for a small increase to the non-flunds rewards from a minigame
 	more services--other than water and trash that I still intended to eventually add, there could be cemeteries, homeless shelters, courthouses, employment offices, intelligence agencies, military, occasional grant requests from colleges, consumer and environment protection agencies, scholarship programs...
 Advisor button that suggests what your city needs the most--businesses, factories, services, decorations, time, space, spread, research, friends, minigame skill, less road, special unlocks

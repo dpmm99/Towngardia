@@ -12,7 +12,7 @@ import { CityFlags } from "./CityFlags.js";
 import { Effect } from "./Effect.js";
 import { Drought, EVENT_TYPES, EmergencyPowerAid, Epidemic, PowerOutage, ResearchReward } from "./EventTypes.js";
 import { FootprintType } from "./FootprintType.js";
-import { LONG_TICKS_PER_DAY, SHORT_TICKS_PER_LONG_TICK } from "./FundamentalConstants.js";
+import { LONG_TICK_TIME, LONG_TICKS_PER_DAY, SHORT_TICKS_PER_LONG_TICK } from "./FundamentalConstants.js";
 import { GameState } from "./GameState.js";
 import { GREENHOUSE_GASES_MIN_POPULATION } from "./GameplayConstants.js";
 import { EffectType } from "./GridType.js";
@@ -1433,6 +1433,7 @@ export class City {
         this.runAssists();
         this.runEvents(EventTickTiming.Normal);
         if (!this.timeFreeze) this.checkStartEvents(); //Events won't start if the tutorial is running
+        this.checkPopulationUnlocks(); //The last thing we do--and we'll only do it if the city processing is caught up, so we don't surprise the player with a dead city if they were offline a while
     }
 
     private distributeResource(resourceType: "power" | "water", desiredAmount: number, importLimit: number,
@@ -1533,7 +1534,7 @@ export class City {
     }
 
     getImportWaterRate(): number {
-        let rate = 0.0000017; //also multiplied by 72x4=288 flunds per 1 unit of water--so 0.4896 a day per kL, and we'll make one house use 1kL a day. Factories should also generally use <=1kL at that rate. Factories will use VERY little compared to reality.
+        let rate = 0.0000022; //also multiplied by 72x4=288 flunds per 1 unit of water--so 0.6336 a day per kL, and we'll make one house use 1kL a day. Factories should also generally use <=1kL at that rate. Factories will use VERY little compared to reality.
         if (this.events.some(e => e instanceof Drought)) rate *= 1.4;
         return rate;
     }
@@ -1766,6 +1767,7 @@ export class City {
     }
 
     runEvents(tickTiming: EventTickTiming) {
+        if (this.timeFreeze) return; //Don't run any events while in the tutorial. Don't want to confuse the player that soon.
         this.events.filter(p => p.tickTiming === tickTiming).forEach(p => {
             if (!p.onLongTick(this)) { //true = keep it going
                 this.events.splice(this.events.indexOf(p), 1); //Remove when the event is done.
@@ -1790,8 +1792,8 @@ export class City {
         }
     }
 
-    updateHappiness() {
-        const happiness = this.resources.get("happiness")!;
+    checkPopulationUnlocks() {
+        if (Date.now() - this.lastLongTick >= LONG_TICK_TIME) return; //Won't trigger while fast-forwarding because MOST of them have negative effects--don't want to tell the player, "Oh, by the way, you needed to do this new thing weeks ago, but now your city's gone."
 
         //Trigger notifications and unlock buildings when the city reaches certain population thresholds. Should actually trigger tutorials.
         if (this.peakPopulation >= 100 && !this.flags.has(CityFlags.PoliceProtectionMatters)) {
@@ -1905,7 +1907,10 @@ export class City {
             this.uiManager?.updateTutorialSteps();
             this.resources.get(new ResourceTypes.GreenhouseGases().type)!.amount = this.getCityAverageGreenhouseGases() * 0.1;
         }
+    }
 
+    updateHappiness() {
+        const happiness = this.resources.get("happiness")!;
         const target = new HappinessCalculator(this).calculateHappiness(); //Results in a value between 0 and 1. We want to adjust this a bit faster in the negative than the positive direction.
         const change = target - happiness.amount;
         happiness.amount += change > 0 ? change * 0.1 : change * 0.2; //Happiness drops twice as fast as it rises. This speaks to the persistent effects of unpleasant events. ;)
