@@ -379,6 +379,11 @@ export class DataCenter extends Building {
     }
 
     override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1000; }
+
+    override onLongTick(city: City): void {
+        super.onLongTick(city);
+        if (!city.flags.has(CityFlags.DataAvailable) && this.lastEfficiency > 0.9) city.flags.add(CityFlags.DataAvailable);
+    }
 }
 
 export class NuclearStorage extends Building { //Should probably be required before you can build any nuclear power plant, 'cuz the waste has to have a place to go!
@@ -568,11 +573,12 @@ export class InformationCenter extends Building {
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
 
-        //Make the city able to receive tourists. No need to run this on every place() call, but it's okay because it's directly setting capacity, not adding to it.
-        const resource = new Tourists();
-        const cityResource = city.resources.get(resource.type);
-        if (cityResource) cityResource.capacity = Number.MAX_SAFE_INTEGER;
-        else city.resources.set(resource.type, resource.clone({ capacity: Number.MAX_SAFE_INTEGER })); //Note: the city should have all resources from the start
+        //Make the city able to receive tourists
+        if (!city.flags.has(CityFlags.UnlockedTourism)) {
+            city.flags.add(CityFlags.UnlockedTourism);
+            const cityResource = city.resources.get(getResourceType(Tourists))!;
+            cityResource.capacity = Number.MAX_SAFE_INTEGER;
+        }
     }
 }
 
@@ -791,7 +797,7 @@ export class MinigameMinilab extends Building { //Could make it cost paper or to
         if (city.flags.has(CityFlags.UnlockedSlots)) unlockedMinigames.push(new SlotsPlays());
         if (city.flags.has(CityFlags.UnlockedStarbox)) unlockedMinigames.push(new StarboxPlays());
         if (city.flags.has(CityFlags.UnlockedMonobrynth)) unlockedMinigames.push(new MonobrynthPlays());
-        if (city.flags.has(CityFlags.UnlockedTourism)) unlockedMinigames.push(new NepotismNetworkingPlays());
+        if (city.flags.has(CityFlags.UnlockedInformationCenter)) unlockedMinigames.push(new NepotismNetworkingPlays());
         const resource = unlockedMinigames[Math.floor(Math.random() * unlockedMinigames.length)];
         city.resources.get(resource.type)!.produce(0.1 * this.lastEfficiency); //2.5 days for one extra token.
 
@@ -3667,8 +3673,9 @@ export class MuseumOfFutureArts extends Building { //Unlocked by Quantum Computi
 
     override onLongTick(city: City): void {
         super.onLongTick(city);
-        if (this.outputResources[0].amount > 150 && Math.random() < 0.1 * this.lastEfficiency && city.buildingTypes.find(p => p.type === getBuildingType(SandsOfTime))?.locked) {
+        if (this.outputResources[0].amount > 150 && Math.random() < 0.1 * this.lastEfficiency && !city.flags.has(CityFlags.UnlockedSandsOfTime)) {
             city.unlock(getBuildingType(SandsOfTime));
+            city.flags.add(CityFlags.UnlockedSandsOfTime);
             city.notify(new Notification("Illusion of Time", "The Museum of Future Arts has discovered alien technology that can manipulate time! You can now build Sands of Time monuments from the Luxury construction category.", "fastforwardnobg"));
         }
     }
@@ -3697,8 +3704,9 @@ export class SandsOfTime extends Building { //Unlocked by having Museum of Futur
     //Similar to Museum of Future Arts, random chance for unlocking Portal after Sands of Time has been unlocked
     override onLongTick(city: City): void {
         super.onLongTick(city);
-        if (Math.random() < 0.1 * this.lastEfficiency && city.buildingTypes.find(p => p.type === getBuildingType(Portal))?.locked) {
+        if (Math.random() < 0.1 * this.lastEfficiency && !city.flags.has(CityFlags.UnlockedPortal)) {
             city.unlock(getBuildingType(Portal));
+            city.flags.add(CityFlags.UnlockedPortal);
             city.notify(new Notification("Other Worlds", "Through happy accidents at the Sands of Time monument, we unlocked the secrets of the universe! The multiverse, even! You can now build a Portal from the Luxury construction category. Check the achievements menu to see how Portals relate to the Plains and Astral Planes achievement, which unlocks the Realms and Regions feature so you can start new cities beyond the Towngardian Plains.", "fastforwardnobg"));
         }
     }
@@ -4188,8 +4196,9 @@ export class QuantumComputingLab extends Building {
         }
 
         //Teleportation Pod unlocked and Museum of Future Arts locked -> 10% chance per long tick to unlock Museum of Future Arts
-        if (this.outputResources[0].amount > 200 && Math.random() < 0.1 * this.lastEfficiency && !city.buildingTypes.find(p => p.type === getBuildingType(TeleportationPod))?.locked && city.buildingTypes.find(p => p.type === getBuildingType(MuseumOfFutureArts))?.locked) {
+        if (this.outputResources[0].amount > 200 && Math.random() < 0.1 * this.lastEfficiency && city.flags.has(CityFlags.UnlockedTeleportationPod) && !city.flags.has(CityFlags.UnlockedMuseumOfFutureArts)) {
             city.unlock(getBuildingType(MuseumOfFutureArts));
+            city.flags.add(CityFlags.UnlockedMuseumOfFutureArts);
             city.notify(new Notification("Particle Accelerator Accident", "Thanks to what we're legally required to call an 'unexpected synergistic intersection of experimental technologies' (but was actually just an intern trying to teleport his lunch while the particle accelerator was running and someone was using the quantum computer to mine cryptocurrency), we now have access to art from approximately 47 years in the future. The good news: temporal art tourism is now possible! The bad news: future art critics are still just as pretentious. You can now build the Museum of Future Arts from the Luxury construction category.", "luxury"));
         }
     }

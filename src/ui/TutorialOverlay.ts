@@ -729,7 +729,7 @@ export class TutorialOverlay implements IHasDrawable {
                 }
             });
         }
-        if (this.city.flags.has(CityFlags.UnlockedTourism)) {
+        if (this.city.flags.has(CityFlags.UnlockedInformationCenter)) {
             steps.push({
                 ...fieldsNotNeededForExtras,
                 title: "Tourism",

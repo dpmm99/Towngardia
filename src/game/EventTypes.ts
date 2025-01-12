@@ -397,6 +397,7 @@ export class Earthquake extends CityEvent {
                     city.addBuilding(vent, x, y);
                     this.affectedBuildings.push(vent);
                     this.startMessage += " The earthquake formed a new geothermal vent in the region, which could be a source of cheap, reliable, eco-friendly power.";
+                    city.flags.add(CityFlags.GeothermalAvailable);
                 }
             }
 

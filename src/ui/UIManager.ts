@@ -33,6 +33,7 @@ import { HappinessFactorsWindow } from "./HappinessFactorsWindow.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
 import { MainMenu } from "./MainMenu.js";
+import { MilestonesMenu } from "./MilestonesMenu.js";
 import { NotificationsMenu } from "./NotificationsMenu.js";
 import { ResourcesBar } from "./ResourcesBar.js";
 import { RightBar } from "./RightBar.js";
@@ -55,6 +56,7 @@ export class UIManager {
     private contextMenu!: ContextMenu;
     private mainMenu!: MainMenu;
     private techMenu!: TechTreeMenu;
+    private milestonesMenu!: MilestonesMenu;
     private budgetMenu!: BudgetMenu;
     private citizenDietWindow!: CitizenDietWindow;
     private achievementsMenu!: AchievementsMenu;
@@ -174,6 +176,7 @@ export class UIManager {
 
         //Full-screen views
         this.techMenu = new TechTreeMenu(newCity, this);
+        this.milestonesMenu = new MilestonesMenu(newCity, this);
         this.friendsMenu = new FriendsMenu(this.game.player!, this);
         this.budgetMenu = new BudgetMenu(newCity, this);
         this.achievementsMenu = new AchievementsMenu(owner, newCity, this);
@@ -342,6 +345,17 @@ export class UIManager {
     }
     hideTechMenu() {
         this.techMenu.hide();
+        this.hideMinigame();
+    }
+
+    async showMilestonesMenu() {
+        game.onLoadStart?.();
+        await this.milestonesMenu.preloadImages();
+        game.onLoadEnd?.();
+        this.showFullScreen(this.milestonesMenu);
+    }
+    hideMilestonesMenu() {
+        this.milestonesMenu.hide();
         this.hideMinigame();
     }
 
@@ -651,6 +665,7 @@ export class UIManager {
     resourcesBarShown() { return this.resourcesBar.isShown(); }
     viewsBarShown() { return this.viewsBar.shown; }
     techMenuShown() { return this.techMenu.isShown(); }
+    milestonesMenuShown() { return this.milestonesMenu.isShown(); } //TODO: May want a tutorial step for that
     isProvisioning() { return this.cityView instanceof ProvisioningView; }
     isConstructing() { return this.isConstructionMode; }
     inTutorial() { return this.tutorialOverlay.isShown(); }
@@ -909,11 +924,71 @@ export class UIManager {
         if (this.renderOnlyWindow && 'onResize' in this.renderOnlyWindow) (this.renderOnlyWindow as IOnResizeEvent).onResize();
     }
 
+    private endDrag() {
+        // Start momentum scrolling
+        let lastTime = Date.now();
+        const startVelocityX = this.dragVelocityX;
+        const startVelocityY = this.dragVelocityY;
+        const friction = 0.97; // Adjust this value to change how quickly scrolling slows down
+        let velocityMultiplier = 1;
+        const minVelocity = 0.03; // Minimum velocity before stopping (per millisecond)
+        const draggingElem = this.draggingElem;
+        const expectedFrameRate = 16; // Roughly 60fps, but we don't KNOW the browser's actual frame rate
+        let dragX = this.lastX;
+        let dragY = this.lastY;
+
+        const momentumStep = () => {
+            const elapsed = Date.now() - lastTime;
+            lastTime = Date.now();
+            velocityMultiplier *= Math.pow(friction, elapsed / expectedFrameRate);
+            const currentVelocityX = startVelocityX * velocityMultiplier;
+            const currentVelocityY = startVelocityY * velocityMultiplier;
+
+            if (Math.abs(currentVelocityX) < 2 && Math.abs(currentVelocityY) < 2) { //Extra deceleration when it's going slow, because I didn't like the purely exponential formula--took too long to stop completely.
+                velocityMultiplier = Math.max(0, velocityMultiplier - 0.01 * elapsed / expectedFrameRate);
+            }
+
+            // Stop if velocity is too low or new touch/click started
+            if (Math.abs(currentVelocityX) < minVelocity && Math.abs(currentVelocityY) < minVelocity
+                //progress >= 1
+                || this.momentumAnimationId === null) { //In a perfect world, the draggingElem.onDragEnd would be called instantly at the beginning of the next touchstart/mousedown call
+                this.momentumAnimationId = null;
+                if (draggingElem?.onDragEnd) draggingElem.onDragEnd();
+                return;
+            }
+
+            // Apply momentum movement
+            if (!draggingElem) {
+                this.offsetX += -(currentVelocityX * expectedFrameRate) / this.scale;
+                this.offsetY += -(currentVelocityY * expectedFrameRate) / this.scale;
+            } else if (draggingElem.onDrag) {
+                dragX += currentVelocityX * expectedFrameRate;
+                dragY += currentVelocityY * expectedFrameRate;
+                draggingElem.onDrag?.(dragX, dragY); //Have to be positions, not velocities
+            }
+            this.requestRedraw();
+            this.momentumAnimationId = requestAnimationFrame(momentumStep);
+        };
+
+        // Only start momentum if there's enough velocity
+        if (Math.abs(startVelocityX) > minVelocity * 10 || Math.abs(startVelocityY) > minVelocity * 10) { //Initial velocity has to be much higher than min velocity after momentum scrolling starts.
+            this.momentumAnimationId = requestAnimationFrame(momentumStep);
+        } else {
+            if (this.draggingElem?.onDragEnd) this.draggingElem.onDragEnd();
+        }
+
+        this.isDragging = false;
+        this.draggingElem = null;
+    }
+
     private onMouseDown(e: MouseEvent) {
         this.initialX = e.clientX * DEVICE_PIXEL_RATIO;
         this.initialY = e.clientY * DEVICE_PIXEL_RATIO;
         this.lastX = this.initialX;
         this.lastY = this.initialY;
+
+        // Cancel any existing momentum animation
+        if (this.momentumAnimationId !== null) this.momentumAnimationId = null; //Will be cancelled by the next frame (because it has a local variable that needs onEndDrag to be called at the moment)
     }
 
     //Stationary long-tap or right-click to open another menu for a building, which contains a 'move' button and a 'store' button...except roads, which should let you store the whole X or Y series.
@@ -938,13 +1013,6 @@ export class UIManager {
         }
         return false;
     }
-
-    private endDrag() {
-        this.isDragging = false;
-        if (this.draggingElem?.onDragEnd) this.draggingElem.onDragEnd();
-        this.draggingElem = null;
-    }
-
     private onMouseMove(e: MouseEvent) {
         this.repositionConstructionOverlay(e.clientX * DEVICE_PIXEL_RATIO, e.clientY * DEVICE_PIXEL_RATIO);
 
@@ -957,16 +1025,17 @@ export class UIManager {
 
         if (e.buttons === 0 && this.isDragging) this.endDrag(); //If the mouse button is released outside the window, we should stop dragging
         if (this.isDragging) {
+            const dx = e.clientX * DEVICE_PIXEL_RATIO - this.lastX;
+            const dy = e.clientY * DEVICE_PIXEL_RATIO - this.lastY;
+            this.lastX = e.clientX * DEVICE_PIXEL_RATIO;
+            this.lastY = e.clientY * DEVICE_PIXEL_RATIO;
+            this.calculateDragVelocity(dx, dy);
             if (!this.draggingElem) {
-                const dx = e.clientX * DEVICE_PIXEL_RATIO - this.lastX;
-                const dy = e.clientY * DEVICE_PIXEL_RATIO - this.lastY;
                 this.offsetX += -dx / this.scale; //Inverted dx and dy because dragging the mouse right should move the camera right, not move the world right. This is opposite the behavior of the touch events.
                 this.offsetY += -dy / this.scale;
-                this.lastX = e.clientX * DEVICE_PIXEL_RATIO;
-                this.lastY = e.clientY * DEVICE_PIXEL_RATIO;
                 this.requestRedraw();
             } else if (this.draggingElem.onDrag) {
-                this.draggingElem.onDrag(e.clientX * DEVICE_PIXEL_RATIO, e.clientY * DEVICE_PIXEL_RATIO);
+                this.draggingElem.onDrag(this.lastX, this.lastY);
                 this.requestRedraw();
             }
         }
@@ -1010,7 +1079,50 @@ export class UIManager {
             this.isDragging = false;
         }
         if (e.touches.length > 1 || (e.touches.length > 0 && e.touches[0].clientY > 10)) e.preventDefault();
+
+        // Cancel any existing momentum animation
+        if (this.momentumAnimationId !== null) this.momentumAnimationId = null; //Will be cancelled by the next frame (because it has a local variable that needs onEndDrag to be called at the moment)
+
         this.requestRedraw();
+    }
+
+    private lastDragTime: number = 0;
+    private readonly DRAG_VELOCITY_HISTORY_SIZE = 5; // Keep last 5 velocity samples
+    private dragVelocityHistoryX: number[] = [];
+    private dragVelocityHistoryY: number[] = [];
+    private dragVelocityX: number = 0;
+    private dragVelocityY: number = 0;
+    private momentumAnimationId: number | null = null;
+
+    private calculateDragVelocity(dx: number, dy: number) {
+        const timeElapsed = Date.now() - this.lastDragTime;
+        this.lastDragTime = Date.now();
+        if (timeElapsed > 0 && timeElapsed < 500) { // Calculate velocity in pixels per millisecond
+            const currentVelocityX = dx / timeElapsed;
+            const currentVelocityY = dy / timeElapsed;
+
+            // Add to history, maintain fixed size
+            this.dragVelocityHistoryX.push(currentVelocityX);
+            this.dragVelocityHistoryY.push(currentVelocityY);
+            if (this.dragVelocityHistoryX.length > this.DRAG_VELOCITY_HISTORY_SIZE) {
+                this.dragVelocityHistoryX.shift();
+                this.dragVelocityHistoryY.shift();
+            }
+
+            // Calculate weighted average favoring more recent samples--I do this to deal with the unstable positions caused by lifting a finger off of a touchscreen
+            let totalWeight = 0;
+            let sumX = 0;
+            let sumY = 0;
+            for (let i = 0; i < this.dragVelocityHistoryX.length; i++) {
+                const weight = i + 1; // More recent samples get higher weight
+                totalWeight += weight;
+                sumX += this.dragVelocityHistoryX[i] * weight;
+                sumY += this.dragVelocityHistoryY[i] * weight;
+            }
+
+            this.dragVelocityX = sumX / totalWeight;
+            this.dragVelocityY = sumY / totalWeight;
+        } else this.dragVelocityX = this.dragVelocityY = this.dragVelocityHistoryX.length = this.dragVelocityHistoryY.length = 0;
     }
 
     private onTouchMove(e: TouchEvent) {
@@ -1023,16 +1135,18 @@ export class UIManager {
             }
 
             if (this.isDragging) {
+                const dx = e.touches[0].clientX * DEVICE_PIXEL_RATIO - this.lastX;
+                const dy = e.touches[0].clientY * DEVICE_PIXEL_RATIO - this.lastY;
+                this.lastX = e.touches[0].clientX * DEVICE_PIXEL_RATIO;
+                this.lastY = e.touches[0].clientY * DEVICE_PIXEL_RATIO;
+                this.calculateDragVelocity(dx, dy);
+
                 if (!this.draggingElem) {
-                    const dx = e.touches[0].clientX * DEVICE_PIXEL_RATIO - this.lastX;
-                    const dy = e.touches[0].clientY * DEVICE_PIXEL_RATIO - this.lastY;
                     this.offsetX += -dx / this.scale;
                     this.offsetY += -dy / this.scale;
-                    this.lastX = e.touches[0].clientX * DEVICE_PIXEL_RATIO;
-                    this.lastY = e.touches[0].clientY * DEVICE_PIXEL_RATIO;
                     this.requestRedraw();
                 } else if (this.draggingElem.onDrag) {
-                    this.draggingElem.onDrag(e.touches[0].clientX * DEVICE_PIXEL_RATIO, e.touches[0].clientY * DEVICE_PIXEL_RATIO);
+                    this.draggingElem.onDrag(this.lastX, this.lastY);
                     this.requestRedraw();
                 }
             }

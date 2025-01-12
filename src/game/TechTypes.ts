@@ -278,7 +278,7 @@ export class AILogistics extends Tech {
         );
     }
     override isUnavailable(city: City): boolean {
-        return !city.buildings.some(p => p instanceof DataCenter && p.lastEfficiency > 0.5);
+        return !city.buildings.some(p => p instanceof DataCenter && p.lastEfficiency > 0.9);
     }
 
     override applyEffects(city: City) {
@@ -606,7 +606,7 @@ export class AIDiagnostics extends Tech {
         );
     }
     override isUnavailable(city: City): boolean {
-        return !city.buildings.some(p => p instanceof DataCenter && p.lastEfficiency > 0.5);
+        return !city.buildings.some(p => p instanceof DataCenter && p.lastEfficiency > 0.9);
     }
 }
 

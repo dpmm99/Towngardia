@@ -77,7 +77,7 @@ export class Drawable {
 
     //Width of the image as it should be drawn (or parent width if no image)
     getWidth(sprite: any, parentWidth: number) {
-        return (cssDimToPixels(this.width, parentWidth, this.biggerOnMobile) ?? this.getNaturalWidth(sprite, parentWidth)) * (this.biggerOnMobile && this.width?.endsWith("px") ? BIGGER_MOBILE_RATIO : 1);
+        return (cssDimToPixels(this.width, parentWidth, this.biggerOnMobile) ?? this.getNaturalWidth(sprite, parentWidth)) * (this.biggerOnMobile && (this.width?.endsWith("px") || !this.width) ? BIGGER_MOBILE_RATIO : 1);
     }
 
     getNaturalHeight(sprite: any, parentHeight: number) {
@@ -85,7 +85,7 @@ export class Drawable {
     }
 
     getHeight(sprite: any, parentHeight: number) {
-        return (cssDimToPixels(this.height, parentHeight, this.biggerOnMobile) ?? this.getNaturalHeight(sprite, parentHeight)) * (this.biggerOnMobile && this.height?.endsWith("px") ? BIGGER_MOBILE_RATIO : 1);
+        return (cssDimToPixels(this.height, parentHeight, this.biggerOnMobile) ?? this.getNaturalHeight(sprite, parentHeight)) * (this.biggerOnMobile && (this.height?.endsWith("px") || !this.width) ? BIGGER_MOBILE_RATIO : 1);
     }
 
     getX(width: number, parentWidth: number) {

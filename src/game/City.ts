@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GregsGrogBarr, GroundwaterPump, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, PostOffice, RainCollector, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, UrbanCampDome, WaterTower, WaterTreatmentPlant, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DataCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GregsGrogBarr, GroundwaterPump, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MuseumOfFutureArts, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, Portal, PostOffice, RainCollector, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TeleportationPod, UrbanCampDome, WaterTower, WaterTreatmentPlant, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -26,7 +26,7 @@ import { Resource } from "./Resource.js";
 import * as ResourceTypes from "./ResourceTypes.js";
 import { GIFT_TYPES } from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
-import { ARShopping, FoodServiceRobots, SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
+import { ARShopping, FoodServiceRobots, Geothermal, SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
 
 const CITY_DATA_VERSION = 7; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
@@ -117,7 +117,7 @@ export class City {
         }
 
         //In case of updates, ensure we have ALL building types. (Note: you need to account for new building that are affected by old upgrades here explicitly, too!)
-        const missingBuildingTypes = [...BUILDING_TYPES.values()].filter(bt => !this.buildingTypes.some(b => b.type === bt.type)); //TODO: use a set instead.
+        const missingBuildingTypes = [...BUILDING_TYPES.values()].filter(bt => !this.buildingTypes.some(b => b.type === bt.type)); //TODO: use a Map<type ID, BuildingType> instead, make a couple functions in City for that, and use them everywhere I'm searching the building types (including where I did concat(buildingTypes) and then filter to a specific type). One for type ID string, one <T> where T instanceof Building.
         if (missingBuildingTypes.length) this.buildingTypes.push(...missingBuildingTypes);
         this.buildingTypes = this.buildingTypes.filter(p => p.category !== BuildingCategory.BLOCKER && p.category !== BuildingCategory.NATURAL_RESOURCE);
         this.categorizeBuildingTypes();
@@ -172,7 +172,7 @@ export class City {
 
     private ensureNewerUnlocks() {
         if (this.player.finishedTutorial) this.buildingTypes.filter(p => TUTORIAL_COMPLETION_BUILDING_UNLOCKS.has(p.type)).forEach(p => this.unlock(p.type));
-        if (this.flags.has(CityFlags.UnlockedTourism)) this.unlock(getBuildingType(ConventionCenter));
+        if (this.flags.has(CityFlags.UnlockedInformationCenter)) this.unlock(getBuildingType(ConventionCenter));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Library));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(HighSchool));
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Dorm));
@@ -181,6 +181,12 @@ export class City {
         if (this.techManager.techs.get(new SmartHomeSystems().id)!.researched) this.unlock(getBuildingType(DepartmentOfEnergy));
         if (this.techManager.techs.get(new VacuumInsulatedWindows().id)!.researched) this.unlock(getBuildingType(UrbanCampDome));
         if (this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount < 150) this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount = 150;
+        if (!this.flags.has(CityFlags.UnlockedMuseumOfFutureArts) && !this.buildingTypes.find(p => p.type === getBuildingType(MuseumOfFutureArts))?.locked) this.flags.add(CityFlags.UnlockedMuseumOfFutureArts);
+        if (!this.flags.has(CityFlags.UnlockedTeleportationPod) && !this.buildingTypes.find(p => p.type === getBuildingType(TeleportationPod))?.locked) this.flags.add(CityFlags.UnlockedTeleportationPod);
+        if (!this.flags.has(CityFlags.UnlockedSandsOfTime) && !this.buildingTypes.find(p => p.type === getBuildingType(SandsOfTime))?.locked) this.flags.add(CityFlags.UnlockedSandsOfTime);
+        if (!this.flags.has(CityFlags.UnlockedPortal) && !this.buildingTypes.find(p => p.type === getBuildingType(Portal))?.locked) this.flags.add(CityFlags.UnlockedPortal);
+        if (!this.flags.has(CityFlags.UnlockedTourism) && this.resources.get(ResourceTypes.getResourceType(ResourceTypes.Tourists))!.capacity) this.flags.add(CityFlags.UnlockedTourism);
+        if (!this.flags.has(CityFlags.GeothermalAvailable) && this.regionID !== "volcanic" && !this.techManager.techs.get(new Geothermal().id)!.unavailable) this.flags.add(CityFlags.GeothermalAvailable);
 
         //Version changes that aren't as simple as an unlock
         if (this.dataVersion < 1) {
@@ -1551,7 +1557,7 @@ export class City {
             //    plays.produce(plays.productionRate * LONG_TICKS_PER_DAY); //Freebie for the first day
             //}
         }
-        if (this.flags.has(CityFlags.UnlockedTourism)) { //Nepotism Networking is unlocked with tourism, since its reward is meant to be just a tourism bonus.
+        if (this.flags.has(CityFlags.UnlockedTourism)) { //Nepotism Networking is unlocked with tourism, since its original reward is meant to be just a tourism bonus.
             const plays = this.resources.get(new ResourceTypes.NepotismNetworkingPlays().type)!;
             plays.produce(plays.productionRate);
         }
@@ -1792,6 +1798,10 @@ export class City {
         }
     }
 
+    getGreenhouseGasesMinPopulation() {
+        return GREENHOUSE_GASES_MIN_POPULATION * (this.regionID === "volcanic" ? 0.5 : 1);
+    }
+
     checkPopulationUnlocks() {
         if (Date.now() - this.lastLongTick >= LONG_TICK_TIME) return; //Won't trigger while fast-forwarding because MOST of them have negative effects--don't want to tell the player, "Oh, by the way, you needed to do this new thing weeks ago, but now your city's gone."
 
@@ -1816,13 +1826,13 @@ export class City {
             this.notify(new Notification("Metaphorical Hermit Crab", "Melodrama from your advisor: Our city sprawls across the landscape, asphalt tendrils like roots feeding upon the lush soil, yet its healthy growth is stifled, pressured by obstructions on every side. We should consider clearing out construction blockers in the surrounding area to make room for continued expansion. The city must grow.", "advisor"));
             this.flags.add(CityFlags.BlockersPointedOut);
         }
-        if (this.peakPopulation >= 400 && !this.flags.has(CityFlags.UnlockedTourism)) {
+        if (this.peakPopulation >= 400 && !this.flags.has(CityFlags.UnlockedInformationCenter)) {
             this.notify(new Notification("Business Booster", "You've reached a population of 400! You can now build an information center to enable tourism in your city. Tourists patronize your businesses and therefore help you earn revenue via sales tax. However, nobody's going to visit if you don't build both the information center and some proper tourist traps. You can also play the Nepotism Networking minigame in any friend's city for a shared bonus after drawing in some tourists! See Tutorials in the main menu for more info.", "neponet"));
             this.unlock(getBuildingType(InformationCenter));
             this.unlock(getBuildingType(SesharTower));
             this.unlock(getBuildingType(ResortHotel));
             this.unlock(getBuildingType(ConventionCenter));
-            this.flags.add(CityFlags.UnlockedTourism);
+            this.flags.add(CityFlags.UnlockedInformationCenter);
             this.uiManager?.updateTutorialSteps();
         }
         if (this.peakPopulation >= 500 && !this.flags.has(CityFlags.FoodMatters)) {
@@ -1901,7 +1911,7 @@ export class City {
             this.notify(new Notification("Altitect", "Reach for the sky! You can now play the Altitect minigame, though it costs a pretty penny. You can access the minigame by long-tapping or right-clicking a Skyscraper in your city. Playing Altitect changes your selected skyscraper's stats permanently depending on your actions in the minigame. You can play it as many times as you like on each skyscraper, but the cost keeps increasing.", "minigames"));
             this.flags.add(CityFlags.UnlockedAltitect);
         }
-        if (this.peakPopulation >= GREENHOUSE_GASES_MIN_POPULATION * (this.regionID === "volcanic" ? 0.5 : 1) && !this.flags.has(CityFlags.GreenhouseGasesMatter)) {
+        if (this.peakPopulation >= this.getGreenhouseGasesMinPopulation() && !this.flags.has(CityFlags.GreenhouseGasesMatter)) {
             this.notify(new Notification("Disastrous Change", "As our population rises, so does the concern that unchecked pollution will harm our environment and lead to more frequent severe weather. We should choose the cleaner, greener option when we have a choice, and for when we don't, we should look into technologies that can undo our damage. See Tutorials in the main menu for more info.", "greenhousegases"));
             this.flags.add(CityFlags.GreenhouseGasesMatter);
             this.uiManager?.updateTutorialSteps();

@@ -127,30 +127,8 @@ pharmaceuticals for health (also distributed to increase happiness via Free Stuf
 
 
 
-For the record, the unlocks in the game are:
-100 population: police, police box, police station
-175 population: Starbox minigame
-250 population: fire, fire bay, fire station
-400 population and a casino: Slots minigame
-400 population: information center, Seshar tower, resort hotel, convention center
-information center (500 flunds): tourism and Nepotism Networking minigame
+For the record, the unlocks in the game that AREN'T recorded as milestones are:
 demolish mysterious rubble (350 flunds): Monobrynth minigame
-500 population: higher food diversity requirements
-650 population: post office
-800 population: education, elementary school, high school, college, dorm, playground
-average education >= 0.9 (basically requires a college or 2 schools covering most residences): 13 high-tech buildings
-high-tech unlocked and then played a perfect game of Monobrynth: Teleportation Pod
-keep a Quantum Computing Lab running for a few days after unlocking Teleportation Pod: Museum of Future Arts
-keep a Museum of Future Arts running for several days: Sands of Time
-1000 population: logistics center and Free Stuff Tables
-1400 population: healthcare, clinic, hospital
-1800 population: algae farm and more food requirements
-2000 population: Minigame Minilab
-2500 population: maximum food requirements
 minigame minilab + playing the minigames: alternative reward sets as options for the minigames
-3000 population + >=4 skyscrapers + >=1k flunds: Altitect minigame
 earthquake: geothermal tech and a hot spring inn
-8000 population: greenhouse gases begin to affect happiness and weather event chances
-keep a Sands of Time running for several days: Portal
-30k population, 4 colleges, and a Portal: regions
-and techs unlock 11 buildings
+techs unlock 13 buildings

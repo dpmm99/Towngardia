@@ -91,7 +91,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     //No longer loading all UI elements up front. Here's a narrowed down list--just the things that are visible as soon as you start the game... aaand some warnings and resource and danger backdrops because the placeholders would look really out-of-place.
     const otherSprites = [
         'friends', 'research', 'notifications', 'notificationson', 'titles', 'achievements', 'views', 'budget', 'resources', 'menu', 'progressbg', 'progressfg',
-        'noroad', 'nopower', 'outage', 'woutage', 'warningbackdrop', 'collectionbackdrop',
+        'noroad', 'nopower', 'outage', 'woutage', 'warningbackdrop', 'collectionbackdrop', 'milestones',
     ];
 
     for (const sprite of otherSprites) {

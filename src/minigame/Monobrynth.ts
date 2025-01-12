@@ -318,8 +318,9 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
             }
 
             this.endGame();
-            if (this.city.flags.has(CityFlags.UnlockedGameDev) && this.noneFailed && this.city.buildingTypes.find(p => p.type === getBuildingType(TeleportationPod))?.locked) {
+            if (this.city.flags.has(CityFlags.UnlockedGameDev) && this.noneFailed && !this.city.flags.has(CityFlags.UnlockedTeleportationPod)) {
                 this.city.unlock(getBuildingType(TeleportationPod));
+                this.city.flags.add(CityFlags.UnlockedTeleportationPod);
                 this.city.notify(new Notification("Telewhat!?", "Breaking news: Thanks to you bringing so many artifacts back from the Monobrynth, your city's smartypants scientists have figured out how to turn people into temporary particle clouds! They insist it's \"perfectly safe\" and only has a 0.0001% chance of accidentally creating an evil doppelganger. You'll find the Teleportation Pod in the Infrastructure construction category.", "monobrynth"));
             }
         }

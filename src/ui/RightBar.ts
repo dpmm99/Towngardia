@@ -58,7 +58,8 @@ export class RightBar implements IHasDrawable, IOnResizeEvent {
         }
         if (this.city?.flags.has(CityFlags.FoodMatters)) buttons.push({ id: 'diet', onClick: () => this.uiManager.showCitizenDietWindow() });
         buttons.push({ id: 'titles', onClick: () => this.uiManager.showTitles() },
-            { id: 'achievements', onClick: () => this.uiManager.showAchievements() });
+            { id: 'achievements', onClick: () => this.uiManager.showAchievements() },
+            { id: 'milestones', onClick: () => this.uiManager.showMilestonesMenu() }); //TODO: May actually want to compile all three of those into a "progress menus" button or something.
         if (this.uiManager.isMyCity && this.player.finishedTutorial) {
             //TODO: Unlock when a Bar is placed, I guess
             buttons.push({ id: 'memorymixology', onClick: () => this.uiManager.showMemoryMixologyMinigame(), resourceType: new BarPlays().type });
