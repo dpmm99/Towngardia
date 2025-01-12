@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DataCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GregsGrogBarr, GroundwaterPump, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MuseumOfFutureArts, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, Portal, PostOffice, RainCollector, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TeleportationPod, UrbanCampDome, WaterTower, WaterTreatmentPlant, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GeothermalVent, GregsGrogBarr, GroundwaterPump, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MuseumOfFutureArts, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, Portal, PostOffice, RainCollector, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TeleportationPod, UrbanCampDome, WaterTower, WaterTreatmentPlant, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -26,7 +26,7 @@ import { Resource } from "./Resource.js";
 import * as ResourceTypes from "./ResourceTypes.js";
 import { GIFT_TYPES } from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
-import { ARShopping, FoodServiceRobots, Geothermal, SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
+import { ARShopping, FoodServiceRobots, SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
 
 const CITY_DATA_VERSION = 7; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
@@ -186,7 +186,7 @@ export class City {
         if (!this.flags.has(CityFlags.UnlockedSandsOfTime) && !this.buildingTypes.find(p => p.type === getBuildingType(SandsOfTime))?.locked) this.flags.add(CityFlags.UnlockedSandsOfTime);
         if (!this.flags.has(CityFlags.UnlockedPortal) && !this.buildingTypes.find(p => p.type === getBuildingType(Portal))?.locked) this.flags.add(CityFlags.UnlockedPortal);
         if (!this.flags.has(CityFlags.UnlockedTourism) && this.resources.get(ResourceTypes.getResourceType(ResourceTypes.Tourists))!.capacity) this.flags.add(CityFlags.UnlockedTourism);
-        if (!this.flags.has(CityFlags.GeothermalAvailable) && this.regionID !== "volcanic" && !this.techManager.techs.get(new Geothermal().id)!.unavailable) this.flags.add(CityFlags.GeothermalAvailable);
+        if (!this.flags.has(CityFlags.GeothermalAvailable) && this.regionID !== "volcanic" && this.buildings.some(p => p.type === getBuildingType(GeothermalVent))) this.flags.add(CityFlags.GeothermalAvailable);
 
         //Version changes that aren't as simple as an unlock
         if (this.dataVersion < 1) {
