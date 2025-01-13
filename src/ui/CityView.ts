@@ -1,4 +1,6 @@
+import { Building } from "../game/Building.js";
 import { City } from "../game/City.js";
+import { CAPACITY_MULTIPLIER } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { LockStepSlider } from "./LockStepSlider.js";
 import { TextureInfo } from "./TextureInfo.js";
@@ -77,6 +79,7 @@ export class CityView {
 export class ProvisioningView extends CityView {
     private amountSlider: LockStepSlider;
     private filterSlider: LockStepSlider;
+    private lastFocusedBuilding: Building | undefined = undefined;
 
     constructor(public city: City, public uiManager: UIManager) {
         super(city, uiManager, "Resource Provisioning");
@@ -144,6 +147,45 @@ export class ProvisioningView extends CityView {
             image: new TextureInfo(48, 48, "ui/x"),
             biggerOnMobile: true,
             onClick: () => this.uiManager.toggleProvisioning()
+        }));
+
+        // Identify buildings meeting the provisioning criteria for the arrows
+        const buildings = this.city.buildings.filter(p => p.owned && p.shouldShowProvisioning(this));
+        let nextIndex = -1;
+        if (this.lastFocusedBuilding) nextIndex = buildings.indexOf(this.lastFocusedBuilding); //Can be -1, which is fine as indicated on the previous line
+
+        // Right arrow button at the right edge
+        const rightArrow = menuDrawable.addChild(new Drawable({
+            anchors: ['right', 'bottom'],
+            x: 10,
+            y: 10,
+            width: "48px",
+            height: "48px",
+            image: new TextureInfo(48, 48, "ui/arrowright"),
+            biggerOnMobile: true,
+            grayscale: !buildings.length,
+            onClick: () => {
+                nextIndex = (nextIndex + 1) % buildings.length;
+                this.lastFocusedBuilding = buildings[nextIndex];
+                if (buildings[nextIndex]) this.uiManager.centerOn(buildings[nextIndex]);
+            }
+        }));
+
+        //Left arrow, anchored to the right arrow
+        rightArrow.addChild(new Drawable({
+            anchors: ['bottom'],
+            rightAlign: true,
+            x: -10,
+            width: "48px",
+            height: "48px",
+            image: new TextureInfo(48, 48, "ui/arrowleft"),
+            biggerOnMobile: true,
+            grayscale: !buildings.length,
+            onClick: () => {
+                if (--nextIndex < 0) nextIndex = buildings.length - 1; //Not using modulo because a not-found building index (i.e., -1) would become -2, and adding buildings.length would skip the last building in the list.
+                this.lastFocusedBuilding = buildings[nextIndex];
+                if (buildings[nextIndex]) this.uiManager.centerOn(buildings[nextIndex]);
+            }
         }));
 
         return this.lastDrawables = [menuDrawable];

@@ -408,6 +408,8 @@ export class CanvasRenderer implements IRenderer {
         if (drawable.text && sprite && drawable.rightAlign) {
             if (!drawable.anchors.includes('right')) x += width - correctedWidth;
             else if (drawable.noXStretch) x = drawable.getX(correctedWidth, parentWidth);
+        } else if (sprite && drawable.rightAlign) {
+            if (!drawable.anchors.includes('right')) x -= correctedWidth;
         }
         
         width = correctedWidth; //After the X positioning because if it's anchored to the right, I want to subtract the full width from the parent's right.

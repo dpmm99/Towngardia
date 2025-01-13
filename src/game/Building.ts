@@ -561,13 +561,17 @@ export class Building implements IHasDrawable {
         return this.lastCollectibleDrawable = null;
     }
 
+    shouldShowProvisioning(view: CityView): boolean {
+        return this.inputResources.length > 0 && this.getProvisionedFraction(CAPACITY_MULTIPLIER) < view.provisionHideAtTicks && this.inputResources.some(p => p.amount < p.capacity);
+    }
+
     //Show icons for when buildings are low on input resources as well. If they don't have enough for the next <view-provided number> long ticks, then the "feed me" icon should appear.
     //Of course, that doesn't apply to every resource. Resources that are needed by MOST or ALL buildings, like power and perhaps water, should not require tapping.
     provisioningAsDrawable(city: City, view: CityView): Drawable | null {
         if (this.inputResources.length === 0 || (!view.showProvisioning && this.outputResources.some(p => p.amount > 0 && !p.isSpecial))) return this.lastProvisioningDrawable = null;
 
         //The minimum amount for showing this drawable depends on the view's settings.
-        if (this.getProvisionedFraction(CAPACITY_MULTIPLIER) >= view.provisionHideAtTicks || this.inputResources.every(p => p.amount === p.capacity)) return this.lastProvisioningDrawable = null;
+        if (!this.shouldShowProvisioning(view)) return this.lastProvisioningDrawable = null;
 
         //Tell the player if they can't afford to give it ANY resources
         const requestedAmounts = this.inputResources.map(p => ({ type: p.type, amount: Math.min(p.consumptionRate * view.provisionTicks, p.capacity - p.amount) }));
