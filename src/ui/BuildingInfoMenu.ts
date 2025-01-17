@@ -737,7 +737,8 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 y: nextY,
                 width: (barWidth - padding * 2) + "px",
                 height: "24px",
-                text: this.city.untreatedWaterPortion ? "Water contamination: " + humanizeCeil(this.city.untreatedWaterPortion * 100) + "%" : "All water is treated",
+                text: this.city.untreatedWaterPortion ? "Water contamination: " + humanizeCeil(this.city.untreatedWaterPortion * 100) + "%" :
+                    ("Treatment surplus: " + floorFunc(this.city.getWaterTreatment() - Math.min(resource.productionRate, resource.consumptionRate))),
                 reddize: this.city.untreatedWaterPortion > 0,
             }));
             nextY += 24 + padding;
@@ -1069,10 +1070,10 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             x: padding,
             y: nextY,
             width: (barWidth - padding * 2) + "px",
-            height: "24px",
+            height: "32px",
             text: "Treats " + humanizeWaterFloor(treated) + "/day" + (treated < maxTreated ? `(max ${humanizeWaterFloor(maxTreated)}/day)` : ""),
         }));
-        nextY += 24 + padding;
+        nextY += 32 + padding;
         return nextY;
     }
 

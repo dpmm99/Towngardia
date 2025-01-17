@@ -44,6 +44,7 @@ Main remaining features:
 More regions (ancient ocean, delta, tundra, polluted paradise, some random planet with no atmosphere)
 aaand probably being able to buy things (particularly the resources that aren't in every region) more easily if your friends are selling them. I was thinking sales go into a list for 5 days, but then you have to load and affect the other players' city data...
 Otherwise, I'm pretty well down to just making buildings, events, techs, and titles/achievements, though I have a decent number of each of those.
+Show active events...somewhere. Pin them in notifications? Have a bar at the top of the notifications that links directly to the notifications?
 
 Coolest open ideas:
 Sort businesses by patron value (or maybe do a fixed sort order for all building types, but need an indicator to show which ones are newly unlocked). Also, nothing shows the buff sources.

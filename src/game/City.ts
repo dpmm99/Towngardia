@@ -1511,7 +1511,7 @@ export class City {
 
         if (this.flags.has(CityFlags.WaterTreatmentMatters)) {
             const water = this.resources.get("water")!;
-            const waterTreatmentQuantity = this.buildings.filter(p => p instanceof WaterTreatmentPlant).reduce((a, b) => a + b.lastEfficiency, 0) * 1900000; //Treats 76 megaliters per plant *per day* (x4) for now--enough for 5100 citizens, so you need 4 for a city with ~30k citizens.
+            const waterTreatmentQuantity = this.getWaterTreatment();
             const importedWater = Math.max(0, Math.min(water.consumptionRate - water.productionRate, this.desiredWater / SHORT_TICKS_PER_LONG_TICK * this.budget.waterImportLimit));
 
             //I considered a moving average so one bad short tick doesn't immediately skyrocket the epidemic chance, but it seemed too gross
@@ -1520,6 +1520,10 @@ export class City {
             else this.untreatedWaterPortion = Math.max(0, 1 - waterTreatmentQuantity / Math.min(water.productionRate, water.consumptionRate)) *
                 (importedWater > 0 ? Math.min(1, water.productionRate / water.consumptionRate) : 1); //More imported means less contaminated, but producing more than consuming doesn't mean >1 contamination rate
         }
+    }
+
+    getWaterTreatment() {
+        return this.buildings.filter(p => p instanceof WaterTreatmentPlant).reduce((a, b) => a + b.lastEfficiency, 0) * 1900000; //Treats 76 megaliters per plant *per day* (x4) for now--enough for 5100 citizens, so you need 4 for a city with ~30k citizens.
     }
 
     frozenAdvanceLongTick(): void {
