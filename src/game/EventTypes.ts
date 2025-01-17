@@ -783,7 +783,7 @@ export class StrombolianEruption extends CityEvent {
     constructor() {
         super("strombolianeruption", "Strombolian Eruption", 0, // Instant event
             "A Strombolian eruption has occurred. These eruptions can produce fresh patches of Ignimbrite or damage buildings near the volcano.",
-            "");
+            "", "volcanic");
     }
 
     override shouldStart(city: City, date: Date): boolean {
@@ -833,7 +833,7 @@ export class VulcanianEruption extends CityEvent {
     constructor() {
         super("vulcanianeruption", "Vulcanian Eruption", 0, // Instant event
             "A Vulcanian eruption has occurred, producing fresh boulders or damaging buildings far from the volcano.",
-            "");
+            "", "volcanic");
     }
 
     override shouldStart(city: City, date: Date): boolean {

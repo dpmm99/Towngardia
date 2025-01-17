@@ -329,7 +329,7 @@ export class City {
         this.spreadEffect(new Effect(EffectType.LandValue, 0.5), 5, 5, true, 2, 2); //Some higher land value in the starting corner or it'll be too hard for players to pick up momentum.
 
         if (this.regionID === "volcanic") {
-            this.notify(new Notification("Region Specifics", "Welcome to the Volcanic Desert! You'll unsurprisingly find that not everything is the same here as it was back in the Towngardian Plains. You can view Tutorials in the main menu for more info about what makes this region unique.", "landvalue"));
+            this.notify(new Notification("Region Specifics", "Welcome to the Volcanic Desert! You'll unsurprisingly find that not everything is the same here as it was back in the Towngardian Plains. You can view Tutorials in the main menu for more info about what makes this region unique.", "volcanic"));
         }
 
         this.lastLongTick = Date.now();
@@ -1477,7 +1477,7 @@ export class City {
         resource.productionRate = connectedBuildings.reduce((total, building) => total + getProduction(building), 0);
 
         if (resource.amount < wasStored) resource.amount = Math.max(0, resource.amount); //Used some of the stored amount; don't go below 0
-        else if (resource.productionRate > resource.consumptionRate) resource.produce(resource.productionRate - resource.consumptionRate); //Produced excess--has a capacity check
+        else if (resource.amount > resource.capacity) resource.amount = resource.capacity; //Don't go above capacity
 
         if (totalImportable === importable) { //The city had enough power/water for itself OR wasn't allowed to import any, so no need to deduct anything.
             setImportCost(0);
