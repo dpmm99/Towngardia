@@ -8,6 +8,7 @@ import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
 import { GameState } from "../game/GameState.js";
 import { UIManager } from "./UIManager.js";
+import { CityEvent } from "../game/CityEvent.js";
 
 export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
@@ -16,6 +17,7 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
     private notificationIconSize = 64;
     private notificationPadding = 10;
     private expandedNotifications: Set<Notification> = new Set();
+    private expandedEvent: CityEvent | null = null;
 
     constructor(private player: Player, private city: City, private game: GameState, private uiManager: UIManager) { }
 
@@ -65,6 +67,66 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
         // List notifications
         let paddingAdjust = 0; //gets subtracted from when a body is expanded since, due to nesting, it would double-up the padding
         let previousNotification: Drawable | null = null;
+
+        const activeEvents = this.city.events.filter(p => !p.fromPlayer && p.duration && p.notificationIcon);
+        if (activeEvents.length) {
+            const eventsContainer = new Drawable({
+                anchors: ['below'],
+                x: paddingAdjust,
+                y: -this.scroller.getScroll(),
+                width: "100%",
+                height: `${this.notificationIconSize}px`,
+                scaleYOnMobile: true,
+                fallbackColor: '#00000000',
+            });
+
+            // Add title
+            eventsContainer.addChild(new Drawable({
+                x: 10,
+                y: 15,
+                text: "Ongoing Events:",
+                width: "240px",
+                height: "48px"
+            }));
+
+            // Add event icons in a row
+            if (this.expandedEvent && !activeEvents.includes(this.expandedEvent)) this.expandedEvent = null;
+            activeEvents.forEach((event, index) => {
+                eventsContainer.addChild(new Drawable({
+                    x: 260 + (index * (this.notificationIconSize + 10)),
+                    width: `${this.notificationIconSize}px`,
+                    height: `${this.notificationIconSize}px`,
+                    image: new TextureInfo(this.notificationIconSize, this.notificationIconSize, `ui/${event.notificationIcon}`),
+                    onClick: () => {
+                        this.expandedEvent = this.expandedEvent === event ? null : event;
+                    }
+                }));
+            });
+
+            previousNotification = nonResizingTop.addChild(eventsContainer);
+
+            if (this.expandedEvent) {
+                nonResizingTop.addChild(new Drawable({
+                    x: 20,
+                    y: this.notificationIconSize + 10,
+                    text: this.expandedEvent.displayName,
+                    width: "calc(100% - 74px)",
+                    height: "32px"
+                }));
+                nonResizingTop.addChild(previousNotification = new Drawable({
+                    x: 20,
+                    y: this.notificationIconSize + 45,
+                    text: this.expandedEvent.startMessage,
+                    wordWrap: true,
+                    keepParentWidth: true, //applies to children nested in it
+                    biggerOnMobile: true,
+                    width: "97%",
+                    height: "24px"
+                }));
+                paddingAdjust = -20;
+            }
+        }
+
         this.notifications.forEach((notification, index) => {
             const height = this.notificationIconSize + (this.expandedNotifications.has(notification) ? 150 : 0);
             const notificationDrawable = new Drawable({
@@ -117,7 +179,7 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
             //Title
             notificationDrawable.addChild(new Drawable({
                 x: this.notificationIconSize + 20,
-                y: 8,
+                y: 15,
                 text: notification.title,
                 width: "calc(100% - 74px)",
                 height: "48px"

@@ -431,7 +431,7 @@ export class CanvasRenderer implements IRenderer {
                 const limitedWidth = drawable.getWidth(sprite, parentWidth); //Have to recalculate width since noXStretch might have reduced the first line's width.
                 for (const extraLineSprite of moreLinesOfTextSprites) {
                     let lineWidth = limitedWidth; //so the final output width isn't set to the width of the last line, but of the first line. Still kinda sloppy...and probably not needed
-                    if (extraLineSprite) {
+                    if (extraLineSprite && extraLineSprite.width) {
                         //Reapply noXStretch logic
                         //I was assuming all lines other than the final one should be justified like this: && moreLinesOfTextSprites.indexOf(extraLineSprite) === moreLinesOfTextSprites.length - 1
                         if (drawable.noXStretch) lineWidth = this.getCorrectedWidth(extraLineSprite, limitedWidth, height, lineStretchRatio);

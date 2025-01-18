@@ -44,7 +44,7 @@ export class CitySerializer {
             wi: o.width,
             he: o.height,
             bt: o.buildingTypes.map(p => this.building(p, true)), //Building templates, different serialization than placed/unplaced buildings
-            ev: o.events.map(p => this.event(p)), //Same as eventTypes--both are stateful
+            ev: o.events.map(p => this.event(p, true)), //Same as eventTypes--both are stateful
             et: o.eventTypes.map(p => this.event(p)),
             tm: this.techManager(o.techManager),
             bg: o.budget, //Doesn't need anything fancy--no constants or complex objects, just numbers and strings
@@ -117,7 +117,7 @@ export class CitySerializer {
         };
     }
 
-    event(o: CityEvent) {
+    event(o: CityEvent, includeMessage: boolean = false) {
         const ev = <any>{
             ty: o.type,
             ac: o.activations,
@@ -128,6 +128,7 @@ export class CitySerializer {
             //Entirely possible that specific event subclasses could need other data stored.
             va: o.variables.length ? o.variables : undefined,
         };
+        if (includeMessage && !o.fromPlayer && o.startMessage !== EVENT_TYPES.find(p => p.type === o.type)?.startMessage) ev.me = o.startMessage; //Only store the event's message if it's not a bonus from another player AND it doesn't match the default.
         if (o instanceof EconomicBoom) ev.co = o.chosenOnes;
         return ev;
     }
@@ -372,6 +373,7 @@ export class CityDeserializer {
             r.skippedStarts = p.ss;
             r.variables = p.va || [];
             r.fromPlayer = p.pl ?? null;
+            if (p.me) r.startMessage = p.me;
             if (r instanceof EconomicBoom) r.chosenOnes = p.co;
             return r;
         }).filter((p: any) => p)

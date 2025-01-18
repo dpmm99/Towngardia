@@ -8,6 +8,7 @@ import { Epidemic, TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICKS_PER_LONG_TICK } from "../game/FundamentalConstants.js";
 import { EffectType } from "../game/GridType.js";
 import { HIGH_TECH_UNLOCK_EDU } from "../game/HappinessCalculator.js";
+import { Resource } from "../game/Resource.js";
 import { Health, MinigameOptionResearch, Timeslips, Water, getResourceType } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
@@ -237,7 +238,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         const idealPowerProduction = building.getPowerProduction(this.city, true);
         const idealWaterProduction = building.getWaterProduction(this.city, true);
         const showWaterInfo = this.city.flags.has(CityFlags.WaterMatters) && (idealWaterProduction || building.stores.some(p => p.type === getResourceType(Water)));
-        if (building.outputResources.length || idealPowerProduction || showWaterInfo) {
+        if (building.outputResources.length || building.outputResourceOptions.length || idealPowerProduction || showWaterInfo) {
             infoDrawable.addChild(new Drawable({
                 x: padding,
                 y: nextY,
@@ -250,43 +251,27 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
             const outputBonus = building.getEfficiencyEffectMultiplier(this.city); //Also appears in the efficiency number, but it's a bit confusing either way. Might need to redesign.
             for (const resource of building.outputResources) {
-                let text = `${humanizeFloor(resource.productionRate * outputBonus * LONG_TICKS_PER_DAY)} ${resource.displayName}/day`;
-                let grayscale = false;
-                if (resource.type === 'population') {
-                    text = `Housing for ${humanizeFloor(resource.capacity)}`;
-                } else if (resource.type === 'tourists') {
-                    const touristsRegionFactor = this.city.getTouristsRegionFactor(); //Decided to just affect the display and the final calculation in City instead of modifying all tourist attractions.
-                    if (building.x !== -1 && building.owned) text = `Tourism: ${humanizeFloor(resource.amount * touristsRegionFactor)}/${humanizeFloor(resource.capacity * touristsRegionFactor)}`;
-                    else text = `Tourism: up to ${humanizeFloor(resource.capacity * touristsRegionFactor)}`;
-                    if (!this.city.flags.has(CityFlags.UnlockedTourism)) grayscale = true;
-                } else if (building.x !== -1 && building.owned && resource.capacity !== 0) { //Don't show capacity or the guaranteed-0 in-stock amount for unplaced buildings or if capacity is 0; it just isn't needed
-                    text += ` (${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)})`;
-                } else if (resource.type === 'happiness') { //Happiness bonus isn't a "per day" thing or a capacity like the above; draw it as a "+0.01%" thing.
-                    text = "+" + Math.floor(building.lastEfficiency * resource.productionRate * 1000) / 10 + "% Happiness";
+                nextY = this.drawOutputResource(resource, outputBonus, building, infoDrawable, padding, nextY, iconSize, barWidth);
+            }
+            if (!building.outputResources.length && building.outputResourceOptions.length) {
+                for (const resource of building.outputResourceOptions) {
+                    nextY = this.drawOutputResource(resource, outputBonus, building, infoDrawable, padding, nextY, iconSize, barWidth);
+                    if (building.outputResourceOptions[building.outputResourceOptions.length - 1] !== resource) {
+                        nextY += 5;
+                        infoDrawable.addChild(new Drawable({
+                            anchors: ['centerX'],
+                            centerOnOwnX: true,
+                            y: nextY,
+                            width: "100%",
+                            height: "36px",
+                            text: "-OR-",
+                        }));
+                        nextY += 36;
+                    }
                 }
-                
-                infoDrawable.addChild(new Drawable({
-                    x: padding,
-                    y: nextY,
-                    width: iconSize + "px",
-                    height: iconSize + "px",
-                    image: new TextureInfo(iconSize, iconSize, `resource/${resource.type}`),
-                    id: `${infoDrawable.id}.output.${resource.type}.icon`,
-                    grayscale
-                }));
-                infoDrawable.addChild(new Drawable({
-                    x: padding + iconSize + 5,
-                    y: nextY + 8,
-                    width: (barWidth - padding * 2 - iconSize - 5) + "px",
-                    height: iconSize + "px",
-                    text: text,
-                    id: `${infoDrawable.id}.output.${resource.type}.text`,
-                    grayscale
-                }));
-                nextY += iconSize + 5;
             }
 
-            if (building.outputResources.length) nextY += padding;
+            if (building.outputResources.length || building.outputResourceOptions.length) nextY += padding;
             //A bit of a mess, but do similar for power if idealPowerProduction is nonzero.
             if (idealPowerProduction) nextY = this.addProductionInfo(infoDrawable, padding, nextY, iconSize, building, barWidth, idealPowerProduction,
                 "power", "getPowerProduction", "getPowerUpkeep", this.city.desiredPower, this.city.budget.powerImportLimit, this.city.getImportPowerRate());
@@ -499,6 +484,44 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         this.scroller.setChildrenSize(nextY - baseY + 240); //TODO: reeeeally need a text height estimator or something
 
         return this.lastDrawable = infoDrawable;
+    }
+
+    private drawOutputResource(resource: Resource, outputBonus: number, building: Building, infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, barWidth: number) {
+        let text = `${humanizeFloor(resource.productionRate * outputBonus * LONG_TICKS_PER_DAY)} ${resource.displayName}/day`;
+        let grayscale = false;
+        if (resource.type === 'population') {
+            text = `Housing for ${humanizeFloor(resource.capacity)}`;
+        } else if (resource.type === 'tourists') {
+            const touristsRegionFactor = this.city.getTouristsRegionFactor(); //Decided to just affect the display and the final calculation in City instead of modifying all tourist attractions.
+            if (building.x !== -1 && building.owned) text = `Tourism: ${humanizeFloor(resource.amount * touristsRegionFactor)}/${humanizeFloor(resource.capacity * touristsRegionFactor)}`;
+            else text = `Tourism: up to ${humanizeFloor(resource.capacity * touristsRegionFactor)}`;
+            if (!this.city.flags.has(CityFlags.UnlockedTourism)) grayscale = true;
+        } else if (building.x !== -1 && building.owned && resource.capacity !== 0) { //Don't show capacity or the guaranteed-0 in-stock amount for unplaced buildings or if capacity is 0; it just isn't needed
+            text += ` (${humanizeFloor(resource.amount)}/${humanizeFloor(resource.capacity)})`;
+        } else if (resource.type === 'happiness') { //Happiness bonus isn't a "per day" thing or a capacity like the above; draw it as a "+0.01%" thing.
+            text = "+" + Math.floor(building.lastEfficiency * resource.productionRate * 1000) / 10 + "% Happiness";
+        }
+
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: iconSize + "px",
+            height: iconSize + "px",
+            image: new TextureInfo(iconSize, iconSize, `resource/${resource.type}`),
+            id: `${infoDrawable.id}.output.${resource.type}.icon`,
+            grayscale
+        }));
+        infoDrawable.addChild(new Drawable({
+            x: padding + iconSize + 5,
+            y: nextY + 8,
+            width: (barWidth - padding * 2 - iconSize - 5) + "px",
+            height: iconSize + "px",
+            text: text,
+            id: `${infoDrawable.id}.output.${resource.type}.text`,
+            grayscale
+        }));
+        nextY += iconSize + 5;
+        return nextY;
     }
 
     private addBusinessStats(infoDrawable: Drawable, padding: number, nextY: number, building: Building, barWidth: number, isPlaced: boolean): number {
