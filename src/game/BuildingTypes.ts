@@ -3141,6 +3141,31 @@ export class ConventionCenter extends Building {
     }
 }
 
+export class Consumeropolis extends Building {
+    constructor() {
+        super(
+            "consumeropolis", "Consumeropolis", "A sprawling temple of commerce with indoor fountains dedicated to the god of luck--or so you'd think from all the coins thrown in them. Features stores ranging from \"how are they still in business?\" to \"how can anyone afford this?\" Before you head to the food court for some \"chicken\" on a stick, be sure to check out the eight identical phone accessory kiosks that somehow stay in business.",
+            BuildingCategory.COMMERCIAL,
+            3, 3, 0,
+            0.4,
+        );
+        this.setBusinessValue(2700, 0.68); //Handles a lot more people than the Convention Center with about the same value, but no tourists
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
+        this.areaIndicatorRounded = true;
+        this.isRestaurant = true;
+        this.isEntertainment = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.3, "dynamicEffectForBusiness")]);
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 5500 }, { type: "concrete", amount: 50 }, { type: "steel", amount: 40 * (1 - 0.1 * city.techManager.getAdoption("3dprinting")) }, { type: "glass", amount: 30 }];
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 32; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 19000; }
+}
+
 //Seasonal businesses
 export class ChocolateBar extends Building {
     constructor() {
@@ -5082,7 +5107,7 @@ export const BLOCKER_TYPES: Map<string, Building> = new Map([
 
 export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Residential*/ SmallHouse, Quadplex, SmallApartment, Highrise, Skyscraper, Dorm, ShowHome,
-    /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, MaidTwoTeas, SauceCode, Casino, CartersCars, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter,
+    /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, MaidTwoTeas, SauceCode, Casino, CartersCars, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter, Consumeropolis,
     /*Seasonal (also commercial)*/ ChocolateBar, HeartyShack,
     /*Industrial*/ MountainIronMine, Quarry, CementMill, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks, SiliconRefinery, CrystalMine, AssemblyHouse, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory, ToyManufacturer, Furnifactory, LithiumMine, MohoMine, Nanogigafactory, PharmaceuticalsLab, SpaceLaunchSite,
     /*Seasonal (also industrial)*/ MiracleWorkshop,
@@ -5107,7 +5132,7 @@ export const TUTORIAL_COMPLETION_BUILDING_UNLOCKS: Set<string> = new Set([
     SiliconRefinery, CrystalMine, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory,
     ToyManufacturer, Furnifactory, LithiumMine,
     IceCreamTruck, PlantMilkPlant,
-    SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, PalmNomNom, GregsGrogBarr, Casino, CartersCars, BlankCheckBank,
+    SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, PalmNomNom, GregsGrogBarr, Casino, CartersCars, BlankCheckBank, Consumeropolis,
     SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, FlippinFun, H2Whoa,
     /*Volcanic region*/ RedGreenhouse, VerticalTreeFarm, EnclosedRanch, ObsidianGatherer, ObsidianCrusher, VolcanoIronMine, IgneousQuarry, Tumbler, PowderMill, HazmatStorage,
 ].map(getBuildingType));
