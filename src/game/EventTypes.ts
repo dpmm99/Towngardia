@@ -882,7 +882,7 @@ export class VulcanianEruption extends CityEvent {
 
 export const EVENT_TYPES = <CityEvent[]>([
     /*Fixed seasonal events*/ Hauntymonth, Merrymonth, Chocomonth,
-    /*Minigame-triggered events*/ TourismReward, ProductionReward, PowerReward, HappinessReward, ResearchReward, //TODO: Others could be a temporary construction cost reduction and a temporary market buy price reduction
+    /*Minigame-triggered events*/ DietReward, TourismReward, ProductionReward, PowerReward, HappinessReward, ResearchReward, //TODO: Others could be a temporary construction cost reduction and a temporary market buy price reduction
     /*Random negative events*/ Drought, Heatwave, ColdSnap, PowerOutage, Burglary, Heist, Epidemic, Fire, Earthquake, Riot, Spoilage,
     //...but Earthquake has positive effects, too: spawns a cheap geothermal power source sometimes, and spawns a hot spring the first time.
     /*Random positive events*/ EconomicBoom,

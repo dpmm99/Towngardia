@@ -130,5 +130,5 @@ pharmaceuticals for health (also distributed to increase happiness via Free Stuf
 For the record, the unlocks in the game that AREN'T recorded as milestones are:
 demolish mysterious rubble (350 flunds): Monobrynth minigame
 minigame minilab + playing the minigames: alternative reward sets as options for the minigames
-earthquake: geothermal tech and a hot spring inn
+earthquake that spawns a hot spring: hot spring inn
 techs unlock 13 buildings

@@ -4209,7 +4209,6 @@ export class QuantumComputingLab extends Building {
             0.3,
             true,
         );
-        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.outputResources.push(new Tourists(4.5, 4.5, 0, 180)); //Brings in 180 tourists per long tick, but it takes 10 days to get up to full steam. This makes the building not totally useless if the chance doesn't fire.
     }
 
