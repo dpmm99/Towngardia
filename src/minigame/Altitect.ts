@@ -13,6 +13,7 @@ import { drawMinigameOptions } from "../ui/MinigameOptions.js";
 import { OnePracticeRun, progressMinigameOptionResearch, rangeMapLinear } from "./MinigameUtil.js";
 import { EffectType } from "../game/GridType.js";
 import { Building, BuildingMod, BuildingModEffectType } from "../game/Building.js";
+import { Skyscraper } from "../game/BuildingTypes.js";
 
 const FLOOR_WIDTH = 8;
 const GAME_DURATION = 120; // seconds
@@ -663,6 +664,38 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
             winningsArea.height = innerNextY + 10 + "px";
             nextY += innerNextY + 20;
         }
+
+        const buildings = this.city.buildings.filter(p => p instanceof Skyscraper);
+        let nextIndex = this.building ? buildings.indexOf(this.building) : -1;
+
+        //Button to help the player find an unmodded skyscraper, since you theoretically want to upgrade them all before redoing any of them.
+        overlay.addChild(new Drawable({
+            anchors: ['centerX'],
+            centerOnOwnX: true,
+            y: nextY,
+            width: "480px",
+            height: "48px",
+            fallbackColor: '#444444',
+            grayscale: !buildings.length,
+            onClick: () => {
+                nextIndex = (nextIndex + 1) % buildings.length;
+                if (!buildings[nextIndex]) return;
+                this.building = buildings[nextIndex];
+                this.winnings = [];
+            },
+            children: [
+                new Drawable({
+                    anchors: ["centerX"],
+                    y: 5,
+                    width: "calc(100% - 10px)",
+                    height: "100%",
+                    text: buildings.length ? "Select an unmodded skyscraper" : "All skyscrapers have been modded",
+                    centerOnOwnX: true,
+                    grayscale: !buildings.length,
+                })
+            ]
+        }));
+        nextY += 60;
 
         //nextY = drawMinigameOptions(this.city, overlay, nextY, [ //TODO: Design options for this Skyscraper-modifying minigame. Maybe one option gives you more weight but adds a steel cost to play. Maybe one increases the budget for a higher Flunds cost.
         //    { group: "aa-r", id: "0", text: "Business Buds (+tourism)", icon: "resource/tourists" },
