@@ -6,9 +6,10 @@
 4. Register a [Discord](https://discord.com/developers/applications) or [Google](https://console.cloud.google.com/apis/credentials) app with OAuth 2.0 client credentials. (Facebook is also supported, but it's commented out in index.html because they require you to be an actual business.)
 5. Configure the appropriate local callback URL in that app, such as `http://localhost:3005/towngardia/auth/google/callback`.
 6. Set TOWNGARDIA_DISCORD_ID and TOWNGARDIA_DISCORD_SECRET, TOWNGARDIA_GOOGLE_ID and TOWNGARDIA_GOOGLE_SECRET, or TOWNGARDIA_FACEBOOK_ID and TOWNGARDIA_FACEBOOK_SECRET accordingly.
-7. Run via `npm run build` and `npm run start`.
-8. Navigate to `http://localhost:3005/towngardia/` in your browser.
-9. Log in.
+7. Run `npm install` in the repository root directory.
+8. Run via `npm run build` and `npm run start` from the repository root directory.
+9. Navigate to `http://localhost:3005/towngardia/` in your browser.
+10. Log in.
 
 ## Optional setup (to allow push notifications)
 1. Execute openssl req -nodes -new -x509 -keyout private-key.pem -out certificate.pem -days 365 -subj "/C=US/ST=CA/L=Chicago/O=Towngardia/OU=IT/CN=localhost"
