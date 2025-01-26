@@ -76,7 +76,7 @@ export class UIManager {
     private starbox!: Starbox;
     private monobrynth!: Monobrynth;
     private neponet!: NepotismNetworking;
-    private Altitect!: Altitect;
+    private altitect!: Altitect;
 
     private city!: City; //Set in switchRenderer, called by the constructor, but TypeScript compiler doesn't know that
     public renderer!: IRenderer;
@@ -188,7 +188,7 @@ export class UIManager {
         this.starbox = new Starbox(this.game.city!, this, this.game);
         this.monobrynth = new Monobrynth(this.game.city!, this, this.game);
         this.neponet = new NepotismNetworking(this.game.city!, newCity, this, this.game); //Affects BOTH your city and the other player's
-        this.Altitect = new Altitect(this.game.city!, this, this.game);
+        this.altitect = new Altitect(this.game.city!, this, this.game);
 
         //This overlay has to be instantiated after bottomBar.shown is set, because the tutorial hides the bottom bar.
         this.windows.push(this.tutorialOverlay = new TutorialOverlay(this.game.player!, this.game.city!, this)); //Also NEVER changes cities/players
@@ -738,11 +738,11 @@ export class UIManager {
 
     async showAltitectMinigame(building: Building): Promise<void> {
         game.onLoadStart?.();
-        await this.Altitect.preloadImages();
+        await this.altitect.preloadImages();
         game.onLoadEnd?.();
 
-        this.Altitect.show(building);
-        this.renderOnlyWindow = this.Altitect;
+        this.altitect.show(building);
+        this.renderOnlyWindow = this.altitect;
         this.cityView.drawBuildings = false;
         this.switchRenderer(this.renderer);
     }
@@ -756,7 +756,7 @@ export class UIManager {
 
     isPlayingMinigame() {
         //Detect if any of the minigames are actively being played--not just shown, but actually playing. In such a case, we don't want to auto-refresh.
-        return this.starbox.isPlaying() || this.neponet.isPlaying() || this.memoryMixology.isPlaying() || this.monobrynth.isPlaying() || this.slots.isPlaying() || this.Altitect.isPlaying();
+        return this.starbox.isPlaying() || this.neponet.isPlaying() || this.memoryMixology.isPlaying() || this.monobrynth.isPlaying() || this.slots.isPlaying() || this.altitect.isPlaying();
     }
 
     //Because screenToWorldCoordinates doesn't round/truncate

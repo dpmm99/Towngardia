@@ -665,7 +665,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
             nextY += innerNextY + 20;
         }
 
-        const buildings = this.city.buildings.filter(p => p instanceof Skyscraper);
+        const buildings = this.city.buildings.filter(p => p instanceof Skyscraper && !p.mods.length);
         let nextIndex = this.building ? buildings.indexOf(this.building) : -1;
 
         //Button to help the player find an unmodded skyscraper, since you theoretically want to upgrade them all before redoing any of them.
