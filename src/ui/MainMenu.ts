@@ -1,4 +1,5 @@
-import { City } from "../game/City.js";
+/// <reference lib="dom" />
+
 import { GameState } from "../game/GameState.js";
 import { CanvasRenderer } from "../rendering/CanvasRenderer.js";
 import { NetworkStorage } from "../storage/NetworkStorage.js";
@@ -144,6 +145,26 @@ export class MainMenu implements IHasDrawable {
             onClick: () => this.game.saveWhenHiding = !this.game.saveWhenHiding
         }));
 
+        if ("Notification" in window) {
+            menu.addChild(new Drawable({
+                anchors: ['centerX'],
+                y: nextY += 50,
+                centerOnOwnX: true,
+                width: "calc(100% - 20px)",
+                height: "40px",
+                text: (window.Notification.permission === "granted") ? "Disable Push Notifications" : "Enable Push Notifications", //Should also check for service worker registration, but asDrawable can't be async
+                onClick: async () => {
+                    if (window.Notification.permission === "granted" && (await navigator.serviceWorker.getRegistration('ui/SubscriptionServiceWorker.js'))) {
+                        this.unsubscribeFromPushNotifications();
+                    } else {
+                        const permission = await window.Notification.requestPermission();
+                        if (permission === "granted") this.subscribeToPushNotifications();
+                        this.uiManager.frameRequested = true;
+                    }
+                }
+            }));
+        }
+
         if (this.game.storage instanceof NetworkStorage) {
             menu.addChild(new Drawable({
                 anchors: ['centerX'],
@@ -162,5 +183,49 @@ export class MainMenu implements IHasDrawable {
     }
     getLastDrawable(): Drawable | null {
         return this.lastDrawable;
+    }
+
+    private async subscribeToPushNotifications() {
+        try {
+            const registration = await navigator.serviceWorker.register('ui/SubscriptionServiceWorker.js'); //Not going to try to get it working in the Webpack bundle
+
+            const response = await fetch('api/vapid-public-key');
+            const { publicKey } = await response.json();
+
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: publicKey
+            });
+
+            await fetch('api/push-subscription', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(subscription)
+            });
+        } catch (error) {
+            console.error('Failed to subscribe to push notifications:', error);
+        }
+    }
+
+    private async unsubscribeFromPushNotifications() {
+        try {
+            const registration = await navigator.serviceWorker.getRegistration('ui/SubscriptionServiceWorker.js');
+            if (!registration) return;
+            const subscription = await registration.pushManager.getSubscription();
+            if (!subscription) return;
+            await subscription.unsubscribe();
+            await registration.unregister();
+            await fetch('api/push-unsubscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: null //No body
+            });
+        } catch (error) {
+            console.error('Failed to unsubscribe from push notifications:', error);
+        }
     }
 }

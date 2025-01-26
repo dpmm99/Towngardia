@@ -5,6 +5,7 @@ import { IStorage } from "./IStorage.js";
 import { Player } from '../game/Player.js';
 import { GameAction } from '../game/GameAction.js';
 import { Assist } from "../game/Assist.js";
+import webpush from 'web-push';
 
 export class Database implements IStorage {
     protected queuedActions: string = ""; //Probably not needed. Will be needed in the client-server comms layer.
@@ -253,6 +254,28 @@ export class Database implements IStorage {
 
         const s = new PlayerSerializer();
         await this.query("UPDATE towngardia_players SET other_public = ?, last_action = ? WHERE id = ?", [JSON.stringify(s.player(player, true)), player.lastUserActionTimestamp, player.id]);
+    }
+
+    //Browser push notifications
+    async savePushSubscription(playerId: string, subscription: any): Promise<void> { //Using UNIX_TIMESTAMP() * 1000 to get milliseconds since epoch to match JavaScript's Date.now()
+        await this.query("UPDATE towngardia_players SET last_notified = UNIX_TIMESTAMP() * 1000, push_subscription = ? WHERE id = ?", [subscription ? JSON.stringify(subscription) : null, playerId]); //Could support multiple devices per player in the future
+    }
+
+    //Pull all push notification subscriptions wherein the player hasn't done anything in the last 5 days AND they haven't been notified since their last activity.
+    //TODO: Consider making the duration customizable and giving the option to have a second notification if they haven't played for even longer.
+    async getPushSubscriptions(): Promise<webpush.PushSubscription[]> {
+        //Switched from 5 * 24 * 60 * 60 * 1000 to 15000 for testing
+        const response = await this.query(`START TRANSACTION;
+        SET @current_time = UNIX_TIMESTAMP() * 1000;
+        SET @long_ago = @current_time - (15000);
+        SELECT push_subscription FROM towngardia_players WHERE push_subscription IS NOT NULL AND last_action < @long_ago AND last_notified < last_action FOR UPDATE;
+        UPDATE towngardia_players SET last_notified = UNIX_TIMESTAMP() * 1000 WHERE push_subscription IS NOT NULL AND last_action < @long_ago AND last_notified < last_action;
+        COMMIT;`, []);
+        return response[0][3].map((p: any) => {
+            let parsedSubscription = p?.push_subscription;
+            if (typeof parsedSubscription === "string" && parsedSubscription) parsedSubscription = JSON.parse(parsedSubscription);
+            return parsedSubscription;
+        });
     }
 
     /**

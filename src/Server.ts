@@ -11,6 +11,7 @@ import { CityDeserializer, CitySerializer, PlayerDeserializer, PlayerSerializer 
 import https from 'https'; //ONLY for local development
 import fs from 'fs'; //ONLY for local development
 import { Assist } from './game/Assist.js';
+import webpush from 'web-push';
 
 const app = express();
 const port = 3005;
@@ -30,6 +31,9 @@ const urlRootPath = '/towngardia';
 app.use(urlRootPath + '/assets', express.static(path.join(__dirname, 'assets')));
 app.get(urlRootPath + '/bundle.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'bundle.js'));
+});
+app.get(urlRootPath + '/ui/SubscriptionServiceWorker.js', (req, res) => {
+    res.sendFile(path.join(__dirname, 'ui/SubscriptionServiceWorker.js'));
 });
 
 // Middleware to check if user is authenticated
@@ -200,6 +204,77 @@ app.post(urlRootPath + '/api/assist-friend', isAuthenticated, asyncHandler(async
     }
 }));
 
+// Generate VAPID keys using webpush.generateVAPIDKeys()
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails('mailto:deprogrammer@aureuscode.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
+    // Endpoint to get the public VAPID key
+    app.get(urlRootPath + '/api/vapid-public-key', (req, res) => {
+        res.json({ publicKey: VAPID_PUBLIC_KEY });
+    });
+
+    // Endpoint to save push subscription
+    app.post(urlRootPath + '/api/push-subscription', isAuthenticated, asyncHandler(async (req: any, res: any) => {
+        const subscription = req.body;
+        await db.savePushSubscription(req.playerId, subscription);
+        res.json({ success: true });
+    }));
+
+    // Endpoint to unsubscribe a player from push notifications
+    app.post(urlRootPath + '/api/push-unsubscribe', isAuthenticated, asyncHandler(async (req: any, res: any) => {
+        await db.savePushSubscription(req.playerId, null);
+        res.json({ success: true });
+    }));
+
+    const pushNotificationMessages: string[] = [
+        "Give me some love and attention! I mean, uh, you haven't played in 5 days...just FYI.",
+        "Your city is getting lonely. And dusty. And probably a little sad without you.",
+        "Remember me? Your virtual urban masterpiece? No? Awkward...",
+        "Breaking news: Your citizens are staging a passive-aggressive protest by looking disappointed.",
+        "Hey! Your city hasn't been touched in 5 days. The citizens are developing serious abandonment issues.",
+        "Psst... your infrastructure misses you. Like, really misses you.",
+        "Anarchy levels have reached critical mass. You might wanna check on your city.",
+        "Your citizens are writing sad poetry about your absence. Do you want that on your conscience?",
+        "Breaking: Local mascot 'lawyers up' to sue for digital neglect.",
+        "Warning: Prolonged absence may result in spontaneous urban chaos and pothole rebellion.",
+        "Your city just isn't the same without you. Even the virtual pigeons are judging you for your laissez-faire governing.",
+        "Your city is staging a silent, pixelated guilt trip.",
+        "Your citizens have started a support group for abandoned digital municipalities.",
+        "If you keep ghosting your city, the citizens might ghost you right back. With fire."
+    ];
+
+    const NOTIFICATION_INTERVAL = 3000 /*3 seconds for testing*/; //30 * 60 * 1000; // 30 minutes in milliseconds
+    async function sendPushNotifications() {
+        try {
+            const subscriptions = await db.getPushSubscriptions();
+            for (const subscription of subscriptions) {
+                try {
+                    await webpush.sendNotification(
+                        subscription,
+                        JSON.stringify({
+                            title: 'Towngardia',
+                            body: "(Play reminder) " + pushNotificationMessages[Math.floor(Math.random() * pushNotificationMessages.length)],
+                        })
+                    );
+                    console.log(new Date().toISOString(), 'Push notification sent');
+                } catch (error) {
+                    console.error(new Date().toISOString(), 'Failed to send push notification:', error);
+                }
+            }
+        } catch (error) {
+            console.error(new Date().toISOString(), 'Error in push notification cycle:', error);
+        }
+    }
+
+    // Schedule push notifications
+    setInterval(sendPushNotifications, NOTIFICATION_INTERVAL);
+} else {
+    console.warn('VAPID keys not found; cannot send push notifications');
+}
+
 const DISCORD_CLIENT_ID = process.env.TOWNGARDIA_DISCORD_ID;
 const DISCORD_CLIENT_SECRET = process.env.TOWNGARDIA_DISCORD_SECRET;
 
@@ -210,6 +285,9 @@ const GOOGLE_APP_ID = process.env.TOWNGARDIA_GOOGLE_ID;
 const GOOGLE_APP_SECRET = process.env.TOWNGARDIA_GOOGLE_SECRET;
 
 if (process.env.OS === "Windows_NT") { //ONLY for local development
+    //Can generate a self-signed certificate for HTTPS like so:
+    //const { execSync } = require('child_process');
+    //execSync('openssl req -nodes -new -x509 -keyout private-key.pem -out certificate.pem -days 365 -subj "/C=US/ST=CA/L=Chicago/O=Towngardia/OU=IT/CN=localhost"');
     const options = {
         key: fs.readFileSync('private-key.pem'),
         cert: fs.readFileSync('certificate.pem')

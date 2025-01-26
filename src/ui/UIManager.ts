@@ -877,7 +877,7 @@ export class UIManager {
         });
         addEventListener("resize", this.adjustDragDueToResize.bind(this));
         addEventListener("resize", this.requestRedraw.bind(this));
-        addEventListener("keydown", (event) => { this.starbox.onKeyDown(event); }); //Can't use bind because Starbox gets reinstantiated when you switch cities
+        addEventListener("keydown", (event: KeyboardEvent) => { this.starbox.onKeyDown(event); }); //Can't use bind because Starbox gets reinstantiated when you switch cities
     }
     
     private requestRedraw() {

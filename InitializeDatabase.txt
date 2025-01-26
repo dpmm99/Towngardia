@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS towngardia_players (
     name VARCHAR(255),
     email VARCHAR(255),
 	last_action BIGINT(20) NOT NULL DEFAULT '1725117593000',
-    other_public JSON
+    other_public JSON,
+	last_notified BIGINT(20) NOT NULL DEFAULT '1725117593000',
+    push_subscription JSON
 );
 
 CREATE TABLE IF NOT EXISTS towngardia_cities (
