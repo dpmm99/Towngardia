@@ -361,7 +361,7 @@ export class HydroponicGardens extends Tech {
         );
     }
 
-    override applyRegionEffects(region: string) {//TODO: Anything that references this must have a applyRegionEffects method to switch its paths
+    override applyRegionEffects(region: string) {
         if (region === "volcanic") {
             this.researched = true;
             this.adoptionRate = 1;

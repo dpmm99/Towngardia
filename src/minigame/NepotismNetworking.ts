@@ -1292,7 +1292,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
             width: "48px",
             height: "48px",
             image: new TextureInfo(64, 64, "ui/x"),
-            onClick: () => this.uiManager.hideMinigame()
+            onClick: () => this.uiManager.hideRenderOnlyWindow()
         }));
     }
 

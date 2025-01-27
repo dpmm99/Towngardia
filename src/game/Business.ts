@@ -3,7 +3,6 @@ import { City } from "./City.js";
 import { EffectType } from "./GridType.js";
 
 /**Ephemeral storage for business information while calculating sales tax revenue*/
-//TODO: may just want to move them straight to Building or SUBCLASS Building and have businesses subclass this. Then we can show patronage in the building info screen.
 export class Business {
     constructor(
         public building: Building,

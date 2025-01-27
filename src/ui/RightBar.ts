@@ -61,7 +61,6 @@ export class RightBar implements IHasDrawable, IOnResizeEvent {
             { id: 'achievements', onClick: () => this.uiManager.showAchievements() },
             { id: 'milestones', onClick: () => this.uiManager.showMilestonesMenu() }); //TODO: May actually want to compile all three of those into a "progress menus" button or something.
         if (this.uiManager.isMyCity && this.player.finishedTutorial) {
-            //TODO: Unlock when a Bar is placed, I guess
             buttons.push({ id: 'memorymixology', onClick: () => this.uiManager.showMemoryMixologyMinigame(), resourceType: new BarPlays().type });
 
             if (this.city?.flags.has(CityFlags.UnlockedSlots)) {

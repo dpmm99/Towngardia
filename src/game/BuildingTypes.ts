@@ -443,7 +443,6 @@ export class CityHall extends Building {
     override onLongTick(city: City): void {
         const population = city.resources.get("population")?.amount || 0;
         const tourists = city.resources.get("tourists")?.amount || 0;
-        //TODO: Actually want to start scaling back down per-capita income after 2k or so; diminishing returns because I don't want you to be earning 2.1k flunds a day with only 6500 citizens and only enough businesses for ~half of them.
         const baseRevenuePerCapita = city.budget.taxRates["income"] * (city.peakPopulation >= 1000 ? 35 : (15 + 0.02 * city.peakPopulation)); //Scale up slowly until you hit 1k population. Don't want to give way too many resources too early.
         city.budget.lastRevenue["income"] = Math.floor(10 + Math.pow(population, 0.6) * baseRevenuePerCapita); //Comes out to about 42 for 10 people, 60 for 46, 114 for 258, 357 for 2.5k, 1335 for 25k, 2553 for 75k, 3855 for 150k...
 
@@ -1616,7 +1615,6 @@ export class Farm extends Building {
     override place(city: City, x: number, y: number): void {
         super.place(city, x, y);
         if (this.outputResources.length === 0) {
-            //TODO: the allowed resource types may depend on the region. Amounts could also differ.
             const foodType = this.outputResourceOptions[Math.floor(Math.random() * this.outputResourceOptions.length)];
             this.outputResources.push(foodType.clone());
         }

@@ -152,7 +152,7 @@ export class UIManager {
         this.city = newCity = this.game.visitingCity || this.game.city!;
         this.cityView = new CityView(newCity, this);
         this.city.uiManager = this; //In case the city needs to trigger dialogs or whatever.
-        this.hideMinigame();
+        this.hideRenderOnlyWindow();
 
         this.windows = [
             this.rightBar = new RightBar(owner, this.isMyCity ? newCity : null, this), //Never given another player's city--only used for showing notifications
@@ -345,7 +345,7 @@ export class UIManager {
     }
     hideTechMenu() {
         this.techMenu.hide();
-        this.hideMinigame();
+        this.hideRenderOnlyWindow();
     }
 
     async showMilestonesMenu() {
@@ -356,7 +356,7 @@ export class UIManager {
     }
     hideMilestonesMenu() {
         this.milestonesMenu.hide();
-        this.hideMinigame();
+        this.hideRenderOnlyWindow();
     }
 
     showFullScreen(menu: IHasDrawable, ...showArgs: any[]) {
@@ -371,7 +371,7 @@ export class UIManager {
     }
     hideBudget() {
         this.budgetMenu.hide();
-        this.hideMinigame();
+        this.hideRenderOnlyWindow();
     }
     showAchievements() {
         this.showFullScreen(this.achievementsMenu, "achievements");
@@ -381,21 +381,21 @@ export class UIManager {
     }
     hideAchievementsMenu() {
         this.achievementsMenu.hide();
-        this.hideMinigame();
+        this.hideRenderOnlyWindow();
     }
     showNotifications() {
         this.showFullScreen(this.notificationsMenu);
     }
     hideNotifications() {
         this.notificationsMenu.hide();
-        this.hideMinigame();
+        this.hideRenderOnlyWindow();
     }
     showFriendsMenu() {
         this.showFullScreen(this.friendsMenu);
     }
     hideFriendsMenu() {
         this.friendsMenu.hide();
-        this.hideMinigame();
+        this.hideRenderOnlyWindow();
     }
     showTutorials() {
         this.tutorialOverlay.showCompletedSteps();
@@ -747,7 +747,7 @@ export class UIManager {
         this.switchRenderer(this.renderer);
     }
 
-    hideMinigame() { //TODO: Rename to hideRenderOnlyWindow
+    hideRenderOnlyWindow() {
         if (this.renderOnlyWindow && 'hide' in this.renderOnlyWindow && typeof this.renderOnlyWindow.hide === 'function') this.renderOnlyWindow.hide();
         this.cityView = new CityView(this.city, this);
         this.renderOnlyWindow = null;
@@ -761,7 +761,7 @@ export class UIManager {
 
     //Because screenToWorldCoordinates doesn't round/truncate
     private screenToGridCoordinates(x: number, y: number): { x: number, y: number } {
-        const worldCoords = this.renderer.screenToWorldCoordinates(this.city, x - this.scale * TILE_WIDTH / 2, y + this.scale * TILE_HEIGHT); //TODO: Not sure why it was off by a little bit, but this correction is exact.
+        const worldCoords = this.renderer.screenToWorldCoordinates(this.city, x - this.scale * TILE_WIDTH / 2, y + this.scale * TILE_HEIGHT);
         return { x: Math.floor(worldCoords.x), y: Math.floor(worldCoords.y) };
     }
 

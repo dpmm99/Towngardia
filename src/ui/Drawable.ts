@@ -20,8 +20,8 @@ export class Drawable {
     scaleYOnMobile?: boolean;
     tileWidth?: number; //if it's in world dimensions; optional
     tileHeight?: number;
-    grayscale: boolean = false; //TODO: Implement in WebGL
-    reddize: boolean = false; //heheh. Probably should just be a color. :) //TODO: Implement
+    grayscale: boolean = false;
+    reddize: boolean = false;
 
     text?: string;
     rightAlign: boolean = false;
@@ -37,7 +37,6 @@ export class Drawable {
     onLongTap: (() => void) | null = null; //Only works if onClick is also set.
     onDrag: ((x: number, y: number) => void) | null = null;
     onDragEnd: (() => void) | null = null;
-    //TODO: Needs a refresh function for when anything changes; should probably return true if redraw is needed. I implemented the renderers to use Drawable factories, though.
 
     constructor(options: Partial<Drawable> = {}) {
         Object.assign(this, options);

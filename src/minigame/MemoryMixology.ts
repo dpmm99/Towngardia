@@ -503,7 +503,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
             image: new TextureInfo(64, 64, "ui/x"),
             id: "closeButton",
             onClick: () => {
-                this.uiManager.hideMinigame();
+                this.uiManager.hideRenderOnlyWindow();
             }
         }));
     }

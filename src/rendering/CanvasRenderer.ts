@@ -161,7 +161,6 @@ export class CanvasRenderer implements IRenderer {
             width: TILE_WIDTH + "px",
             height: TILE_HEIGHT + "px",
             isDiamond: true,
-            //TODO: different color per footprint type. fallbackColor: "#00000077",
         });
         for (let y = 0; y < city.height; y++) {
             for (let x = 0; x < city.width; x++) {
@@ -214,7 +213,6 @@ export class CanvasRenderer implements IRenderer {
     private drawBuilding(view: CityView, city: City, building: Building): void {
         const { x, y } = calculateScreenPosition(building, city);
 
-        //TODO: fallback image, fallback color
         const buildingImageID = "building/" + building.type + (building.variant || "");
         let img = this.getSprite(buildingImageID, undefined);
         const height = img?.height ?? (building.height * TILE_HEIGHT);
@@ -352,7 +350,7 @@ export class CanvasRenderer implements IRenderer {
             } else if (imageId.startsWith("resource/") || imageId.startsWith("ui/") || imageId.startsWith("region/")) {
                 //Simple "?" icon
                 sprite = this.sprites.get("resource/generic");
-            } else if (imageId.startsWith("footprint/")) { //Other footprints just default to empty for a split second--could actually make the footprints render a diamond and cache it instead of loading images. //TODO: In fact, do exactly that for the data views that use gradients--make 20-step gradients for them.
+            } else if (imageId.startsWith("footprint/")) { //Other footprints just default to empty for a split second--could actually make the footprints render a diamond and cache it instead of loading images.
                 sprite = this.sprites.get("footprint/EMPTY");
             } else if (imageId.startsWith("tech/")) {
                 sprite = this.sprites.get("tech/generic");
@@ -362,8 +360,6 @@ export class CanvasRenderer implements IRenderer {
                 canvas.width = canvas.height = 1;
                 sprite = canvas;
             }
-
-            //TODO: just delay the load of the not-immediately-visible UI elements until after the first frame, before they're requested
 
             // Request actual sprite load if not already pending or previously failed
             if (!this.pendingOrFailedSpriteLoads.has(imageId)) {

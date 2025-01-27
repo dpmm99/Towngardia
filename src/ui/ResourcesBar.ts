@@ -261,7 +261,7 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
                         image: new TextureInfo(64, 64, "ui/arrowleft"),
                         id: barDrawable.id + ".tradesettings.left",
                         biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
-                        onClick: () => this.page = Math.max(0, this.page - 1), //TODO: I really need to make the click order opposite the draw order still
+                        onClick: () => this.page = Math.max(0, this.page - 1),
                     }));
                 if (this.page < 2)
                     settingsFixedTopPart.addChild(new Drawable({

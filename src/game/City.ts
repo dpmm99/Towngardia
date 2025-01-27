@@ -1445,6 +1445,7 @@ export class City {
     private distributeResource(resourceType: "power" | "water", desiredAmount: number, importLimit: number,
         getUpkeep: (building: Building) => number, getProduction: (building: Building) => number,
         usageMultiplier: number, needMetField: keyof Building, needMetTimeField: keyof Building, importRate: number, setImportCost: (cost: number) => void): void {
+        //TODO: I think this function has a bug where in the first or second short tick after a long tick, it doubles or zeroes the production rate. I screenshotted myself having a power surplus of 10.8GW at 16:03 a few hours after placing a new nuclear power plant because I was using more than 10.6 GW and therefore had a few hundred watts deficit.
         const resource = this.resources.get(resourceType);
         if (!resource) throw new Error(`${resourceType} resource is missing from city`); //would be a serious bug
 
@@ -1503,7 +1504,6 @@ export class City {
             (building: Building) => building.getPowerUpkeep(this), (building: Building) => building.getPowerProduction(this),
             this.powerUsageMultiplier, "powered", "poweredTimeDuringLongTick", this.getImportPowerRate(), (cost: number) => this.lastImportedPowerCost = cost);
 
-        //TODO: I screwed up. All my water numbers were per-long-tick, but the logic was per-short-tick, so costs are 72x too high and storage is 72x too low. Is it okay if I just fix it here?
         if (this.flags.has(CityFlags.WaterMatters)) //else... watered defaults to true anyway, and Building's onLongTick takes care of the wateredTimeDuringLongTick part.
             this.distributeResource("water", this.desiredWater / SHORT_TICKS_PER_LONG_TICK, this.budget.waterImportLimit,
                 (building: Building) => building.getWaterUpkeep(this) / SHORT_TICKS_PER_LONG_TICK, (building: Building) => building.getWaterProduction(this) / SHORT_TICKS_PER_LONG_TICK,
@@ -1552,7 +1552,7 @@ export class City {
     updateMinigamePlays() {
         this.resources.get(ResourceTypes.getResourceType(ResourceTypes.PracticeRuns))!.produce(1 / LONG_TICKS_PER_DAY); //One free practice run a day for any minigame
 
-        { //TODO: Memory Mixology may need a bar to unlock, but for now, it's a freebie
+        { //Opted to keep Memory Mixology a freebie forever instead of requiring a Bar. Felt like I couldn't accept not having a minigame available at the start.
             const plays = this.resources.get(new ResourceTypes.BarPlays().type)!;
             plays.produce(plays.productionRate);
             //if (!this.flags.has(CityFlags.UnlockedMemoryMixology)) {
@@ -1565,7 +1565,7 @@ export class City {
             const plays = this.resources.get(new ResourceTypes.NepotismNetworkingPlays().type)!;
             plays.produce(plays.productionRate);
         }
-        if (this.peakPopulation >= 400 && this.presentBuildingCount.get(new Casino().type)) { //Only matters whether or not you've built a casino--not if it's place, not how many you have.
+        if (this.peakPopulation >= 400 && this.presentBuildingCount.get(new Casino().type)) { //Only matters whether or not you've built a casino--not if it's placed, not how many you have.
             const plays = this.resources.get(new ResourceTypes.SlotsPlays().type)!;
             plays.produce(plays.productionRate);
             if (!this.flags.has(CityFlags.UnlockedSlots)) {

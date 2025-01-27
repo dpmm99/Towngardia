@@ -30,7 +30,7 @@ export class Building implements IHasDrawable {
     needsRoad = true;
     isRoad = false;
 
-    onlyAllowInRegions: string[] = []; //TODO: Implement. Should fail to unlock if the city is not in one of these regions, even if it's in TutorialUnlocks or whatever.
+    onlyAllowInRegions: string[] = []; //Should fail to unlock if the city is not in one of these regions, even if it's in TutorialUnlocks or whatever.
 
     isNew = true; //Just so buildings don't show 'unpowered' right away when you place them, which seems a bit odd as a player
     isHidden = false; //Just for seasonal buildings. Don't want to show them year-round when they're unusable.
@@ -78,7 +78,7 @@ export class Building implements IHasDrawable {
     public stores: Resource[] = [];
     public storeAmount: number = 0;
 
-    public mods: BuildingMod[] = []; // Store all modified building effects here //TODO: Serialize and deserialize these and reapply them as needed upon deserialization (some types won't need to be)
+    public mods: BuildingMod[] = []; // Store all modified building effects here
 
     constructor(
         public type: string,
@@ -180,7 +180,7 @@ export class Building implements IHasDrawable {
                         }
                         break;
                     default:
-                        //TODO: Any other non-enum modifiers to be applied (this can be expanded later)
+                        // Any other non-enum modifiers to be applied (this can be expanded later)
                         console.error("Unhandled mod effect type: ", mod.type);
                         break;
                 }
