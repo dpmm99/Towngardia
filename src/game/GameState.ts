@@ -308,7 +308,11 @@ export class GameState {
 
             this.city.onLongTick();
             if (now - this.city.lastLongTick < LONG_TICK_TIME) { //Don't save while fast-forwarding.
-                this.fullSave();
+                try {
+                    this.fullSave();
+                } catch (err) {
+                    console.error('Failed to save:', err);
+                }
             }
             if (this.uiManager) this.uiManager.frameRequested = true;
         }
@@ -316,7 +320,13 @@ export class GameState {
         // If no more long ticks are needed, do the short ticks up to the current time.
         const moreLongTicksPending = now - this.city.lastLongTick >= LONG_TICK_TIME;
         if (!moreLongTicksPending) {
-            if (this.shortTick(now)) this.fullSave();
+            if (this.shortTick(now)) {
+                try {
+                    this.fullSave();
+                } catch (err) {
+                    console.error('Failed to save:', err);
+                }
+            }
         }
 
         // Return true if there are more long ticks to run, false otherwise.

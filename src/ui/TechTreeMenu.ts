@@ -75,7 +75,7 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
                 image: new TextureInfo(this.techIconSize, this.techIconSize, "tech/" + tech.id),
                 fallbackImage: new TextureInfo(this.techIconSize, this.techIconSize, "tech/generic"),
                 id: techTreeDrawable.id + "." + tech.id,
-                onClick: () => this.selectedTech = tech,
+                onClick: () => { this.selectedTech = tech; this.city.lastSelectedTech = tech.id; },
                 grayscale: grayscale,
             }));
 
@@ -341,6 +341,7 @@ export class TechTreeMenu implements IHasDrawable, IOnResizeEvent {
         this.scrollerX.resetScroll();
         this.scrollerY.resetScroll();
         this.shown = true;
+        this.selectedTech = this.city.lastSelectedTech ? this.techManager.techs.get(this.city.lastSelectedTech) || null : null;
 
         //Fixing a past mistake, in case anyone already had an Earthquake occur
         if ((this.city.presentBuildingCount.get(getBuildingType(GeothermalVent)) ?? 0) > 0) this.techManager.techs.get(new Geothermal().id)!.unavailable = false;

@@ -85,22 +85,24 @@ export class ProvisioningView extends CityView {
         super(city, uiManager, "Resource Provisioning");
         this.showCollectibles = false;
         this.showProvisioning = true;
+        this.provisionTicks = this.city.provisionAmountPerTap;
+        this.provisionHideAtTicks = this.city.provisionFilterLevel;
         const sliderOptions = { "6 hours": 1, "12 hours": 2, "1 day": 4, "2 days": 8, "3 days": 12, "Max": 100 }; //Most should be 5 days max (20 ticks), but coal power plants are tentatively 10 (40 ticks)...
         this.amountSlider = new LockStepSlider(uiManager,
             { x: 20, y: 80, fallbackColor: "#00000000" },
             "Amount per tap",
             "",
             Object.keys(sliderOptions),
-            2,
-            (value) => { this.provisionTicks = (<any>sliderOptions)[value]; }
+            Math.max(1, Object.values(sliderOptions).indexOf(this.city.provisionAmountPerTap)),
+            (value) => { this.provisionTicks = this.city.provisionAmountPerTap = (<any>sliderOptions)[value]; }
         );
         this.filterSlider = new LockStepSlider(uiManager,
             { x: 20, y: 150, fallbackColor: "#00000000" },
             "Filter level",
             "",
             Object.keys(sliderOptions),
-            2,
-            (value) => { this.provisionHideAtTicks = (<any>sliderOptions)[value]; }
+            Math.max(1, Object.values(sliderOptions).indexOf(this.city.provisionFilterLevel)),
+            (value) => { this.provisionHideAtTicks = this.city.provisionFilterLevel = (<any>sliderOptions)[value]; }
         );
         this.lastDraggables = [this.amountSlider, this.filterSlider];
     }

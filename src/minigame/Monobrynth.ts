@@ -101,7 +101,9 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
     private selectedDifficulty: Difficulty = 'easy';
     private metXenocideRequirements: boolean = false;
 
-    constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
+    constructor(private city: City, private uiManager: UIManager, private game: GameState) {
+        this.selectedDifficulty = (this.city.minigameOptions.get("mb-s1") ?? 'easy') as Difficulty;
+    }
 
     private initializeGame(): void {
         this.score = 0;
@@ -710,6 +712,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
                 fallbackColor: this.selectedDifficulty === difficulty ? '#666666' : '#444444',
                 onClick: () => {
                     this.selectedDifficulty = difficulty as Difficulty;
+                    this.city.minigameOptions.set("mb-s1", difficulty);
                     this.costs.find(p => p.type === new MonobrynthPlays().type)!.amount = this.difficulty.playCost;
                 },
                 children: [

@@ -85,7 +85,9 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
     private readonly countdownSteps = [8, 7, 6, 5, 4, 3, 2, 1, "GO"];
     private countdownStep = 0;
 
-    constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
+    constructor(private city: City, private uiManager: UIManager, private game: GameState) {
+        this.selectedDifficulty = (this.city.minigameOptions.get("mm-d") ?? 'easy') as Difficulty;
+    }
 
     private get difficulty(): DifficultySettings { return DIFFICULTY_SETTINGS[this.selectedDifficulty]; }
 
@@ -835,6 +837,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
                 fallbackColor: this.selectedDifficulty === difficulty ? '#666666' : '#444444',
                 onClick: () => {
                     this.selectedDifficulty = difficulty as Difficulty;
+                    this.city.minigameOptions.set("mm-d", difficulty);
                     this.costs.find(p => p.type === new BarPlays().type)!.amount = this.difficulty.playCost;
                 },
                 children: [

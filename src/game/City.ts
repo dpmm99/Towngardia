@@ -47,6 +47,9 @@ export class City {
     public cityHall!: CityHall;
     public postOffice: PostOffice | null = null;
 
+    //Temporary
+    public shortTicks: number = 0;
+
     //These really matter
     public trafficPrecalculation: number = 0;
     public roadUpkeepPrecalculation: number = 0;
@@ -75,6 +78,10 @@ export class City {
     public lastUserActionTimestamp: number = 1725117593000; //Kept around until we set lastSavedUserActionTimestamp to it after a successful save; timestamp of the last action the user took.
 
     public resourceEvents: { type: string, event: "buy" | "sell" | "earn" | "produce" | "consume", amount: number }[] = []; //Gets cleared at the end of every long tick. Used for achievements. Will need to serialize if saves occur outside long ticks (which is totally necessary).
+    public fadeBuildings: boolean = false; //Moved from CityView to City so it can be saved and loaded
+    public provisionAmountPerTap: number = 4;
+    public provisionFilterLevel: number = 4;
+    public lastSelectedTech: string | null = null;
 
     constructor(
         public player: Player,
@@ -601,14 +608,12 @@ export class City {
         const power = this.resources.get('power')!;
         this.desiredPower += multiplier * building.getPowerUpkeep(this, true) * this.powerUsageMultiplier;
         const production = multiplier * building.getPowerProduction(this); //Considered using productionRate, but if power is variable...
-        power.amount += production; //To make it apply more quickly when you place a new power producer.
         power.productionRate += production;
 
         //Same for water
         const water = this.resources.get('water')!;
         this.desiredWater += multiplier * building.getWaterUpkeep(this, true);
         const waterProduction = multiplier * building.getWaterProduction(this);
-        water.amount += waterProduction;
         power.productionRate += waterProduction;
     }
 
@@ -1440,6 +1445,7 @@ export class City {
         this.runEvents(EventTickTiming.Normal);
         if (!this.timeFreeze) this.checkStartEvents(); //Events won't start if the tutorial is running
         this.checkPopulationUnlocks(); //The last thing we do--and we'll only do it if the city processing is caught up, so we don't surprise the player with a dead city if they were offline a while
+        this.shortTicks = 0;
     }
 
     private distributeResource(resourceType: "power" | "water", desiredAmount: number, importLimit: number,
@@ -1478,7 +1484,7 @@ export class City {
         resource.productionRate = connectedBuildings.reduce((total, building) => total + getProduction(building), 0);
 
         if (resource.amount < wasStored) resource.amount = Math.max(0, resource.amount); //Used some of the stored amount; don't go below 0
-        else if (resource.amount > resource.capacity) resource.amount = resource.capacity; //Don't go above capacity
+        if (resource.amount > resource.capacity) resource.amount = resource.capacity; //Don't go above capacity (or stay above it), either
 
         if (totalImportable === importable) { //The city had enough power/water for itself OR wasn't allowed to import any, so no need to deduct anything.
             setImportCost(0);
@@ -1500,6 +1506,7 @@ export class City {
     }
 
     onShortTick(): void {
+        this.shortTicks++;
         this.distributeResource("power", this.desiredPower, this.budget.powerImportLimit,
             (building: Building) => building.getPowerUpkeep(this), (building: Building) => building.getPowerProduction(this),
             this.powerUsageMultiplier, "powered", "poweredTimeDuringLongTick", this.getImportPowerRate(), (cost: number) => this.lastImportedPowerCost = cost);
@@ -1730,9 +1737,10 @@ export class City {
 
         const targetPopulation = Math.min(this.events.some(p => p.type === new Epidemic().type) ? populationResource.amount : Number.MAX_SAFE_INTEGER, maxPopulation * happinessMultiplier);
 
-        // Gradually adjust population towards target
+        // Gradually adjust population towards target (not shown to the player so I don't care as much if population never actually reaches it)
         const populationChange = (targetPopulation - populationResource.amount) / Math.max(1, Math.min(5, populationResource.amount / 35)); //No floor or ceiling or round, because then the population can't change *at all* early in the game. Just round in the UI.
         populationResource.amount = Math.max(1, populationResource.amount + populationChange); //Can't be 0; that causes math errors. Plus the player can't move out of their own city. :)
+        if (targetPopulation > 1 && Math.abs(populationResource.amount - targetPopulation) < 5) populationResource.amount = targetPopulation; //Close enough
 
         this.runEvents(EventTickTiming.Population);
 
@@ -1926,8 +1934,15 @@ export class City {
     updateHappiness() {
         const happiness = this.resources.get("happiness")!;
         const target = new HappinessCalculator(this).calculateHappiness(); //Results in a value between 0 and 1. We want to adjust this a bit faster in the negative than the positive direction.
-        const change = target - happiness.amount;
-        happiness.amount += change > 0 ? change * 0.1 : change * 0.2; //Happiness drops twice as fast as it rises. This speaks to the persistent effects of unpleasant events. ;)
+        let change = target - happiness.amount;
+        if (Math.abs(change) < 0.001) { //0.1%
+            happiness.amount = target;
+        } else {
+            change *= change > 0 ? 0.1 : 0.2; //Happiness drops twice as fast as it rises. This speaks to the persistent effects of unpleasant events. ;)
+            if (change > 0 && change < 0.001) change = 0.001; //a minimum change rate so it doesn't look like it'll NEVER reach the target
+            else if (change < 0 && change > -0.001) change = -0.001;
+            happiness.amount += change;
+        }
     }
 
     public failBusiness(building: Building): void {

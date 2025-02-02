@@ -67,6 +67,10 @@ export class CitySerializer {
             la: o.lastUserActionTimestamp,
             ls: o.lastSavedUserActionTimestamp,
             ap: o.altitectPlays,
+            fb: o.fadeBuildings,
+            pa: o.provisionAmountPerTap,
+            pf: o.provisionFilterLevel,
+            lr: o.lastSelectedTech,
         };
 
         return r;
@@ -295,6 +299,10 @@ export class CityDeserializer {
         r.roadUpkeepPrecalculation = o.ru || 0;
         r.untreatedWaterPortion = o.uw || 0;
         r.altitectPlays = o.ap || 0;
+        r.fadeBuildings = o.fb || false;
+        if (o.pa) r.provisionAmountPerTap = o.pa;
+        if (o.pf) r.provisionFilterLevel = o.pf;
+        if (o.lr && techManager.techs.get(o.lr)) r.lastSelectedTech = o.lr;
 
         //Old defunct storage of some flags
         if (o.pm) r.flags.add(CityFlags.PoliceProtectionMatters);

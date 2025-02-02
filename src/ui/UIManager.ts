@@ -129,6 +129,7 @@ export class UIManager {
     //Must be called before the UIManager will do anything
     switchRenderer(newRenderer: IRenderer): void {
         this.renderer = newRenderer;
+        this.renderer.setVisibilityMode(this.city.fadeBuildings);
 
         this.renderer.clearWindowsAndWorldCoordinateDrawables();
         if (this.renderOnlyWindow === null) {
@@ -494,7 +495,8 @@ export class UIManager {
         this.cityView.drawBuildings = !this.cityView.drawBuildings;
     }
     toggleBuildingFade() {
-        this.renderer.setVisibilityMode(!this.renderer.getVisibilityMode());
+        this.city.fadeBuildings = !this.city.fadeBuildings;
+        this.renderer.setVisibilityMode(this.city.fadeBuildings);
         if (this.renderer.getVisibilityMode()) this.cityView.drawBuildings = true; //Just to make it a bit less confusing if they click the button--it won't do *nothing* now.
     }
 
