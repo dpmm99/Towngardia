@@ -3176,6 +3176,8 @@ export class ChocolateBar extends Building {
         );
         this.setBusinessValue(190, 0.8); //A bit high since it's seasonal
         this.outputResources.push(new Chocolate(0, 0.25));
+        this.stores.push(...this.outputResourceOptions);
+        this.storeAmount = 5;
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 5;
         this.areaIndicatorRounded = true;
         this.isRestaurant = true;
