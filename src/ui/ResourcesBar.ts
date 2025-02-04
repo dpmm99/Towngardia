@@ -1,4 +1,5 @@
 import { City } from "../game/City.js";
+import { EconomicBoom } from "../game/EventTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -95,6 +96,7 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
 
         //TODO: Maybe categorize foods last?
         const resources = [...this.city.resources.values()].filter(p => !p.isSpecial && p.capacity);
+        const boom = this.city.events.find(p => p instanceof EconomicBoom);
         for (const resource of resources) {
             barDrawable.addChild(new Drawable({
                 x: padding,
@@ -105,6 +107,17 @@ export class ResourcesBar implements IHasDrawable, IOnResizeEvent {
                 id: barDrawable.id + "." + resource.type,
                 biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
             }));
+            if (boom?.chosenOnes.includes(resource.type)) {
+                barDrawable.addChild(new Drawable({
+                    x: padding - 6,
+                    y: nextY - 4,
+                    width: "32px",
+                    height: "32px",
+                    image: new TextureInfo(32, 32, "ui/doubleup"),
+                    id: barDrawable.id + "." + resource.type + ".doubleup",
+                    biggerOnMobile: true, scaleXOnMobile: true, scaleYOnMobile: true,
+                }));
+            }
             barDrawable.addChild(new Drawable({
                 x: padding + iconSize + 5,
                 y: nextY + 4,
