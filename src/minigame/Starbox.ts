@@ -60,6 +60,7 @@ export class Starbox implements IHasDrawable, IOnResizeEvent {
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) {
         this.selectedDifficulty = (this.city.minigameOptions.get("sb-s1") ?? 'easy') as Difficulty;
+        this.costs.find(p => p.type === new StarboxPlays().type)!.amount = this.difficulty.playCost;
         this.initializeGame();
     }
 

@@ -87,6 +87,7 @@ export class MemoryMixology implements IHasDrawable, IOnResizeEvent {
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) {
         this.selectedDifficulty = (this.city.minigameOptions.get("mm-d") ?? 'easy') as Difficulty;
+        this.costs.find(p => p.type === new BarPlays().type)!.amount = this.difficulty.playCost;
     }
 
     private get difficulty(): DifficultySettings { return DIFFICULTY_SETTINGS[this.selectedDifficulty]; }

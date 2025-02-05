@@ -103,6 +103,7 @@ export class Monobrynth implements IHasDrawable, IOnResizeEvent {
 
     constructor(private city: City, private uiManager: UIManager, private game: GameState) {
         this.selectedDifficulty = (this.city.minigameOptions.get("mb-s1") ?? 'easy') as Difficulty;
+        this.costs.find(p => p.type === new MonobrynthPlays().type)!.amount = this.difficulty.playCost;
     }
 
     private initializeGame(): void {
