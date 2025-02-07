@@ -797,7 +797,7 @@ export class UIManager {
 
         //First, check if you're about to build on top of a Skyscraper that has mods. If you are, prompt to confirm if you want to demolish it, because you prooobably don't.
         const placingOn = this.city.getBuildingsInArea(x, y, this.buildTypeBar.selectedBuilding.width, this.buildTypeBar.selectedBuilding.height, 0, 0, false, true);
-        if ([...placingOn].some(p => p.type === getBuildingType(Skyscraper) && p.mods.length)) {
+        if ([...placingOn].some(p => p.type === getBuildingType(Skyscraper) && p.mods.length && p !== this.buildTypeBar.selectedBuilding)) {
             if (!confirm("You're about to build on top of an Altitect-modified Skyscraper. Are you sure you want to do that?")) { //TODO: Replace with a more in-game dialog
                 return;
             }
