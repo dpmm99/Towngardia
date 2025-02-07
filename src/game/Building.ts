@@ -575,7 +575,7 @@ export class Building implements IHasDrawable {
 
         //Tell the player if they can't afford to give it ANY resources
         const requestedAmounts = this.inputResources.map(p => ({ type: p.type, amount: Math.min(p.consumptionRate * view.provisionTicks, p.capacity - p.amount) }));
-        const canProvision = city.calculateAffordablePortion(requestedAmounts) > 0;
+        const canProvision = city.calculateAffordablePortion(requestedAmounts) > 0.00001;
 
         this.lastCollectibleDrawable = null; //So it doesn't steal the click from the provisioning view
         return this.lastProvisioningDrawable = new Drawable({
