@@ -101,8 +101,8 @@ export class GameState {
             const existingIndex = owner.cities.findIndex(p => p.id === cityID);
             if (existingIndex !== -1) owner.cities[existingIndex] = toCity; else owner.addCity(toCity);
         }
-        if (owner === this.player) {
-            //Switching to one of my own other cities. No actual plans for multiple cities per player yet, but the back-end will support it.
+        if (owner?.id == this.player?.id) {
+            //Switching to one of my own other cities.
             this.city = toCity;
             this.city.game = this; //Enables city to call back to this object for things like saving
             this.visitingCity = null;

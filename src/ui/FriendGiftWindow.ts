@@ -195,6 +195,7 @@ export class FriendGiftWindow implements IHasDrawable {
                 this.sendAssist(type, event);
             }
         }
+        this.game?.fullSave();
     }
 
     public hide() {

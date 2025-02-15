@@ -1098,7 +1098,7 @@ export class City {
 
     getCellType(x: number, y: number): FootprintType {
         const building = this.grid[y][x];
-        return building ? building.stampFootprint[y - building.y][x - building.x] : FootprintType.EMPTY;
+        return building ? building.stampFootprint[y - building.y]?.[x - building.x] || FootprintType.EMPTY : FootprintType.EMPTY; //Only due to a placement bug would [y - building.y] be undefined, but it's possible.
     }
 
     //Need to account for builtOn when moving a building, e.g., geothermal power plant thinks you can place it 1 tile over and inch it over like that until it's way off the vent.
