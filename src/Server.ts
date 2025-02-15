@@ -153,11 +153,8 @@ app.get(urlRootPath + '/api/loadCity/:cityId', isAuthenticated, asyncHandler(asy
 app.post(urlRootPath + '/api/savePlayer', isAuthenticated, asyncHandler(async (req: any, res: any)  => {
     const d = new PlayerDeserializer();
     const player = d.player(req.body);
-    if (req.playerId !== player.id) res.status(403).send('Forbidden');
-    else {
-        await db.updatePlayer(player);
-        res.sendStatus(200);
-    }
+    await db.updatePlayer(req.playerId, player);
+    res.sendStatus(200);
 }));
 
 // Player search API

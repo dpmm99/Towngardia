@@ -40,7 +40,7 @@ export class Database implements IStorage {
     async loadCity(player: Player, cityID: string): Promise<City | null> {
         const d = new CityDeserializer();
         const response = await this.query(`
-            SELECT c.city, c.id, c.name, p.id AS player_id, COALESCE(p.name, p.display_name) AS player_name FROM towngardia_cities c
+            SELECT c.city, c.id, c.last_action, c.name, p.id AS player_id, COALESCE(p.name, p.display_name) AS player_name FROM towngardia_cities c
             LEFT JOIN towngardia_players p ON p.id = c.player
             LEFT JOIN towngardia_player_friends f ON f.player_id = c.player
             WHERE (f.friend_id = ? OR c.player = ?) AND c.id = ?
@@ -58,7 +58,9 @@ export class Database implements IStorage {
 
         //Lets me create NEW cities or CLONED cities in the database easily, especially for debugging:
         const cityData = parsedCity ? d.city(player, parsedCity) : new City(player, responseObj.id, responseObj.name || (player.name + "-gardia"), 50, 50);
+        //Values that CAN be serialized in the data but have their own columns in the database...let's only use the database values.
         cityData.id = responseObj.id;
+        cityData.lastSavedUserActionTimestamp = cityData.lastUserActionTimestamp = responseObj.last_action;
 
         //Get any separately stored assists, apply them to the city, re-save the city with them in it, and then delete those assists from the friends table.
         if (isMyCity) await this.getAndApplyCityAssists(player, cityData);
@@ -102,24 +104,28 @@ export class Database implements IStorage {
      */
     protected async insertCity(city: City): Promise<number> {
         const s = new CitySerializer();
-        const result = await this.query("INSERT INTO towngardia_cities SET ?", [{ player: city.player.id, name: city.name, city: JSON.stringify(s.city(city)) }]);
+        const result = await this.query("INSERT INTO towngardia_cities SET ?", [{ player: city.player.id, name: city.name, city: JSON.stringify(s.city(city, true)) }]);
         return city.id = result[0].insertId;
+    }
+
+    private async isGM(playerID: string): Promise<boolean> {
+        return playerID == "1"; //TODO: If the game were bigger, you would just put an isGM flag in the database and query that here.
     }
 
     /**
      * Update the city in storage; assumes it already exists.
      */
     protected async updateCity(playerID: string, city: City): Promise<void> {
-        if (playerID != city.player.id) throw new Error("Wrong player ID submitted for city" + city.id + ". City has: " + city.player.id + "; given player ID was: " + playerID);
+        if (playerID != city.player.id && !this.isGM(playerID)) throw new Error("Wrong player ID submitted for city " + city.id + ". City has: " + city.player.id + "; given player ID was: " + playerID);
 
         //Check that the city hasn't been updated on another client since it was loaded on that client
-        const lastActionTimestamp = await this.query("SELECT last_action FROM towngardia_cities WHERE id = ?", [city.id]); //lastUserActionTimestamp is a Date; last_action is a TIMESTAMP(3). Both are UTC.
+        const lastActionTimestamp = await this.query("SELECT last_action FROM towngardia_cities WHERE id = ?", [city.id]);
         if (lastActionTimestamp[0].length === 0) throw new Error("City with ID " + city.id + " not found.");
         if (city.lastSavedUserActionTimestamp < lastActionTimestamp[0][0].last_action) throw new Error("Tried to save outdated version of city data.");
         city.lastSavedUserActionTimestamp = city.lastUserActionTimestamp; //Update the last saved timestamp, or else it'll load incorrectly next time
 
         const s = new CitySerializer();
-        await this.query("UPDATE towngardia_cities SET city = ?, name = ?, last_action = ? WHERE player = ? AND id = ?", [JSON.stringify(s.city(city)), city.name, city.lastUserActionTimestamp, playerID, city.id]);
+        await this.query("UPDATE towngardia_cities SET city = ?, name = ?, last_action = ? WHERE player = ? AND id = ?", [JSON.stringify(s.city(city, true)), city.name, city.lastUserActionTimestamp, city.player.id, city.id]);
     }
 
     /**
@@ -174,6 +180,7 @@ export class Database implements IStorage {
         }
 
         mainPlayer.friends = Array.from(friendsMap.values());
+        mainPlayer.isGM = await this.isGM(mainPlayer.id);
 
         return mainPlayer;
     }
@@ -245,7 +252,9 @@ export class Database implements IStorage {
     }
 
     //For saving the player JSON data
-    async updatePlayer(player: Player): Promise<void> {
+    async updatePlayer(playerID: string, player: Player): Promise<void> {
+        if (playerID != player.id && !this.isGM(playerID)) throw new Error("Wrong player ID submitted for player " + player.id + ". Given player ID was: " + playerID);
+
         //Check that the player hasn't been updated on another client since it was loaded on that client
         const lastActionTimestamp = await this.query("SELECT last_action FROM towngardia_players WHERE id = ?", [player.id]);
         if (lastActionTimestamp[0].length === 0) throw new Error("Player with ID " + player.id + " not found.");

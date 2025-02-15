@@ -6,6 +6,7 @@
     "build": "tsc && webpack",
     "test": "jest",
     "start": "node dist/server.js",
+    "debug": "node --inspect dist/server.js",
     "buildserver": "tsc"
   },
   "type": "module",

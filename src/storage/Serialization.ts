@@ -19,7 +19,7 @@ import { Assist } from "../game/Assist.js";
 
 //Kinda knows about everything, even private/protected fields (typecast with <any> to access those)--I WANT them to be private so I don't assign directly to them normally, but on-save/load it's a *given* that they'll be accessed.
 export class CitySerializer {
-    city(o: City) {
+    city(o: City, forDB: boolean = false) {
         //Note: player IS NOT serialized as part of the city JSON; it should be stored in a separate column in the database.
         const r: any = {
             _v: o.dataVersion,
@@ -39,7 +39,6 @@ export class CitySerializer {
             nb: o.nextBuildingID,
             eg: this.effectGrid(o.effectGrid),
             fl: [...o.flags.values()],
-            id: o.id,
             na: o.name,
             wi: o.width,
             he: o.height,
@@ -64,14 +63,19 @@ export class CitySerializer {
             tp: o.trafficPrecalculation,
             ru: o.roadUpkeepPrecalculation,
             uw: o.untreatedWaterPortion,
-            la: o.lastUserActionTimestamp,
-            ls: o.lastSavedUserActionTimestamp,
             ap: o.altitectPlays,
             fb: o.fadeBuildings,
             pa: o.provisionAmountPerTap,
             pf: o.provisionFilterLevel,
             lr: o.lastSelectedTech,
         };
+
+        if (!forDB) {
+            r.id = o.id; //Has its own column in the database
+            r.la = o.lastUserActionTimestamp;
+            r.ls = o.lastSavedUserActionTimestamp;
+            r.playerId = o.player.id; //For GMing
+        }
 
         return r;
     }
@@ -279,10 +283,11 @@ export class CityDeserializer {
         const effectGrid = this.effectGrid(o.eg, buildingsByID);
 
         if (grid && buildings.some(p => grid[p.y]?.[p.x] != p && !grid[p.y]?.[p.x]?.builtOn.has(p))) {
-            console.error(new Date().toISOString(), player.id, "Deserialization: some buildings don't match their grid locations: " + buildings.filter(p => grid[p.y][p.x] != p).map(p => p.type + "(" + p.x + "," + p.y + ")").join(" "));
+            console.error(new Date().toISOString(), o.playerId, player.id, "Deserialization: some buildings don't match their grid locations: " + buildings.filter(p => grid[p.y][p.x] != p).map(p => p.type + "(" + p.x + "," + p.y + ")").join(" "));
             //throw new Error("Deserialization error: some buildings don't match their grid locations: " + buildings.filter(p => grid[p.y][p.x] != p).map(p => p.type + "(" + p.x + "," + p.y + ")").join(" "));
         }
 
+        if (o.playerId) player = Object.assign(new Player(o.playerId, o.name), { ...player, id: o.playerId }); //For GMing, just change the ID (but don't change the passed-in player object)
         const r = new City(player, o.id + "", o.na, o.wi, o.he, [...this.buildingTypes.values()], o.re.map((p: any) => this.resource(p)), unplacedBuildings, events,
             techManager, budget, undefined, titles, grid, [...eventTypes.values()], effectGrid, buildings, o.lt, o.st, o.nb, o.ri, o.rv, o.fl ? new Set(o.fl) : new Set(), o._v ?? 0);
         if (o.ob && r.presentBuildingCount.size === 0) r.presentBuildingCount = new Map(o.ob); //Shim so players don't have to refresh the page just because I removed 'ob' from the save data.
@@ -519,6 +524,7 @@ export class PlayerSerializer {
             player.fr = <any[]>o.friends.map((p): any => this.player(p, forDB));
             player.ci = o.cities.map(p => ({ id: p.id, na: p.name }));
             player.av = o.avatar || undefined;
+            if (o.isGM) player.gm = o.isGM;
         }
         return player;
     }
@@ -555,6 +561,7 @@ export class PlayerDeserializer {
         r.avatar = o.av || "";
         if (o.la) r.lastUserActionTimestamp = o.la;
         if (o.ls) r.lastSavedUserActionTimestamp = o.ls;
+        if (o.gm) r.isGM = o.gm;
         return r;
     }
 

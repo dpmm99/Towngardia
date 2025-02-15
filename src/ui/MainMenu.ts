@@ -179,6 +179,21 @@ export class MainMenu implements IHasDrawable {
             }));
         }
 
+        if (this.game.player!.isGM && !this.uiManager.isMyCity) {
+            menu.addChild(new Drawable({
+                anchors: ['centerX'],
+                y: nextY += 50,
+                centerOnOwnX: true,
+                width: "calc(100% - 20px)",
+                height: "40px",
+                text: "GM Mode",
+                onClick: () => {
+                    this.shown = false;
+                    this.game.startGMing();
+                }
+            }));
+        }
+
         return this.lastDrawable = menu;
     }
     getLastDrawable(): Drawable | null {

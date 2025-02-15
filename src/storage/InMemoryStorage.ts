@@ -7,7 +7,7 @@ import { CityDeserializer, CitySerializer } from "./Serialization.js";
 export class InMemoryStorage implements IStorage {
     private data: any = {};
 
-    async updatePlayer(player: Player): Promise<void> {
+    async updatePlayer(playerID: string, player: Player): Promise<void> {
         // Not implemented
     }
 

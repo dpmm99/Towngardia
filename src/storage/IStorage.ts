@@ -12,7 +12,7 @@ export interface IStorage {
     loadCity(player: Player, cityID: string): Promise<City | null>;
     saveCity(playerID: string, city: City): Promise<void>;
 
-    updatePlayer(player: Player): Promise<void>;
+    updatePlayer(playerID: string, player: Player): Promise<void>;
 
     sendAssist(assist: Assist): Promise<void>;
 }

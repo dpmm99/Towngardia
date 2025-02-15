@@ -28,6 +28,7 @@ export class GameState {
     saveWhenHiding: boolean = true;
     loading: boolean = false;
     saving: boolean = false;
+    isGMing: boolean = false;
 
     constructor(
         public storage: IStorage,
@@ -36,6 +37,14 @@ export class GameState {
         public onLoadStart?: () => void,
         public onLoadEnd?: () => void
     ) {
+    }
+
+    startGMing() { //Note: once you start, you can't stop. You have to reload the game to get out of GM mode.
+        this.isGMing = true;
+        this.city = this.visitingCity;
+        this.visitingCity = null;
+        this.player = this.visitingPlayer;
+        this.visitingPlayer = null;
     }
 
     //Must be called in order for it to start drawing
@@ -257,7 +266,7 @@ export class GameState {
         try {
             console.log("Saving fully."); //Removed stack trace because it was making it hard to debug other things. :)
             const playerActionTimeWhenSaveStarted = this.player!.lastUserActionTimestamp; //because it's async; user could keep doing stuff
-            await this.storage.updatePlayer(this.player!);
+            await this.storage.updatePlayer(this.player!.id, this.player!);
             this.player!.lastSavedUserActionTimestamp = playerActionTimeWhenSaveStarted;
             const cityActionTimeWhenSaveStarted = this.city.lastUserActionTimestamp;
             await this.storage.saveCity(this.player!.id, this.city);
@@ -293,6 +302,7 @@ export class GameState {
     tick(): boolean {
         if (!this.city) throw new Error("City not yet loaded.");
         const now = Date.now();
+        if (this.isGMing) return false; //Don't advance time when GMing someone else's city
         if (this.city.timeFreeze) {
             this.city.lastShortTick = this.city.lastLongTick = now;
             return false;

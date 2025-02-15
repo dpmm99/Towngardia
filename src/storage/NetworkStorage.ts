@@ -63,7 +63,7 @@ export class NetworkStorage implements IStorage {
         city.id = (await response.json()).id;
     }
 
-    async updatePlayer(player: Player): Promise<void> {
+    async updatePlayer(playerID: string, player: Player): Promise<void> {
         const s = new PlayerSerializer();
         const serializedPlayer = s.player(player);
         const response = await this.fetchWithAuth(`api/savePlayer`, {

@@ -6,6 +6,7 @@ import { Notification } from "./Notification.js";
 export class Player {
     public lastSavedUserActionTimestamp: number = 1725117593000; //The one that gets checked when saving--was the user's last action timestamp when the player was last saved successfully.
     public lastUserActionTimestamp: number = 1725117593000; //Kept around until we set lastSavedUserActionTimestamp to it after a successful save; timestamp of the last action the user took.
+    public isGM: boolean = false; //Game Master gets the menu option to GM someone else's city. This just controls the UI element.
     constructor(
         public id: string,
         public name: string,

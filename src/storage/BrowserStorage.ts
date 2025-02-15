@@ -5,7 +5,7 @@ import { IStorage } from "./IStorage.js";
 import { CityDeserializer, CitySerializer } from "./Serialization.js";
 
 export class BrowserStorage implements IStorage {
-    async updatePlayer(player: Player): Promise<void> {
+    async updatePlayer(playerID: string, player: Player): Promise<void> {
         // Not implemented
     }
     async getPlayerAndFriends(playerId: string): Promise<Player> {
