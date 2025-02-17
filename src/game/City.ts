@@ -619,7 +619,7 @@ export class City {
         const water = this.resources.get('water')!;
         this.desiredWater += multiplier * building.getWaterUpkeep(this, true);
         const waterProduction = multiplier * building.getWaterProduction(this);
-        water.productionRate += waterProduction;
+        water.productionRate += waterProduction / SHORT_TICKS_PER_LONG_TICK;
     }
 
     //Also notifies the player
