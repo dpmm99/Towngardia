@@ -478,7 +478,7 @@ export class Fire extends CityEvent {
         if (!epicenter) return; //Shouldn't have started the fire in the first place
         this.affectedBuildings.push(epicenter);
 
-        let intensity = epicenter.getFireHazard(city) * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) + 0.3 * Math.random();
+        let intensity = Math.max(0.1, epicenter.getFireHazard(city) * (city.titles.get(TitleTypes.AsbestosIntentions.id)?.attained ? 0.85 : 1) + 0.3 * Math.random());
         epicenter.damagedEfficiency = Math.max(0, epicenter.damagedEfficiency - intensity);
         epicenter.damageCause = "fire";
         intensity *= 0.9;
@@ -490,7 +490,7 @@ export class Fire extends CityEvent {
         for (const building of potentiallyDamaged) {
             if (building === epicenter || building instanceof FireBay || building instanceof FireStation || building.damagedEfficiency < 1 - intensity || !building.owned) continue;
             const coverage = building.getHighestEffect(city, EffectType.FireProtection);
-            building.damagedEfficiency = Math.max(0, building.damagedEfficiency - (0.8 + Math.random() * 0.2) * intensity * (1.1 - coverage));
+            building.damagedEfficiency = Math.max(0, building.damagedEfficiency - (0.8 + Math.random() * 0.2) * intensity * Math.max(0, 1.1 - coverage));
             building.damageCause = "fire";
             this.affectedBuildings.push(building);
             intensity *= 0.9;
@@ -772,7 +772,7 @@ export class DryLightning extends CityEvent {
         const buildings = city.buildings.filter(p => p.owned && !p.isRoad);
         const targetBuilding = buildings[Math.floor(buildings.length * Math.random())];
         if (targetBuilding) {
-            targetBuilding.damagedEfficiency = Math.max(0, targetBuilding.damagedEfficiency - 0.2 - targetBuilding.getFireHazard(city) * 0.6 * Math.random()); // about 20%-50% damage, lower for low-fire-hazard buildings
+            targetBuilding.damagedEfficiency = Math.max(0, targetBuilding.damagedEfficiency - 0.2 - Math.max(0, targetBuilding.getFireHazard(city)) * 0.6 * Math.random()); // about 20%-50% damage, lower for low-fire-hazard buildings
             targetBuilding.damageCause = "lightning";
             this.affectedBuildings.push(targetBuilding);
         }
