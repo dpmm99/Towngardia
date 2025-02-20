@@ -305,10 +305,15 @@ export class Database implements IStorage {
     /**
      * Load just the given session from the database, unless it's expired.
      * @param {string} sessionId The session ID to load
+     * @param {number} extraDays The number of extra days to allow past the 'expires' date
      * @returns The session object if it exists and is not expired, or null if it does not exist or is expired.
      */
-    async loadSession(sessionId: string): Promise<{ sessionId: string, expires: string, playerId: string } | null> {
-        const [rows] = await this.query("SELECT id AS sessionId, expires, player_id AS playerId FROM towngardia_sessions WHERE id = ? AND expires > UTC_DATE();", [sessionId]);
+    async loadSession(sessionId: string, extraDays: number = 0): Promise<{ sessionId: string, expires: string, playerId: string } | null> {
+        const [rows] = await this.query(`
+            SELECT id AS sessionId, expires, player_id AS playerId 
+            FROM towngardia_sessions 
+            WHERE id = ? AND expires > DATE_ADD(UTC_DATE(), INTERVAL ? DAY);
+        `, [sessionId, extraDays]);
         return rows[0] ?? null;
     }
 

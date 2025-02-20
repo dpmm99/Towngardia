@@ -1456,7 +1456,6 @@ export class City {
     private distributeResource(resourceType: "power" | "water", desiredAmount: number, importLimit: number,
         getUpkeep: (building: Building) => number, getProduction: (building: Building) => number,
         usageMultiplier: number, needMetField: keyof Building, needMetTimeField: keyof Building, importRate: number, setImportCost: (cost: number) => void): void {
-        //TODO: I think this function has a bug where in the first or second short tick after a long tick, it doubles or zeroes the production rate. I screenshotted myself having a power surplus of 10.8GW at 16:03 a few hours after placing a new nuclear power plant because I was using more than 10.6 GW and therefore had a few hundred watts deficit.
         const resource = this.resources.get(resourceType);
         if (!resource) throw new Error(`${resourceType} resource is missing from city`); //would be a serious bug
 

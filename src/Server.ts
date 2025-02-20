@@ -37,23 +37,25 @@ app.get(urlRootPath + '/ui/SubscriptionServiceWorker.js', (req, res) => {
 });
 
 // Middleware to check if user is authenticated
-const isAuthenticated = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const sessionId = <string | null>req.cookies.sessionId;
-    if (!sessionId) {
-        console.log(new Date().toISOString(), "NoSession", req.originalUrl);
-        return res.redirect(urlRootPath + '/');
-    }
+const isAuthenticated = (daysAllowedPastExpiration: number) => {
+    return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        const sessionId = <string | null>req.cookies.sessionId;
+        if (!sessionId) {
+            console.log(new Date().toISOString(), "NoSession", req.originalUrl);
+            return res.redirect(urlRootPath + '/');
+        }
 
-    const session = await db.loadSession(sessionId);
-    if (!session) {
-        console.log(new Date().toISOString(), "SessionExpired", sessionId, req.originalUrl);
-        res.clearCookie('sessionId');
-        return res.redirect(urlRootPath + '/');
-    }
+        const session = await db.loadSession(sessionId, daysAllowedPastExpiration);
+        if (!session) {
+            console.log(new Date().toISOString(), "SessionExpired", sessionId, req.originalUrl);
+            res.clearCookie('sessionId');
+            return res.redirect(urlRootPath + '/');
+        }
 
-    req.playerId = session.playerId;
-    console.log(new Date().toISOString(), req.playerId, req.originalUrl);
-    next();
+        req.playerId = session.playerId;
+        console.log(new Date().toISOString(), req.playerId, req.originalUrl);
+        next();
+    };
 };
 
 // Anti-crash middleware
@@ -86,7 +88,8 @@ app.get(urlRootPath + '/index.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.get(urlRootPath + '/game.html', isAuthenticated, (req, res) => { //TODO: Allow moderately expired sessions on everything except this route.
+//Moderately expired sessions are allowed on every route except this one. The user can keep playing for a while, but if they reload the page, they have to log back in. The point is to avoid interrupting their play time (especially when they finish a minigame).
+app.get(urlRootPath + '/game.html', isAuthenticated(0), (req, res) => {
     res.sendFile(path.join(__dirname, 'game.html'));
 });
 
@@ -125,20 +128,20 @@ app.post(urlRootPath + '/auth/google', asyncHandler(async (req: any, res: any) =
     res.redirect(urlRootPath + '/game.html');
 }));
 
-app.get(urlRootPath + '/api/player', isAuthenticated, asyncHandler(async (req: any, res: any)  => {
+app.get(urlRootPath + '/api/player', isAuthenticated(7), asyncHandler(async (req: any, res: any)  => {
     const s = new PlayerSerializer();
     const playerAndFriends = await db.getPlayerAndFriends(req.playerId);
     res.json(s.player(playerAndFriends));
 }));
 
-app.post(urlRootPath + '/api/saveCity', isAuthenticated, asyncHandler(async (req: any, res: any)  => { //TODO: When client is outdated, save if possible, but then tell the client to refresh (though if they're doing something like starting a minigame, we don't want to force it right away).
+app.post(urlRootPath + '/api/saveCity', isAuthenticated(7), asyncHandler(async (req: any, res: any)  => { //TODO: When client is outdated, save if possible, but then tell the client to refresh (though if they're doing something like starting a minigame, we don't want to force it right away).
     const d = new CityDeserializer();
     const rebuiltCity = d.city(new Player(req.playerId, ""), req.body); // Validate city (sort of)
     await db.saveCity(req.playerId, rebuiltCity);
     res.json({ id: rebuiltCity.id });
 }));
 
-app.get(urlRootPath + '/api/loadCity/:cityId', isAuthenticated, asyncHandler(async (req: any, res: any)  => {
+app.get(urlRootPath + '/api/loadCity/:cityId', isAuthenticated(7), asyncHandler(async (req: any, res: any)  => {
     const { cityId } = req.params;
     const player = new Player(req.playerId, ""); //The city looks up THIS player ID to see if it's at least a friend OF the city owner.
     const city = await db.loadCity(player, cityId);
@@ -150,7 +153,7 @@ app.get(urlRootPath + '/api/loadCity/:cityId', isAuthenticated, asyncHandler(asy
     }
 }));
 
-app.post(urlRootPath + '/api/savePlayer', isAuthenticated, asyncHandler(async (req: any, res: any)  => {
+app.post(urlRootPath + '/api/savePlayer', isAuthenticated(7), asyncHandler(async (req: any, res: any)  => {
     const d = new PlayerDeserializer();
     const player = d.player(req.body);
     await db.updatePlayer(req.playerId, player);
@@ -158,7 +161,7 @@ app.post(urlRootPath + '/api/savePlayer', isAuthenticated, asyncHandler(async (r
 }));
 
 // Player search API
-app.get(urlRootPath + '/api/player-search', isAuthenticated, asyncHandler(async (req: any, res: any) => {
+app.get(urlRootPath + '/api/player-search', isAuthenticated(7), asyncHandler(async (req: any, res: any) => {
     const { name } = req.query;
     if (!name || typeof name !== 'string') return res.status(400).json({ error: 'Invalid search parameter' });
     
@@ -170,7 +173,7 @@ app.get(urlRootPath + '/api/player-search', isAuthenticated, asyncHandler(async 
 }));
 
 // Add friend API
-app.post(urlRootPath + '/api/add-friend', isAuthenticated, asyncHandler(async (req: any, res: any) => {
+app.post(urlRootPath + '/api/add-friend', isAuthenticated(7), asyncHandler(async (req: any, res: any) => {
     const { friendId } = req.body;
     if (!friendId || typeof friendId !== 'string') return res.status(400).json({ error: 'Invalid friend ID' });
     
@@ -184,7 +187,7 @@ app.post(urlRootPath + '/api/add-friend', isAuthenticated, asyncHandler(async (r
 }));
 
 // Assist friend API
-app.post(urlRootPath + '/api/assist-friend', isAuthenticated, asyncHandler(async (req: any, res: any) => {
+app.post(urlRootPath + '/api/assist-friend', isAuthenticated(7), asyncHandler(async (req: any, res: any) => {
     const assists = req.body as Assist[];
     if (!assists?.length) return res.status(400).json({ error: 'Incorrect assist format' });
 
@@ -214,14 +217,14 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
     });
 
     // Endpoint to save push subscription
-    app.post(urlRootPath + '/api/push-subscription', isAuthenticated, asyncHandler(async (req: any, res: any) => {
+    app.post(urlRootPath + '/api/push-subscription', isAuthenticated(7), asyncHandler(async (req: any, res: any) => {
         const subscription = req.body;
         await db.savePushSubscription(req.playerId, subscription);
         res.json({ success: true });
     }));
 
     // Endpoint to unsubscribe a player from push notifications
-    app.post(urlRootPath + '/api/push-unsubscribe', isAuthenticated, asyncHandler(async (req: any, res: any) => {
+    app.post(urlRootPath + '/api/push-unsubscribe', isAuthenticated(7), asyncHandler(async (req: any, res: any) => {
         await db.savePushSubscription(req.playerId, null);
         res.json({ success: true });
     }));
