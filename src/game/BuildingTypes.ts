@@ -1200,7 +1200,7 @@ export class OilPowerPlant extends Building {
 export class OilTruck extends Building {
     constructor() {
         super(
-            "oiltruck", "Oil Truck", "A truck that keeps your oil power plant running as long as there's oil in storage or on the market (and you can afford it). Good for preventing blackouts when you're on vacation.",
+            "oiltruck", "Oil Truck", "A truck that keeps your oil power plant running as long as there's oil in storage or on the market (and you can afford it). Good for preventing blackouts when you're on vacation. Must be placed on the rightmost corner of an oil power plant.",
             BuildingCategory.ENERGY,
             1, 1, 0,
             0,
@@ -1279,7 +1279,7 @@ export class CoalPowerPlant extends Building {
 export class CoalTruck extends Building {
     constructor() {
         super(
-            "coaltruck", "Coal Truck", "A truck that keeps your coal power plant running as long as there's coal in storage or on the market (and you can afford it). Good for preventing blackouts when you're on vacation.",
+            "coaltruck", "Coal Truck", "A truck that keeps your coal power plant running as long as there's coal in storage or on the market (and you can afford it). Good for preventing blackouts when you're on vacation. Must be placed on the leftmost corner of a coal power plant.",
             BuildingCategory.ENERGY,
             1, 1, 0,
             0,
@@ -1353,7 +1353,7 @@ export class NuclearPowerPlant extends Building {
 export class NuclearFuelTruck extends Building {
     constructor() {
         super(
-            "nuclearfueltruck", "Nuclear Fuel Truck", "A truck that keeps your nuclear power plant running as long as there's uranium in storage or on the market (and you can afford it). Good for preventing blackouts when you're on vacation.",
+            "nuclearfueltruck", "Nuclear Fuel Truck", "A truck that keeps your nuclear power plant running as long as there's uranium in storage or on the market (and you can afford it). Good for preventing blackouts when you're on vacation. Must be placed on the center-left tile of a nuclear power plant.",
             BuildingCategory.ENERGY,
             1, 1, 0,
             0,
@@ -1424,7 +1424,7 @@ export class FusionPowerPlant extends Building {
 export class FusionFuelTruck extends Building {
     constructor() {
         super(
-            "fusionfueltruck", "Fusion Fuel Truck", "A truck that keeps your fusion power plant running as long as there's tritium (and lithium, if it's a breeder reactor) in storage or on the market (and you can afford it). Good for preventing blackouts when you're on vacation.",
+            "fusionfueltruck", "Fusion Fuel Truck", "A truck that keeps your fusion power plant running as long as there's tritium (and lithium, if it's a breeder reactor) in storage or on the market (and you can afford it). Good for preventing blackouts when you're on vacation. Must be placed on the rightmost corner of a fusion power plant.",
             BuildingCategory.ENERGY,
             1, 1, 0,
             0,
