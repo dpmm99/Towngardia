@@ -28,7 +28,7 @@ import { GIFT_TYPES } from "./ResourceTypes.js";
 import { TechManager } from "./TechManager.js";
 import { ARShopping, FoodServiceRobots, SmartHomeSystems, VacuumInsulatedWindows } from "./TechTypes.js";
 
-const CITY_DATA_VERSION = 8; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
+const CITY_DATA_VERSION = 9; //Updated to 1 when I changed a lot of building types' production and consumption rates; old cities don't have it, and the deserializer defaults to 0.
 export class City {
     //Not serialized
     public uiManager: UIManager | null = null;
@@ -288,6 +288,29 @@ export class City {
             const chocoBars = this.buildings.filter(p => p instanceof ChocolateBar).length;
             this.resources.get("chocolate")!.capacity = chocoBars * 5;
             this.dataVersion = 8;
+        }
+        if (this.dataVersion < 10) { //Some of the storage logic was wrong, so recalculate storage for all buildings.
+            this.resources.forEach(resource => {
+                if (resource.isSpecial) return;
+                resource.capacity = 0;
+            });
+            //Re-add the base capacities (see startNew(); should make these constants for a single source of truth, though)
+            this.resources.get("wood")!.capacity += 30;
+            this.resources.get("concrete")!.capacity += 30;
+            for (const building of this.buildings) {
+                for (const resource of building.stores) { //Normal storage buildings; not ones with mods
+                    const res = this.resources.get(resource.type);
+                    if (res) res.capacity += building.storeAmount;
+                }
+                //Mods are applied later in the startup code, BUT that code expects storage to already be saved at the city level, so we have to specifically apply storage mods here as if they had never happened.
+                const storageMods = building.mods.filter(p => p.type === "storage");
+                if (storageMods.length) {
+                    building.applyMods(this, storageMods);
+                    //Then reset the 'stores' array because applyMods being called again later would duplicate those (applyMods assumes the building normally stores nothing).
+                    building.stores.length = 0;
+                }
+            }
+            this.dataVersion = 9;
         }
     }
 

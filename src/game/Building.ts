@@ -148,12 +148,12 @@ export class Building implements IHasDrawable {
                 //Handle string type modifications
                 switch (mod.type) {
                     case "storage": //Apply and reapply are the same for storage because it's not serialized
-                        if (negate) this.stores.length = 0;
-                        else this.stores.push(...[Wood, Iron, Steel, Glass, Batteries, Clothing, Furniture, Electronics, Paper, Toys].map(p => new p()));
+                        if (!negate) this.stores.push(...[Wood, Iron, Steel, Glass, Batteries, Clothing, Furniture, Electronics, Paper, Toys].map(p => new p()));
 
                         //storeAmount is saved, but stores is not, so we need to reset storeAmount to that of the template building type before applying this mod (note: assumes there's only one storage mod on any given building)
-                        this.storeAmount = city.buildingTypes.find(p => p.type === this.type)?.storeAmount || 0;
-                        if (!negate) this.storeAmount += mod.magnitude;
+                        //We need to call addStorage since the building may or may not be placed when the mod is applied.
+                        this.addStorage(city, (city.buildingTypes.find(p => p.type === this.type)?.storeAmount || 0) - this.storeAmount + (negate ? 0 : mod.magnitude));
+                        if (negate) this.stores.length = 0;
                         break;
                     case "population": // Modify existing population resource--unless we're reapplying, in which case there's nothing to do here.
                         if (reapply) continue;
