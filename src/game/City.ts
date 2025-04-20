@@ -289,7 +289,7 @@ export class City {
             this.resources.get("chocolate")!.capacity = chocoBars * 5;
             this.dataVersion = 8;
         }
-        if (this.dataVersion < 10) { //Some of the storage logic was wrong, so recalculate storage for all buildings.
+        if (this.dataVersion < 9) { //Some of the storage logic was wrong, so recalculate storage for all buildings.
             this.resources.forEach(resource => {
                 if (resource.isSpecial) return;
                 resource.capacity = 0;
