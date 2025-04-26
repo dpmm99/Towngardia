@@ -4216,7 +4216,13 @@ export class QuantumComputingLab extends Building {
         super.onLongTick(city);
         if (this.lastEfficiency > 0.9 && Math.random() < 0.01) { //1% per long tick, about 24.6% chance a week or 68% chance a month
             const researchProgress = 0.3 + Math.random() * 0.2; //30%-50% of the base cost
-            city.techManager.randomFreeResearch(city, researchProgress); //Apply research to one of the researchable techs
+            const researched = city.techManager.randomFreeResearch(city, researchProgress); //Apply research to one of the researchable techs
+            if (researched) {
+                const titleWords = ["Hop", "Skip", "Jump", "Trip", "Bounce", "Blink", "Zap", "Whoosh", "Zoom", "Plop", "Splash", "Slip"]; //Everything EXCEPT 'leap', subverting expectations :)
+                city.notify(new Notification("Quantum " + titleWords[Math.floor(Math.random() * titleWords.length)],
+                    "The quantum research lab made a monumental discovery, progressing your research toward the " + researched.name + " tech.",
+                    "tech/quantumcomputing"));
+            }
         }
 
         //Teleportation Pod unlocked and Museum of Future Arts locked -> 10% chance per long tick to unlock Museum of Future Arts

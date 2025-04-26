@@ -164,7 +164,7 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
                 x: 10,
                 width: `${this.notificationIconSize}px`,
                 height: `${this.notificationIconSize}px`,
-                image: new TextureInfo(this.notificationIconSize, this.notificationIconSize, `ui/${notification.icon}`)
+                image: new TextureInfo(this.notificationIconSize, this.notificationIconSize, notification.icon.includes("/") ? notification.icon : `ui/${notification.icon}`)
             }));
             //Unread?
             if (!notification.seen) {

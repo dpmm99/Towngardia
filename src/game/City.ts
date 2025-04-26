@@ -571,7 +571,7 @@ export class City {
                 }
             }
 
-            if (portionCost > flunds && !allowDebt) {
+            if (portionCost > 0 && portionCost > flunds && !allowDebt) {
                 highPortion = midPortion;
             } else {
                 lowPortion = midPortion;
