@@ -1643,7 +1643,8 @@ export class City {
     }
     getGreenhouseGases(x: number, y: number): number { //The odd one out: should increase on each tick--the longer you have factories and no air cleaning, the worse. But doesn't affect happiness so much.
         //const greenhouseGases = this.resources.get("greenhousegases")!; //Originally made the cumulative amount visible, but it makes the production areas impossible to see.
-        return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.GreenhouseGases).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));
+        //Decided to reduce the minimum of 0 to -0.25 because it was impossible to reduce GHG after they accumulated, and carbon capture plants are -0.5.
+        return Math.max(-0.25, this.effectGrid[y][x].filter(p => p.type === EffectType.GreenhouseGases).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));
     }
     getNoise(x: number, y: number): number {
         return Math.max(0, this.effectGrid[y][x].filter(p => p.type === EffectType.Noise).reduce((sum, effect) => sum + effect.getEffect(this, null, y, x), 0));

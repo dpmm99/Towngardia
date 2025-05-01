@@ -54,6 +54,10 @@ export class TechManager {
         return true;
     }
 
+    noMoreTechs(city: City): boolean {
+        return Array.from(this.techs.values()).every(tech => tech.researched || tech.isUnavailable(city) || !tech.canBecomeAvailableInRegion(city.regionID!));
+    }
+
     /**
      * For use when you visit a friend's city for the first time in the given reset period. Not sure how I want to determine 'points' yet.
      * @param city Your city

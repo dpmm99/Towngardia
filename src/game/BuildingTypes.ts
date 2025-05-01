@@ -4150,7 +4150,7 @@ export class College extends Building {
 export class CarbonCapturePlant extends Building {
     constructor() {
         super(
-            "carboncaptureplant", "Carbon Capture Plant", "A facility that captures carbon dioxide from the air and stores it underground. Also filters out some particulate pollution. It's a plant that's like a plant--get it?",
+            "carboncaptureplant", "Carbon Capture Plant", "A facility that captures carbon dioxide from the air and stores it underground. Also filters out some particulate pollution. These are most effective when placed near sources of greenhouse gases and several tiles away from the city limits. It's a plant that's like a plant--get it?",
             BuildingCategory.GOVERNMENT,
             2, 2, 0,
             0.3,

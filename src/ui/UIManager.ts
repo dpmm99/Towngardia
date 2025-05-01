@@ -200,6 +200,10 @@ export class UIManager {
 
         //If visiting a friend, possibly grant research points and show the friend visit window
         if (!this.isMyCity) {
+            //If this player can't make progress on any research, even if the friend has something they don't, just don't show the window at all.
+            const noMoreTechBonusesPossible = this.game.city!.techManager.noMoreTechs(this.game.city!);
+            if (noMoreTechBonusesPossible) return;
+
             const resource = { type: getResourceType(Research), amount: 2 }; //TODO: How do we want to determine number of points?
             this.game.city!.applyReceiptBonus(resource); //May increase the amount of research points' worth of progress to grant
             const [tech, bonusClaimed] = TechManager.grantFreePoints(this.game.city!, this.game.visitingCity!, resource.amount, Date.now());
