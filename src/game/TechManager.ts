@@ -5,6 +5,7 @@ import { inPlaceShuffle } from "./MiscFunctions.js";
 import { Research } from "./ResourceTypes.js";
 import { Tech } from "./Tech.js";
 import { TECH_TYPES } from "./TechTypes.js";
+import { Notification } from "./Notification.js";
 
 export class TechManager {
     public techs: Map<string, Tech> = new Map();
@@ -129,6 +130,11 @@ export class TechManager {
             tech.researched = true;
             tech.applyEffects(city);
             city.checkAndAwardTitle(TitleTypes.CityOfInnovators.id);
+
+            if (!city.allResearchCompleteNotified && this.noMoreTechs(city)) {
+                city.allResearchCompleteNotified = true;
+                city.notify(new Notification("Research Overload", "Our researchers have hit a wall. With their heads, I mean, because they're fresh out of ideas to improve the city. To keep them from getting bored and/or turning feral, let's have them work on our skyscraper blueprints instead! You can now use research points for a flunds discount when starting a round of Altitect.", "research"));
+            }
         } else {
             //Reduce the tech's costs by the fractional amount actually spent. Like adding progress, but easier to represent.
             for (let i = 0; i < tech.costs.length; i++) {

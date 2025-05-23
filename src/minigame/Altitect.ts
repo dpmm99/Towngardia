@@ -1,6 +1,6 @@
 import { City } from "../game/City.js";
 import { UIManager } from "../ui/UIManager.js";
-import { Flunds, PracticeRuns, getResourceType } from "../game/ResourceTypes.js";
+import { Flunds, PracticeRuns, getResourceType, Research } from "../game/ResourceTypes.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { Drawable } from "../ui/Drawable.js";
 import { addResourceCosts, humanizeFloor } from "../ui/UIUtil.js";
@@ -107,6 +107,8 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     private endReason: string = "";
     private deciding: boolean = false;
     private isPractice: boolean = false;
+    private spendResearch: boolean = false;
+    private allResearchCompleted: boolean = false;
 
     // Define room types here
     private readonly SupportPillar: Room = new Room("pillar", "Support Pillar", 1, 0, 0, 0, 0, [], 0, true);
@@ -137,7 +139,9 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     constructor(private city: City, private uiManager: UIManager, private game: GameState) { }
 
     private getCosts(): { type: string, amount: number }[] {
-        return this.isPractice ? OnePracticeRun : [{ type: getResourceType(Flunds), amount: Math.min(25000, 1000 + 1000 * this.city.altitectPlays) }];
+        return this.isPractice ? OnePracticeRun :
+            this.spendResearch ? [{ type: getResourceType(Research), amount: 10 }, { type: getResourceType(Flunds), amount: Math.min(5000, 200 + 200 * this.city.altitectPlays) }] :
+                [{ type: getResourceType(Flunds), amount: Math.min(25000, 1000 + 1000 * this.city.altitectPlays) }];
     }
 
     private initializeGame(): void {
@@ -252,6 +256,11 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         //Show the effects that you applied to the building the last time you played for THAT specific building.
         this.winnings = building?.mods.map(p => ({ type: p.type, magnitude: p.magnitude })) ?? null; //cloning just in case I modify them somewhere, which I don't plan to
         this.shown = true;
+
+        this.allResearchCompleted = this.city.techManager.noMoreTechs(this.city);
+        if (!this.allResearchCompleted) {
+            this.spendResearch = false; //Cannot spend research if not all research is completed
+        }
     }
 
     public hide(): void {
@@ -556,8 +565,40 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         }));
 
         const unaffordable = !this.city.hasResources(this.getCosts(), false);
-        addResourceCosts(startButton, this.getCosts(), 82, 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
+        addResourceCosts(startButton, this.getCosts(), 86 - (this.spendResearch ? 28 : 0), 58, false, false, false, 48, 10, 32, undefined, undefined, unaffordable, this.city);
         nextY += 176;
+
+        if (this.allResearchCompleted) {
+            overlay.addChild(new Drawable({
+                anchors: ['centerX'],
+                centerOnOwnX: true,
+                y: nextY,
+                width: "500px",
+                height: "48px",
+                fallbackColor: '#00000000',
+                onClick: () => {
+                    this.spendResearch = !this.spendResearch;
+                },
+                children: [
+                    new Drawable({
+                        x: 5,
+                        width: "48px",
+                        height: "48px",
+                        image: new TextureInfo(64, 64, this.spendResearch ? "ui/checked" : "ui/unchecked"),
+                    }),
+                    new Drawable({
+                        anchors: ["right"],
+                        rightAlign: true,
+                        x: 5,
+                        y: 7,
+                        width: "calc(100% - 60px)",
+                        height: "100%",
+                        text: "Use Research",
+                    }),
+                ]
+            }));
+            nextY += 60;
+        }
 
         overlay.addChild(new Drawable({
             anchors: ['centerX'],

@@ -68,6 +68,7 @@ export class CitySerializer {
             pa: o.provisionAmountPerTap,
             pf: o.provisionFilterLevel,
             lr: o.lastSelectedTech,
+            rc: o.allResearchCompleteNotified,
         };
 
         if (!forDB) {
@@ -305,6 +306,7 @@ export class CityDeserializer {
         r.untreatedWaterPortion = o.uw || 0;
         r.altitectPlays = o.ap || 0;
         r.fadeBuildings = o.fb || false;
+        r.allResearchCompleteNotified = o.rc || false;
         if (o.pa) r.provisionAmountPerTap = o.pa;
         if (o.pf) r.provisionFilterLevel = o.pf;
         if (o.lr && techManager.techs.get(o.lr)) r.lastSelectedTech = o.lr;

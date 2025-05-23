@@ -82,6 +82,7 @@ export class City {
     public provisionAmountPerTap: number = 4;
     public provisionFilterLevel: number = 4;
     public lastSelectedTech: string | null = null;
+    public allResearchCompleteNotified: boolean = false;
 
     constructor(
         public player: Player,
