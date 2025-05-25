@@ -1395,6 +1395,9 @@ export class City {
 
         this.updateHappiness(); //Do before resetting powered time, because it uses it
         this.updateMinigamePlays();
+        //Friend research freebies use the same logic as a minigame play, but I didn't put it in that method since it's not a minigame
+        const researchVisits = this.resources.get(ResourceTypes.getResourceType(ResourceTypes.FriendResearchVisits))!;
+        researchVisits.produce(researchVisits.productionRate);
 
         //The Sands of Time monument generates timeslips, but not with diminishing returns, but ONLY based on whichever one has the highest efficiency. Basically, you can skip 1 long tick every 5 days.
         const timeMonuments = this.buildings.filter(p => p instanceof SandsOfTime).sort((a, b) => b.lastEfficiency - a.lastEfficiency);

@@ -127,6 +127,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     delete urls["resource/timeslips"];
     delete urls["resource/powercosts"];
     delete urls["resource/miniresearch"];
+    delete urls["resource/friendresearch"];
 
     return urls;
 }

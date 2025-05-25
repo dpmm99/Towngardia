@@ -277,6 +277,16 @@ export class Research extends Resource {
     }
 }
 
+export class FriendResearchVisits extends Resource {
+    constructor(initialCount: number = 1, productionRate: number = 0.25, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
+        super(
+            "friendresearch", "Friend Research Visit Allowance",
+            initialCount, productionRate, capacity, consumptionRate,
+            true
+        );
+    }
+}
+
 /*Food types are: Grain, RootVegetables, Apples, Berries, LeafyGreens, Legumes, RedMeat, Poultry, Fish, Dairy, PlantBasedDairy, LabGrownMeat.*/
 export class Grain extends Resource {
     constructor(initialCount: number = 0, productionRate: number = 0, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
@@ -801,7 +811,7 @@ export const RESOURCE_TYPES = <Resource[]>([
     /*Fuel and ingredients*/ Coal, Copper, Gemstones, Lithium, Oil, Plastics, Rubber, Sand, Silicon, Textiles, Tritium, Uranium,
     /*Manufactured goods*/ Apps, Batteries, Clothing, Electronics, Furniture, Paper, Pharmaceuticals, Toys,
     /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays, PracticeRuns, MinigameOptionResearch,
-    /*Mainly math*/ Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, PowerCosts, DeptOfEnergyBonus, EnvironmentalLabBonus,
+    /*Mainly math*/ FriendResearchVisits, Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, PowerCosts, DeptOfEnergyBonus, EnvironmentalLabBonus,
     /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Timeslips, Water,
     /*Event-limited*/ BrainBrews, GleeGrenades, TurboTonics, Chocolate,
     /*Region-limited*/ Obsidian, GreenObsidian, FireObsidian, Sulfur, Dynamite,

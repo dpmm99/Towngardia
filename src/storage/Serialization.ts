@@ -105,7 +105,7 @@ export class CitySerializer {
 
     techManager(o: TechManager) {
         return {
-            fv: o.lastFriendVisitDate,
+            lv: [...o.lastFriendVisitDates.entries()], //Map<string, Date> requires non-default serialization
             cd: o.lastResearchCompletionDates,
             te: this.techs(o.techs)
         };
@@ -398,7 +398,7 @@ export class CityDeserializer {
         const techTypes = new Map(TECH_TYPES.map((p: Tech) => [p.id, p]));
         const techs = <Tech[]>o.te.map((p: any) => this.tech(techTypes, p));
         const r = new TechManager(techs);
-        if (o.fv) r.lastFriendVisitDate = new Date(o.fv);
+        if (o.lv) r.lastFriendVisitDates = new Map(o.lv);
         r.lastResearchCompletionDates = o.cd.map((p: any) => new Date(p));
         return r;
     }

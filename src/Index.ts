@@ -3,6 +3,8 @@ import { BrowserStorage } from "./storage/BrowserStorage.js";
 import { InMemoryStorage } from "./storage/InMemoryStorage.js";
 import { NetworkStorage } from "./storage/NetworkStorage.js";
 import "./debug.js"; //To make it execute
+import { LONG_TICK_TIME } from "./game/FundamentalConstants.js";
+import { longTicksToDaysAndHours } from "./ui/UIUtil.js";
 
 declare global {
     var game: GameState;
@@ -33,6 +35,7 @@ async function initGame() {
     // Game loop
     let lastFocusLostTime = performance.now();
     let lastTime = performance.now();
+    const catchUpNoticeElement = document.getElementById('catchUpNotice')!;
     async function gameLoop() {
         const currentTime = performance.now();
 
@@ -49,7 +52,14 @@ async function initGame() {
         if (!document.hidden) lastFocusLostTime = currentTime; //Reset that timer if the user is looking at the page
 
         requestAnimationFrame(gameLoop);
-        document.getElementById('catchUpNotice')!.style.display = game.tick() ? "flex" : "none";
+        const isCatchingUp = game.tick();
+        catchUpNoticeElement.style.display = isCatchingUp ? "flex" : "none";
+        if (isCatchingUp && game.city) {
+            const remainingTicks = Math.max(0, Math.floor((Date.now() - game.city.lastLongTick) / LONG_TICK_TIME));
+            catchUpNoticeElement.textContent = `Fast-forwarding time...\r\nRemaining: ${longTicksToDaysAndHours(remainingTicks)}`;
+        }
+
+        //document.getElementById('catchUpNotice')!.style.display = game.tick() ? "flex" : "none";
         if (game.uiManager?.frameRequested) {
             game.uiManager.frameRequested = false; //Reset it in advance in case the render call requests another frame
             game.uiManager?.draw();

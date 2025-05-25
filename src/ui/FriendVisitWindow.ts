@@ -1,15 +1,14 @@
-import { Tech } from "../game/Tech.js";
+import { FriendResearchVisitResult } from "../game/GrantFreePointsResult.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { TextureInfo } from "./TextureInfo.js";
+import { longTicksToHoursAndMinutes } from "./UIUtil.js";
 
 export class FriendVisitWindow implements IHasDrawable {
     private lastDrawable: Drawable | null = null;
 
     public shown: boolean = false;
-    public tech: Tech | null = null;
-    public techPoints: number = 0;
-    public bonusClaimed: boolean = false;
+    public researchResult: FriendResearchVisitResult | null = null;
     constructor() {
     }
 
@@ -28,13 +27,13 @@ export class FriendVisitWindow implements IHasDrawable {
         });
 
         let nextY = 10;
-        if (this.tech) {
+        if (this.researchResult?.tech) {
             window.addChild(new Drawable({
                 x: 10,
                 y: nextY,
                 width: "calc(100% - 20px)",
                 height: "32px",
-                text: "Received " + (Math.round(this.techPoints * 10) / 10) + " research progress toward:",
+                text: "Received " + (Math.round(this.researchResult.points * 10) / 10) + " research progress toward:",
                 biggerOnMobile: true,
                 scaleXOnMobile: true,
                 scaleYOnMobile: true,
@@ -47,7 +46,7 @@ export class FriendVisitWindow implements IHasDrawable {
                 y: nextY,
                 width: "64px",
                 height: "64px",
-                image: new TextureInfo(64, 64, "tech/" + this.tech.id),
+                image: new TextureInfo(64, 64, "tech/" + this.researchResult.tech.id),
                 fallbackImage: new TextureInfo(64, 64, "tech/generic"),
                 biggerOnMobile: true,
                 scaleXOnMobile: true,
@@ -60,14 +59,14 @@ export class FriendVisitWindow implements IHasDrawable {
                 y: nextY,
                 width: "calc(100% - 90px)",
                 height: "32px",
-                text: this.tech.name,
+                text: this.researchResult.tech.name,
                 biggerOnMobile: true,
                 scaleXOnMobile: true,
                 scaleYOnMobile: true,
             }));
             nextY += 58;
 
-            if (this.tech.researched) {
+            if (this.researchResult.tech.researched) {
                 window.addChild(new Drawable({
                     anchors: ['centerX'],
                     centerOnOwnX: true,
@@ -80,13 +79,26 @@ export class FriendVisitWindow implements IHasDrawable {
                 }));
                 nextY += 40;
             }
-        } else if (this.bonusClaimed) {
+        } else if (this.researchResult?.longTicksToWait) {
             window.addChild(new Drawable({
                 x: 10,
                 y: nextY,
                 width: "calc(100% - 20px)",
                 height: "32px",
-                text: "Research bonus already claimed today.",
+                text: "You cannot claim any more research bonuses from friends today. Try again in about " + longTicksToHoursAndMinutes(this.researchResult.longTicksToWait) + ".",
+                wordWrap: true,
+                biggerOnMobile: true,
+                scaleXOnMobile: true,
+                scaleYOnMobile: true,
+            }));
+        } else if (this.researchResult?.alreadyClaimedForThisFriend) {
+            window.addChild(new Drawable({
+                x: 10,
+                y: nextY,
+                width: "calc(100% - 20px)",
+                height: "32px",
+                text: "You already received a research bonus from this friend today. Try visiting a different friend's city. You have " + this.researchResult.remainingVisits + " research bonus" + (this.researchResult.remainingVisits === 1 ? "" : "es") + " left to claim from friends.",
+                wordWrap: true,
                 biggerOnMobile: true,
                 scaleXOnMobile: true,
                 scaleYOnMobile: true,
@@ -123,11 +135,9 @@ export class FriendVisitWindow implements IHasDrawable {
         return this.shown;
     }
 
-    public show(tech: Tech | null, points: number = 0, bonusClaimed: boolean = false): void {
+    public show(friendResearchVisitResult: FriendResearchVisitResult): void {
         this.shown = true;
-        this.tech = tech;
-        this.techPoints = points;
-        this.bonusClaimed = bonusClaimed;
+        this.researchResult = friendResearchVisitResult;
     }
 
     getLastDrawable(): Drawable | null {

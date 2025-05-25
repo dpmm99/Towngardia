@@ -2,15 +2,17 @@ import { TitleTypes } from "./AchievementTypes.js";
 import { CartersCars, getBuildingType } from "./BuildingTypes.js";
 import { City } from "./City.js";
 import { inPlaceShuffle } from "./MiscFunctions.js";
-import { Research } from "./ResourceTypes.js";
+import { Research, FriendResearchVisits } from "./ResourceTypes.js";
 import { Tech } from "./Tech.js";
 import { TECH_TYPES } from "./TechTypes.js";
 import { Notification } from "./Notification.js";
+import { FriendResearchVisitResult } from "./GrantFreePointsResult.js";
+import { LONG_TICK_TIME } from "./FundamentalConstants.js";
 
 export class TechManager {
     public techs: Map<string, Tech> = new Map();
     public readonly fudgeFactor = 0.9995; //Be nice. Close enough. :)
-    public lastFriendVisitDate: Date | null = null;
+    public lastFriendVisitDates: Map<string, Date> = new Map(); // PlayerID -> timestamp of last visit
     public lastResearchCompletionDates: Date[] = [];
     constructor(techs: Tech[] = TECH_TYPES) {
         techs.forEach(tech => this.techs.set(tech.id, tech.clone()));
@@ -65,30 +67,42 @@ export class TechManager {
      * @param otherCity Friend's city
      * @param points Number of research points to award (other resource costs are reduced proportionally)
      * @param visitTime The time of the visit to the friend's city--Date.now() normally, but it's a parameter for repeating the logic on the server side
-     * @returns An array. First element is the tech that was chosen to grand research points for, or null if none was. Second element is true if bonus already claimed today, or false otherwise.
+     * @returns An object containing the selected tech, hours to wait instead of getting a bonus this time, whether this friend's bonus was already claimed, and integer remaining visit allowance.
      */
-    static grantFreePoints(city: City, otherCity: City, points: number, visitTime: number): [Tech | null, boolean] {
-        if (city.techManager.lastFriendVisitDate && city.techManager.lastFriendVisitDate.getDate() === new Date(visitTime).getDate()
-            && city.techManager.lastFriendVisitDate.getMonth() === new Date(visitTime).getMonth() && city.techManager.lastFriendVisitDate.getFullYear() === new Date(visitTime).getFullYear())
-            return [null, true]; //Only once per day (for now; may consider 5x every 5 days like most things, but then I kinda want to track *which* friends were visited already each day and require 5 distinct friend visits every 5 days)
+    static grantFreePoints(city: City, otherCity: City, points: number, visitTime: number): FriendResearchVisitResult {
+        //Visit allowance stocks up for 5 days, and you can claim all the visits in one day as long as you have that many friends
+        const friendVisitAllowance = city.resources.get(new FriendResearchVisits().type)!;
+        if (friendVisitAllowance.amount < 1)
+            return { tech: null, longTicksToWait: (1 - friendVisitAllowance.amount) / friendVisitAllowance.productionRate - (Date.now() - city.lastLongTick) / LONG_TICK_TIME, alreadyClaimedForThisFriend: false, remainingVisits: 0, points: 0 };
+
+        //But you can only claim one bonus *per friend* per day
+        const lastVisitDate = city.techManager.lastFriendVisitDates.get(otherCity.player.id);
+        const currentVisitDate = new Date(visitTime);
+        if (lastVisitDate && lastVisitDate.getDate() === currentVisitDate.getDate() && lastVisitDate.getMonth() === currentVisitDate.getMonth()
+            && lastVisitDate.getFullYear() === currentVisitDate.getFullYear())
+            return { tech: null, longTicksToWait: 0, alreadyClaimedForThisFriend: true, remainingVisits: Math.floor(friendVisitAllowance.amount), points: 0 };
 
         //Pick a tech
         const friendResearchedTechsSet = new Set([...otherCity.techManager.techs.values()].filter(p => p.researched).map(p => p.id)); //Techs they have researched
         const researchableTechs = Array.from(city.techManager.techs.values()).filter(tech => friendResearchedTechsSet.has(tech.id) && !tech.researched && city.techManager.prereqsAreResearched(tech) && tech.canBecomeAvailableInRegion(city.regionID!)); //Tentative rules. Techs you don't have but COULD be researching now.
-        if (!researchableTechs.length) return [null, false];
+        if (!researchableTechs.length) return { tech: null, longTicksToWait: 0, alreadyClaimedForThisFriend: false, remainingVisits: Math.floor(friendVisitAllowance.amount), points: 0 };
         inPlaceShuffle(researchableTechs);
         const tech = researchableTechs[0];
 
         //Calculate what fraction of the entire remaining cost the given number of points (research points) represents, based on the research resource in the costs.
         const cost = tech.costs.find(cost => cost.type === new Research().type);
-        if (!cost) return [null, false];
+        if (!cost) return { tech: null, longTicksToWait: 0, alreadyClaimedForThisFriend: false, remainingVisits: Math.floor(friendVisitAllowance.amount), points: 0 };
         const remainingFraction = 1 - Math.min(1, points / cost.amount);
         tech.costs.forEach(p => p.amount *= remainingFraction);
 
-        //Possibly *complete* the tech research
-        if (tech.costs.every(p => p.amount < 1)) city.techManager.researchTech(city, tech); //Be EXTRA nice. :)
-        city.techManager.lastFriendVisitDate = new Date();
-        return [tech, false];
+        //Possibly *complete* the tech research; be EXTRA nice by allowing a fudge factor of 1 whole resource (of whichever type requires the fewest)
+        if (tech.costs.every(p => p.amount < 1)) city.techManager.researchTech(city, tech);
+
+        //Record the visit
+        city.techManager.lastFriendVisitDates.set(otherCity.player.id, currentVisitDate);
+        friendVisitAllowance.consume(1);
+
+        return { tech: tech, longTicksToWait: 0, alreadyClaimedForThisFriend: false, remainingVisits: Math.floor(friendVisitAllowance.amount), points };
     }
 
     randomFreeResearch(city: City, fractionToGrant: number): Tech | null {

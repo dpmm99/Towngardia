@@ -5,7 +5,7 @@ import { City } from "../game/City.js";
 import { GameState } from "../game/GameState.js";
 import { Player } from "../game/Player.js";
 import { getResourceType, Research } from "../game/ResourceTypes.js";
-import { Tech } from "../game/Tech.js";
+import { FriendResearchVisitResult } from "../game/GrantFreePointsResult.js";
 import { TechManager } from "../game/TechManager.js";
 import { Altitect } from "../minigame/Altitect.js";
 import { MemoryMixology } from "../minigame/MemoryMixology.js";
@@ -206,11 +206,11 @@ export class UIManager {
 
             const resource = { type: getResourceType(Research), amount: 2 }; //TODO: How do we want to determine number of points?
             this.game.city!.applyReceiptBonus(resource); //May increase the amount of research points' worth of progress to grant
-            const [tech, bonusClaimed] = TechManager.grantFreePoints(this.game.city!, this.game.visitingCity!, resource.amount, Date.now());
-            if (tech) await this.techMenu.preloadImages();
-            this.showFriendVisitWindow(tech, resource.amount, bonusClaimed); //TODO: also let the player choose to buy specific resources from this city (if this city has sold them recently)
+            const result = TechManager.grantFreePoints(this.game.city!, this.game.visitingCity!, resource.amount, Date.now());
+            if (result.tech) await this.techMenu.preloadImages();
+            this.showFriendVisitWindow(result); //TODO: also let the player choose to buy specific resources from this city (if this city has sold them recently)
             this.game.city!.updateLastUserActionTime();
-            if (bonusClaimed) this.game.fullSave();
+            if (result.tech) this.game.fullSave();
             this.frameRequested = true;
         }
     }
@@ -534,8 +534,8 @@ export class UIManager {
         else this.happinessFactorsWindow.show();
     }
 
-    showFriendVisitWindow(tech: Tech | null, techPoints: number, bonusClaimed: boolean) {
-        this.friendVisitWindow.show(tech, techPoints, bonusClaimed);
+    showFriendVisitWindow(friendResearchVisitResult: FriendResearchVisitResult) {
+        this.friendVisitWindow.show(friendResearchVisitResult);
     }
 
     showFriendGiftWindow() {

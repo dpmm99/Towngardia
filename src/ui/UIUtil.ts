@@ -55,6 +55,19 @@ export function longTicksToDaysAndHours(ticks: number): string {
         : hoursText;
 }
 
+//A function to convert a number of long ticks into a number of hour(s) and minute(s), written properly with singular or plural and full words.
+export function longTicksToHoursAndMinutes(ticks: number): string {
+    const totalMinutesValue = ticks * LONG_TICK_TIME / (60 * 1000);
+    const hours = Math.floor(totalMinutesValue / 60);
+    const remainingMinutesValue = totalMinutesValue % 60;
+    const roundedMinutes = Math.round(remainingMinutesValue * 10) / 10;
+    const hoursText = hours ? (hours + " hour" + (hours !== 1 ? "s" : "")) : "";
+    const minutesText = roundedMinutes ? (roundedMinutes + " minute" + (roundedMinutes !== 1 ? "s" : "")) : "";
+    return hours
+        ? hoursText + (minutesText ? " " + minutesText : "")
+        : minutesText;
+}
+
 export function addResourceCosts(parentDrawable: Drawable, costs: { type: string, amount: number, reddize?: boolean }[],
     startX: number, startY: number, biggerOnMobile: boolean = false, scaleXOnMobile: boolean = false, scaleYOnMobile: boolean = false,
     resourceIconSize = 16, resourcePadding = 2, fontHeight = 14, wrapAfter = 3, grayscale: boolean = false, reddize: boolean = false, city?: City | undefined,
