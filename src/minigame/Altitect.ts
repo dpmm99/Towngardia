@@ -842,7 +842,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
             height: "40px",
             wordWrap: true,
             keepParentWidth: true,
-            text: "You can also move floors after placing them by simply tapping the floor and then an empty space.",
+            text: "You can also move rooms after placing them by simply tapping the room and then an empty space.",
         }));
         parent = parent.addChild(new Drawable({
             anchors: ['bottom'],
