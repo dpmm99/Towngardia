@@ -349,6 +349,7 @@ export class Building implements IHasDrawable {
     }
 
     //Calculate the given type of effect for each cell the building covers and return the highest one.
+    //NOTE: Doesn't consider irregular footprints
     getHighestEffect(city: City, type: EffectType, atX: number = this.x, atY: number = this.y): number {
         let maxEffect = 0;
         if (atX === -1) return 0; //Assume 0 effect for unplaced buildings
@@ -364,6 +365,7 @@ export class Building implements IHasDrawable {
         return maxEffect;
     }
 
+    //NOTE: Doesn't consider irregular footprints
     * getAllEffects(city: City): Generator<Effect> {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {

@@ -9,7 +9,7 @@ import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICKS_PER_LONG_TICK } from ".
 import { EffectType } from "../game/GridType.js";
 import { HIGH_TECH_UNLOCK_EDU } from "../game/HappinessCalculator.js";
 import { Resource } from "../game/Resource.js";
-import { Health, MinigameOptionResearch, Timeslips, Water, getResourceType } from "../game/ResourceTypes.js";
+import { MinigameOptionResearch, Timeslips, Water, getResourceType } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -22,6 +22,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
     private scroller = new StandardScroller(false, true);
     private timeout: NodeJS.Timeout | null = null;
+    private expandedSections: Set<string> = new Set(["ghg", "power", "water", "storage", "upgrade"]); //Note: it'll always remember what you had minimized until you reload the page.
 
     constructor(public city: City, public uiManager: UIManager, private building?: Building | undefined) {
     }
@@ -34,6 +35,31 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
     isShown(): boolean { return !!this.building; }
 
     onResize():void { this.scroller.onResize(); }
+
+    private toggleSection(sectionId: string): void {
+        if (this.expandedSections.has(sectionId)) {
+            this.expandedSections.delete(sectionId);
+        } else {
+            this.expandedSections.add(sectionId);
+        }
+    }
+
+    private isSectionExpanded(sectionId: string): boolean {
+        return this.expandedSections.has(sectionId);
+    }
+
+    private addSectionHeader(infoDrawable: Drawable, barWidth: number, padding: number, nextY: number, sectionId: string, title: string): number {
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: "24px",
+            text: (this.isSectionExpanded(sectionId) ? "\u25bc " : "\u25ba ") + title,
+            onClick: () => this.toggleSection(sectionId)
+        }));
+        nextY += 24 + 5;
+        return nextY;
+    }
 
     asDrawable(): Drawable {
         if (!this.building) return this.lastDrawable = new Drawable({ width: "0px" }); //Nothing
@@ -315,63 +341,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             }
 
             if (building.effects.effects.some(p => p.type === EffectType.GreenhouseGases) && this.city.flags.has(CityFlags.GreenhouseGasesMatter)) {
-                //Show citywide accumulated greenhouse gases and estimated effect on weather events
-                infoDrawable.addChild(new Drawable({
-                    x: padding,
-                    y: nextY,
-                    width: (barWidth - padding * 2) + "px",
-                    height: "24px",
-                    text: "About greenhouse gases:",
-                }));
-                nextY += 24 + 5;
-                const gas = this.city.resources.get("greenhousegases")!;
-                infoDrawable.addChild(new Drawable({
-                    x: padding,
-                    y: nextY,
-                    width: (barWidth - padding * 2) + "px",
-                    height: "24px",
-                    text: ` Citywide accumulation: ${humanizeCeil(gas.amount * 1000)} ppm`, //I could equate 0 to 350 ppm and 0.1 to 450 ppm, but it's easier to understand "0 = good". Instead, 0.1 = 100 ppm.
-                }));
-                nextY += 24 + 5;
-                infoDrawable.addChild(new Drawable({
-                    x: padding,
-                    y: nextY,
-                    width: (barWidth - padding * 2) + "px",
-                    height: "24px",
-                    text: ` ${(gas.productionRate > 0 ? "In" : "De")}creasing by ${Math.round(Math.abs(gas.productionRate) * LONG_TICKS_PER_DAY * 10000) / 10} ppm/day`,
-                }));
-                nextY += 24 + 5;
-
-                function expectedEventTimeFraction(chance: number, duration: number, ticksBetween: number) {
-                    return duration / (1 / chance + duration + ticksBetween);
-                }
-                function increasedEventTimeFraction(chance: number, duration: number, ticksBetween: number, greenhouseGases: number) {
-                    return expectedEventTimeFraction(Math.min(1, chance * (greenhouseGases + 0.1)), duration, Math.ceil(ticksBetween * Math.max(0, 1 - greenhouseGases)))
-                        / expectedEventTimeFraction(chance * 0.1, duration, ticksBetween)
-                        - 1;
-                }
-
-                //Show expected increase in time spent in weather events as caused by greenhouse gases.
-                //I labeled it "rate" for brevity, but it's actually "increase in the fraction of time that the city spends with this event active".
-                const droughtFraction = increasedEventTimeFraction(0.03, 40, 100, gas.amount) || 0; //Numbers copied from the event definitions
-                infoDrawable.addChild(new Drawable({
-                    x: padding,
-                    y: nextY,
-                    width: (barWidth - padding * 2) + "px",
-                    height: "24px",
-                    text: ` Drought rate +${Math.round(droughtFraction * 1000) / 10}%`,
-                }));
-                nextY += 24 + 5;
-                const heatwaveFraction = increasedEventTimeFraction(0.05, 20, 80, gas.amount) || 0;
-                const isHeatwave = new Date().getMonth() > 3 && new Date().getMonth() < 9;
-                infoDrawable.addChild(new Drawable({
-                    x: padding,
-                    y: nextY,
-                    width: (barWidth - padding * 2) + "px",
-                    height: "24px",
-                    text: ` ${isHeatwave ? "Heatwave" : "Cold snap"} rate +${Math.round(heatwaveFraction * 1000) / 10}%`,
-                }));
-                nextY += 24 + 5 + padding;
+                nextY = this.addGreenhouseGasesInfo(infoDrawable, padding, nextY, barWidth);
             }
         }
 
@@ -419,6 +389,10 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
                 //TODO: Add efficiency bonuses here--healthcare bonus from food healthiness, events
             }
+
+            // Residence Upgrade Info
+            if (building.isResidence) nextY = this.addResidenceUpgradeInfo(infoDrawable, padding, nextY, building, barWidth);
+
             if (building instanceof InformationCenter) nextY = this.addTourismInfo(infoDrawable, padding, nextY, iconSize, barWidth);
             else if (building instanceof PostOffice) nextY = this.addPostOfficeInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
             else if (building instanceof DepartmentOfEnergy) nextY = this.addDepartmentOfEnergyInfo(infoDrawable, padding, nextY, iconSize, building, barWidth);
@@ -588,7 +562,66 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         return nextY;
     }
 
+    addGreenhouseGasesInfo(infoDrawable: Drawable, padding: number, nextY: number, barWidth: number): number {
+        //Show citywide accumulated greenhouse gases and estimated effect on weather events
+        nextY = this.addSectionHeader(infoDrawable, barWidth, padding, nextY, "ghg", "Greenhouse gas information:");
+        if (!this.isSectionExpanded("ghg")) return nextY;
+
+        const gas = this.city.resources.get("greenhousegases")!;
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: "24px",
+            text: ` Citywide accumulation: ${humanizeCeil(gas.amount * 1000)} ppm`, //I could equate 0 to 350 ppm and 0.1 to 450 ppm, but it's easier to understand "0 = good". Instead, 0.1 = 100 ppm.
+        }));
+        nextY += 24 + 5;
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: "24px",
+            text: ` ${(gas.productionRate > 0 ? "In" : "De")}creasing by ${Math.round(Math.abs(gas.productionRate) * LONG_TICKS_PER_DAY * 10000) / 10} ppm/day`,
+        }));
+        nextY += 24 + 5;
+
+        function expectedEventTimeFraction(chance: number, duration: number, ticksBetween: number) {
+            return duration / (1 / chance + duration + ticksBetween);
+        }
+        function increasedEventTimeFraction(chance: number, duration: number, ticksBetween: number, greenhouseGases: number) {
+            return expectedEventTimeFraction(Math.min(1, chance * (greenhouseGases + 0.1)), duration, Math.ceil(ticksBetween * Math.max(0, 1 - greenhouseGases)))
+                / expectedEventTimeFraction(chance * 0.1, duration, ticksBetween)
+                - 1;
+        }
+
+        //Show expected increase in time spent in weather events as caused by greenhouse gases.
+        //I labeled it "rate" for brevity, but it's actually "increase in the fraction of time that the city spends with this event active".
+        const droughtFraction = increasedEventTimeFraction(0.03, 40, 100, gas.amount) || 0; //Numbers copied from the event definitions
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: "24px",
+            text: ` Drought rate +${Math.round(droughtFraction * 1000) / 10}%`,
+        }));
+        nextY += 24 + 5;
+        const heatwaveFraction = increasedEventTimeFraction(0.05, 20, 80, gas.amount) || 0;
+        const isHeatwave = new Date().getMonth() > 3 && new Date().getMonth() < 9;
+        infoDrawable.addChild(new Drawable({
+            x: padding,
+            y: nextY,
+            width: (barWidth - padding * 2) + "px",
+            height: "24px",
+            text: ` ${isHeatwave ? "Heatwave" : "Cold snap"} rate +${Math.round(heatwaveFraction * 1000) / 10}%`,
+        }));
+        nextY += 24 + 5 + padding;
+        return nextY;
+    }
+
     private addBuildingStorageStats(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: Building, barWidth: number): number {
+        nextY = this.addSectionHeader(infoDrawable, barWidth, padding, nextY, "storage", "Storage information:");
+        if (!this.isSectionExpanded("storage")) return nextY;
+
         const floorFunc = building.stores.length === 1 && building.stores[0].type === "water" ? humanizeWaterFloor :
             building.stores.length === 1 && building.stores[0].type === "power" ? humanizePowerFloor : humanizeFloor;
         infoDrawable.addChild(new Drawable({
@@ -597,7 +630,6 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             width: (barWidth - padding * 2) + "px",
             height: "24px",
             text: `Stores ${floorFunc(building.storeAmount)} of:`,
-            id: `${infoDrawable.id}.storageLabel`,
         }));
         nextY += 24 + 5;
 
@@ -608,7 +640,6 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 width: iconSize + "px",
                 height: iconSize + "px",
                 image: new TextureInfo(iconSize, iconSize, `resource/${resource.type}`),
-                id: `${infoDrawable.id}.storage.${resource.type}.icon`,
             }));
             infoDrawable.addChild(new Drawable({
                 x: padding + iconSize + 5,
@@ -616,7 +647,6 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 width: (barWidth - padding * 2 - iconSize - 5) + "px",
                 height: iconSize + "px",
                 text: resource.displayName,
-                id: `${infoDrawable.id}.storage.${resource.type}.text`,
             }));
             nextY += iconSize + 5;
         }
@@ -626,6 +656,8 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
 
     private addProductionInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: Building, barWidth: number, idealProd: number,
         type: "power" | "water", getProduction: keyof Building, getUpkeep: keyof Building, desiredAmount: number, importLimit: number, importRate: number): number {
+
+        // Always show the power/water icon and current production because it blends with the "Produces:" section nicely.
         const floorFunc = type === "power" ? humanizePowerFloor : humanizeWaterFloor;
         const ceilFunc = type === "power" ? humanizePowerCeil : humanizeWaterCeil; //TODO: All the water numbers should be per-day
         infoDrawable.addChild(new Drawable({
@@ -645,6 +677,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             text: floorFunc(actualProd) + (actualProd < idealProd ? `${perDay} (max ${floorFunc(idealProd)}${perDay})` : perDay),
         }));
         nextY += iconSize + padding;
+
+        nextY = this.addSectionHeader(infoDrawable, barWidth, padding, nextY, type, type == "power" ? "Power information:" : "Water information:");
+        if (!this.isSectionExpanded(type)) return nextY;
 
         const resource = this.city.resources.get(type)!;
         const productionRate = resource.productionRate * (type === "water" ? SHORT_TICKS_PER_LONG_TICK * LONG_TICKS_PER_DAY : 1);
@@ -854,6 +889,71 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         if (this.timeout) clearTimeout(this.timeout);
         if (!this.city.timeFreeze) this.timeout = setTimeout(() => { this.uiManager.frameRequested = true; }, 1000); //Only redraw automatically for this one building.
         return nextY + padding;
+    }
+
+    private addResidenceUpgradeInfo(infoDrawable: Drawable, padding: number, nextY: number, building: Building, barWidth: number): number {
+        const details = this.city.residenceSpawner.getResidenceUpgradeDetails(building);
+        if (!details) return nextY;
+
+        if (details.despawnChance) {
+            //Show the chance to despawn instead of the chance to upgrade
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px",
+                text: `Demolition chance: ${humanizeCeil(details.despawnChance * 100)}% each tick`,
+                reddize: true,
+            }));
+            nextY += 24 + padding;
+            return nextY;
+        }
+
+        nextY = this.addSectionHeader(infoDrawable, barWidth, padding, nextY, "upgrade", "Upgrade information:");
+        if (!this.isSectionExpanded("upgrade")) return nextY;
+
+        const addRequirement = (isMet: boolean, text: string) => {
+            infoDrawable.addChild(new Drawable({
+                x: padding,
+                y: nextY,
+                width: (barWidth - padding * 2) + "px",
+                height: "24px", // Assuming single line, adjust if wordWrap needed
+                text: `${isMet ? "\u2714" : "\u2718"} ${text}`, // Checkmark or X
+                reddize: !isMet, // Highlight failing conditions in red
+            }));
+            nextY += 24 + 5;
+        };
+
+        addRequirement(details.globalSpawnChance > details.minGlobalSpawnChance,
+            `Citywide factors: ${humanizeFloor(details.globalSpawnChance * 100)} (min ${humanizeCeil(details.minGlobalSpawnChance * 100)})`);
+            
+        addRequirement(!!building.lastEfficiency, `Building is operational (efficiency > 0%)`,);
+
+        addRequirement(details.businessPresence >= details.minBusinessPresence, `Business presence: ${humanizeFloor(details.businessPresence * 100)} ` +
+            `(min ${humanizeCeil(details.minBusinessPresence * 100)})`);
+
+        addRequirement(details.hasSpace, details.hasSpace ? `Has room for ${details.nextTierName}` : `No room for ${details.nextTierName || 'a bigger residence'}`);
+
+        if (details.minPeakPopulation)
+            addRequirement(this.city.peakPopulation >= details.minPeakPopulation,
+                `City peak population: ${humanizeFloor(this.city.peakPopulation)} (min ${humanizeCeil(details.minPeakPopulation)})`);
+        
+        if (details.minDesirability)
+            addRequirement(details.desirability >= details.minDesirability,
+                `Location desirability: ${humanizeFloor(details.desirability * 100)} (min ${humanizeCeil(details.minDesirability * 100)})`);
+
+        const willUpgrade = details.globalSpawnChance > details.minGlobalSpawnChance && building.lastEfficiency
+            && (!details.minDesirability || details.desirability >= details.minDesirability)
+            && details.businessPresence > details.minBusinessPresence && details.nextTierName && details.hasSpace;
+        infoDrawable.addChild(new Drawable({
+            x: padding, y: nextY, width: (barWidth - padding * 2) + "px", height: "24px",
+            text: willUpgrade ?
+                `Chance to upgrade: ${humanizeFloor(details.overallUpgradeProbability * 100)}% each tick.`
+                : "Upgrade requirements not met.",
+            reddize: !willUpgrade,
+        }));
+        nextY += 24 + padding;
+        return nextY;
     }
 
     private addTourismInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, barWidth: number): number {

@@ -809,7 +809,7 @@ export class MinigameMinilab extends Building { //Could make it cost paper or to
 export class SmallHouse extends Building {
     constructor() {
         super(
-            "smallhouse", "Small House", "Someone moved in. You can demolish the place, but they won't be happy about it.",
+            "smallhouse", "Small House", "Someone set roots in your city. You can demolish their humble abode if city planning demands it, but they won't be happy about it.",
             BuildingCategory.RESIDENTIAL,
             1, 1, 0,
             0.2,
@@ -912,6 +912,10 @@ export class SmallApartment extends Building {
 }
 
 export class Highrise extends Building {
+    public static readonly MIN_PEAK_POPULATION = 330;
+    public static readonly MIN_BUSINESS_PRESENCE = 0.4;
+    public static readonly MIN_RESIDENTIAL_DESIRABILITY = 0.5;
+
     constructor() {
         super(
             "highrise", "Highrise", "A very tall building with many residents. It's like a small apartment building, but really tall.",
@@ -939,9 +943,9 @@ export class Highrise extends Building {
     getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: Math.sqrt(city.peakPopulation) * 2.5 }]; }
     
     override canPlace(city: City, x: number, y: number, bySpawner: boolean): boolean {
-        return super.canPlace(city, x, y, bySpawner) && city.peakPopulation > 330
-            && (city.getBusinessDensity(x, y) >= 0.4 || city.getBusinessDensity(x, y + 1) >= 0.4 || city.getBusinessDensity(x + 1, y) >= 0.4 || city.getBusinessDensity(x + 1, y + 1) >= 0.4)
-            && (city.getResidentialDesirability(x, y) >= 0.5 || city.getResidentialDesirability(x, y + 1) >= 0.5 || city.getResidentialDesirability(x + 1, y) >= 0.5 || city.getResidentialDesirability(x + 1, y + 1) >= 0.5);
+        return super.canPlace(city, x, y, bySpawner) && city.peakPopulation >= Highrise.MIN_PEAK_POPULATION
+            && (city.getBusinessDensity(x, y) >= Highrise.MIN_BUSINESS_PRESENCE || city.getBusinessDensity(x, y + 1) >= Highrise.MIN_BUSINESS_PRESENCE || city.getBusinessDensity(x + 1, y) >= Highrise.MIN_BUSINESS_PRESENCE || city.getBusinessDensity(x + 1, y + 1) >= Highrise.MIN_BUSINESS_PRESENCE)
+            && (city.getResidentialDesirability(x, y) >= Highrise.MIN_RESIDENTIAL_DESIRABILITY || city.getResidentialDesirability(x, y + 1) >= Highrise.MIN_RESIDENTIAL_DESIRABILITY || city.getResidentialDesirability(x + 1, y) >= Highrise.MIN_RESIDENTIAL_DESIRABILITY || city.getResidentialDesirability(x + 1, y + 1) >= Highrise.MIN_RESIDENTIAL_DESIRABILITY);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {
@@ -955,6 +959,10 @@ export class Highrise extends Building {
 }
 
 export class Skyscraper extends Building {
+    public static readonly MIN_PEAK_POPULATION = 800;
+    public static readonly MIN_BUSINESS_PRESENCE = 0.5;
+    public static readonly MIN_RESIDENTIAL_DESIRABILITY = 0.65;
+
     constructor() {
         super(
             "skyscraper", "Skyscraper", "A very tall building housing hundreds of residents. It's like a highrise, but even taller.",
@@ -982,9 +990,9 @@ export class Skyscraper extends Building {
     getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: Math.sqrt(city.peakPopulation) * 5 }]; }
 
     override canPlace(city: City, x: number, y: number, bySpawner: boolean): boolean {
-        return super.canPlace(city, x, y, bySpawner) && city.peakPopulation > 800
-            && (city.getBusinessDensity(x, y) >= 0.5 || city.getBusinessDensity(x, y + 1) >= 0.5 || city.getBusinessDensity(x + 1, y) >= 0.5 || city.getBusinessDensity(x + 1, y + 1) >= 0.5)
-            && (city.getResidentialDesirability(x, y) >= 0.65 || city.getResidentialDesirability(x, y + 1) >= 0.65 || city.getResidentialDesirability(x + 1, y) >= 0.65 || city.getResidentialDesirability(x + 1, y + 1) >= 0.65);
+        return super.canPlace(city, x, y, bySpawner) && city.peakPopulation >= Skyscraper.MIN_PEAK_POPULATION
+            && (city.getBusinessDensity(x, y) >= Skyscraper.MIN_BUSINESS_PRESENCE || city.getBusinessDensity(x, y + 1) >= Skyscraper.MIN_BUSINESS_PRESENCE || city.getBusinessDensity(x + 1, y) >= Skyscraper.MIN_BUSINESS_PRESENCE || city.getBusinessDensity(x + 1, y + 1) >= Skyscraper.MIN_BUSINESS_PRESENCE)
+            && (city.getResidentialDesirability(x, y) >= Skyscraper.MIN_RESIDENTIAL_DESIRABILITY || city.getResidentialDesirability(x, y + 1) >= Skyscraper.MIN_RESIDENTIAL_DESIRABILITY || city.getResidentialDesirability(x + 1, y) >= Skyscraper.MIN_RESIDENTIAL_DESIRABILITY || city.getResidentialDesirability(x + 1, y + 1) >= Skyscraper.MIN_RESIDENTIAL_DESIRABILITY);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {

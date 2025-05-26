@@ -8,8 +8,22 @@ import { Happiness, Population, UntappedPatronage, getResourceType } from "./Res
 
 const MIN_GLOBAL_CHANCE_FOR_UPGRADE = 0.6;
 const MIN_DENSITY_FOR_UPGRADE = 0.35;
-const MIN_DENSITY_FOR_HIGHRISE = 0.4;
-const MIN_DENSITY_FOR_SKYSCRAPER = 0.5;
+
+export interface ResidenceUpgradeUIDetails {
+    globalSpawnChance: number;
+    minGlobalSpawnChance: number;
+    regionFactor: number;
+    overallUpgradeProbability: number;
+    businessPresence: number;
+    minBusinessPresence: number;
+    minPeakPopulation: number;
+    desirability: number;
+    minDesirability: number;
+    hasSpace: boolean;
+    nextTierName?: string;
+    despawnChance: number;
+}
+
 export class ResidenceSpawningSystem {
     private city: City;
     private residenceTypes: Building[];
@@ -109,7 +123,7 @@ export class ResidenceSpawningSystem {
 
             //Upgrade apartments to bigger ones as well. Note: theoretically possible to upgrade the one we JUST upgraded from a house. (Or it was, at least, until I added the lastEfficiency check.)
             //Warning: This specifically checks for SmallApartments, so if you add more apartment types, you'll need to adjust this.
-            const upgradableApartments = this.city.buildings.filter(p => p.isResidence && p.lastEfficiency && p.residenceLevel && (p instanceof SmallApartment || p instanceof Quadplex) && this.city.getBusinessDensity(p.x, p.y) >= MIN_DENSITY_FOR_HIGHRISE);
+            const upgradableApartments = this.city.buildings.filter(p => p.isResidence && p.lastEfficiency && p.residenceLevel && (p instanceof SmallApartment || p instanceof Quadplex) && this.city.getBusinessDensity(p.x, p.y) >= Highrise.MIN_BUSINESS_PRESENCE);
             const apartment = upgradableApartments[Math.floor(Math.random() * upgradableApartments.length)];
             if (apartment) {
                 const upgradeTo = this.selectResidenceType(apartment.x, apartment.y, true, apartment); //Basically only a 50% chance to upgrade. I like that, so not changing the interface.
@@ -117,7 +131,7 @@ export class ResidenceSpawningSystem {
             }
 
             //Same for Highrise.
-            const upgradableHighrises = this.city.buildings.filter(p => p.isResidence && p.lastEfficiency && p.residenceLevel && p instanceof Highrise && this.city.getBusinessDensity(p.x, p.y) >= MIN_DENSITY_FOR_SKYSCRAPER);
+            const upgradableHighrises = this.city.buildings.filter(p => p.isResidence && p.lastEfficiency && p.residenceLevel && p instanceof Highrise && this.city.getBusinessDensity(p.x, p.y) >= Skyscraper.MIN_BUSINESS_PRESENCE);
             const highrise = upgradableHighrises[Math.floor(Math.random() * upgradableHighrises.length)];
             if (highrise) {
                 const upgradeTo = this.selectResidenceType(highrise.x, highrise.y, true, highrise); //Basically only a 50% chance to upgrade. I like that, so not changing the interface.
@@ -205,7 +219,7 @@ export class ResidenceSpawningSystem {
 
         const allowedTypesAndPositions = this.getAllowedTypesAndPositions(building.x, building.y, building.residenceLevel + 1);
         const businessDensity = Math.max(...allowedTypesAndPositions.map(p => p.type.getHighestEffect(this.city, EffectType.BusinessPresence, p.x, p.y)));
-        return businessDensity > MIN_DENSITY_FOR_UPGRADE;
+        return businessDensity >= MIN_DENSITY_FOR_UPGRADE; //Don't have to check the higher business presence requirements for Highrise and Skyscraper here since it's already checked by getAllowedTypesAndPositions.
     }
 
     private selectResidenceType(x: number, y: number, forceApartment: boolean = false, upgradingBuilding: Building | undefined = undefined): { type: Building, x: number, y: number } | undefined {
@@ -226,5 +240,72 @@ export class ResidenceSpawningSystem {
         //TODO: If there are multiple allowed positions, prefer the one that's a perfect fit or that destroys the least houses. :)
         return allowedTypesAndPositions.find(tp => isApartment ? tp.type.residenceLevel : !tp.type.residenceLevel) //Apartments are a nonzero residenceLevel
             || allowedTypesAndPositions[0]; // Fallback to first type if not found
+    }
+
+    public getResidenceUpgradeDetails(building: Building): ResidenceUpgradeUIDetails | null {
+        if (!building.isResidence || building.x === -1 || !building.owned || building instanceof Skyscraper) { // Any non-upgradable type or not placed
+            return null;
+        }
+
+        const regionFactor = this.city.regionID === "volcanic" ? 0.85 : 1;
+        // This is the chance an upgrade of this tier happens if one is attempted city-wide
+        const overallUpgradeProbability = this.globalSpawnChance > MIN_GLOBAL_CHANCE_FOR_UPGRADE ? this.globalSpawnChance * regionFactor : 0;
+
+        const businessDensity = this.city.getBusinessDensity(building.x, building.y);
+
+        // Get current desirability (maximum from all four corners for 2x2 buildings)
+        //NOTE: Doesn't consider irregular footprints
+        let desirability = Number.NEGATIVE_INFINITY;
+        for (let x = 0; x < building.width; x++) {
+            for (let y = 0; y < building.height; y++) {
+                desirability = Math.max(desirability, this.city.getResidentialDesirability(building.x + x, building.y + y));
+            }
+        }
+
+        //Show the best direct (no level skipping) upgrade. Otherwise, I'd just use the selectResidenceType method, but that allows skipping levels.
+        const targetMinNextResidenceLevel = (building.residenceLevel ?? 0) + 1;
+        //Like getAllowedTypesAndPositions, but ignores all requirements other than the footprint by using Building.canPlace instead of the overridden functions.
+        const potentialUpgradeChoices = this.residenceTypes.filter(p => p.residenceLevel >= targetMinNextResidenceLevel)
+            .flatMap(type => (type.width === 1 && type.height === 1) || (type.width === building.width && type.height === building.height) //Stay at the exact given location if upgrading from 2x2 to 2x2 or if initially spawning a 1x1 building. Otherwise, it can adjust a bit.
+                ? { type, x: building.x, y: building.y } //One tile; be faster
+                : [{ type, x: building.x, y: building.y }, { type, x: building.x - type.width + 1, y: building.y }, { type, x: building.x, y: building.y - type.height + 1 }, { type, x: building.x - type.width + 1, y: building.y - type.height + 1 }]) //The four corners
+            .filter(tp => Building.prototype.canPlace.call(tp.type, this.city, tp.x, tp.y, true))
+            .map(tp => tp.type);
+
+        //Then, like selectResidenceType, Quadplex is only allowed if SmallApartment can't fit.
+        if (potentialUpgradeChoices.some(tp => tp instanceof SmallApartment)) {
+            const quadplexIndex = potentialUpgradeChoices.findIndex(tp => tp instanceof Quadplex);
+            if (quadplexIndex > -1) potentialUpgradeChoices.splice(quadplexIndex, 1);
+        }
+        const hasSpace = !!potentialUpgradeChoices.length;
+        const targetType = hasSpace ? potentialUpgradeChoices[0] : this.residenceTypes.find(p => p.residenceLevel === targetMinNextResidenceLevel);
+
+        const requiredDensity = (targetType?.constructor as any)?.MIN_BUSINESS_PRESENCE || MIN_DENSITY_FOR_UPGRADE;
+        const requiredPeakPopulation = (targetType?.constructor as any)?.MIN_PEAK_POPULATION || 0; //These are static readonly properties of some residence classes.
+        const requiredDesirability = (targetType?.constructor as any)?.MIN_RESIDENTIAL_DESIRABILITY || 0;
+
+        // Calculate despawn probability based on desirability and global factors
+        let despawnChance = 0;
+        const adjustedDesirability = desirability + 0.5 * (building.damagedEfficiency - 1); //Damage factor included like in despawnResidences
+        if (adjustedDesirability < 0 || this.globalSpawnChance < 0) {
+            despawnChance = Math.max(0, Math.min(1, //Clamp
+                this.globalSpawnChance >= 0 ? -adjustedDesirability : (1 - adjustedDesirability + Math.abs(this.globalSpawnChance))
+            ));
+        }
+
+        return {
+            globalSpawnChance: this.globalSpawnChance,
+            minGlobalSpawnChance: MIN_GLOBAL_CHANCE_FOR_UPGRADE, //TODO: Might even be nice to have the resource sales effect and furniture store effect broken out.
+            regionFactor: regionFactor,
+            overallUpgradeProbability: overallUpgradeProbability,
+            businessPresence: businessDensity,
+            minBusinessPresence: requiredDensity,
+            minPeakPopulation: requiredPeakPopulation,
+            desirability: desirability,
+            minDesirability: requiredDesirability,
+            hasSpace: hasSpace,
+            nextTierName: targetType?.displayName, //residenceTypes is sorted by residenceLevel, so this is the upgrade option with the least requirements
+            despawnChance: despawnChance,
+        };
     }
 }
