@@ -924,7 +924,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             nextY += 24 + 5;
         };
 
-        addRequirement(details.globalSpawnChance > details.minGlobalSpawnChance,
+        addRequirement(details.globalSpawnChance >= details.minGlobalSpawnChance,
             `Citywide factors: ${humanizeFloor(details.globalSpawnChance * 100)} (min ${humanizeCeil(details.minGlobalSpawnChance * 100)})`);
             
         addRequirement(!!building.lastEfficiency, `Building is operational (efficiency > 0%)`,);
@@ -942,9 +942,9 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
             addRequirement(details.desirability >= details.minDesirability,
                 `Location desirability: ${humanizeFloor(details.desirability * 100)} (min ${humanizeCeil(details.minDesirability * 100)})`);
 
-        const willUpgrade = details.globalSpawnChance > details.minGlobalSpawnChance && building.lastEfficiency
+        const willUpgrade = details.globalSpawnChance >= details.minGlobalSpawnChance && building.lastEfficiency
             && (!details.minDesirability || details.desirability >= details.minDesirability)
-            && details.businessPresence > details.minBusinessPresence && details.nextTierName && details.hasSpace;
+            && details.businessPresence >= details.minBusinessPresence && details.nextTierName && details.hasSpace;
         infoDrawable.addChild(new Drawable({
             x: padding, y: nextY, width: (barWidth - padding * 2) + "px", height: "24px",
             text: willUpgrade ?

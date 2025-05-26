@@ -912,9 +912,9 @@ export class SmallApartment extends Building {
 }
 
 export class Highrise extends Building {
-    public static readonly MIN_PEAK_POPULATION = 330;
-    public static readonly MIN_BUSINESS_PRESENCE = 0.4;
-    public static readonly MIN_RESIDENTIAL_DESIRABILITY = 0.5;
+    public static readonly MIN_PEAK_POPULATION = 329.999;
+    public static readonly MIN_BUSINESS_PRESENCE = 0.3999;
+    public static readonly MIN_RESIDENTIAL_DESIRABILITY = 0.4999;
 
     constructor() {
         super(
@@ -959,9 +959,9 @@ export class Highrise extends Building {
 }
 
 export class Skyscraper extends Building {
-    public static readonly MIN_PEAK_POPULATION = 800;
-    public static readonly MIN_BUSINESS_PRESENCE = 0.5;
-    public static readonly MIN_RESIDENTIAL_DESIRABILITY = 0.65;
+    public static readonly MIN_PEAK_POPULATION = 799.999;
+    public static readonly MIN_BUSINESS_PRESENCE = 0.4999;
+    public static readonly MIN_RESIDENTIAL_DESIRABILITY = 0.64999;
 
     constructor() {
         super(

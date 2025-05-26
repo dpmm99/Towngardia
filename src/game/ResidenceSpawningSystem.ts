@@ -4,10 +4,10 @@ import { City } from "./City.js";
 import { CityFlags } from "./CityFlags.js";
 import { EffectType } from "./GridType.js";
 import { Notification } from "./Notification.js";
-import { Happiness, Population, UntappedPatronage, getResourceType } from "./ResourceTypes.js";
+import { Happiness, Population } from "./ResourceTypes.js";
 
-const MIN_GLOBAL_CHANCE_FOR_UPGRADE = 0.6;
-const MIN_DENSITY_FOR_UPGRADE = 0.35;
+const MIN_GLOBAL_CHANCE_FOR_UPGRADE = 0.5999;
+const MIN_DENSITY_FOR_UPGRADE = 0.34999;
 
 export interface ResidenceUpgradeUIDetails {
     globalSpawnChance: number;
@@ -113,7 +113,7 @@ export class ResidenceSpawningSystem {
     private upgradeResidences() {
         //Pick a random house and see if it can upgrade to an apartment. Has a minimum happiness requirement, and the chance increases as happiness increases, but limited to 1 per long tick.
         const regionFactor = this.city.regionID === "volcanic" ? 0.85 : 1; //Less impactful region factor compared to the residence spawn count's region factor
-        if (this.globalSpawnChance > MIN_GLOBAL_CHANCE_FOR_UPGRADE && Math.random() < this.globalSpawnChance * regionFactor) {
+        if (this.globalSpawnChance >= MIN_GLOBAL_CHANCE_FOR_UPGRADE && Math.random() < this.globalSpawnChance * regionFactor) {
             const houses = this.city.buildings.filter(p => p.isResidence && p.lastEfficiency && !p.residenceLevel && this.city.getBusinessDensity(p.x, p.y) >= MIN_DENSITY_FOR_UPGRADE); //Higher minimum density than normal apartment spawning
             const house = houses[Math.floor(Math.random() * houses.length)];
             if (house) {
@@ -228,7 +228,7 @@ export class ResidenceSpawningSystem {
         if (!forceApartment) {
             const businessDensity = Math.max(...allowedTypesAndPositions.map(p => p.type.getHighestEffect(this.city, EffectType.BusinessPresence, p.x, p.y)));
             const apartmentChance = businessDensity * 0.5;
-            isApartment = businessDensity >= 0.25 && Math.random() < apartmentChance;
+            isApartment = businessDensity >= 0.24999 && Math.random() < apartmentChance;
         }
 
         //Quadplex is ONLY allowed if SmallApartment can't fit.
@@ -249,7 +249,7 @@ export class ResidenceSpawningSystem {
 
         const regionFactor = this.city.regionID === "volcanic" ? 0.85 : 1;
         // This is the chance an upgrade of this tier happens if one is attempted city-wide
-        const overallUpgradeProbability = this.globalSpawnChance > MIN_GLOBAL_CHANCE_FOR_UPGRADE ? Math.min(1, this.globalSpawnChance * regionFactor) : 0;
+        const overallUpgradeProbability = this.globalSpawnChance >= MIN_GLOBAL_CHANCE_FOR_UPGRADE ? Math.min(1, this.globalSpawnChance * regionFactor) : 0;
 
         const businessDensity = this.city.getBusinessDensity(building.x, building.y);
 
