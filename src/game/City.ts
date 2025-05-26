@@ -1677,6 +1677,9 @@ export class City {
     getResidentialDesirability(x: number, y: number): number {
         return this.residenceSpawner.calculateDesirability(x, y);
     }
+    getResidentialDesirabilityWithMods(x: number, y: number, building: Building): number {
+        return this.residenceSpawner.calculateDesirabilityWithMods(x, y, building);
+    }
     getCityAverageGreenhouseGases(): number {
         let total = 0;
         for (let y = 0; y < this.height; y++) {

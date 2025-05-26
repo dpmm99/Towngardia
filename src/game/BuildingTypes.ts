@@ -5,6 +5,7 @@ import { Business } from "./Business.js";
 import { City } from "./City.js";
 import { FootprintType } from "./FootprintType.js";
 import { EffectType } from "./GridType.js";
+import { Effect } from "./Effect.js";
 import { Apples, Apps, BarPlays, Batteries, Berries, BrainBrews, Bricks, CAPACITY_MULTIPLIER, Chocolate, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Dynamite, Electronics, EnvironmentalLabBonus, FireObsidian, Fish, Flunds, Furniture, Gemstones, Glass, GleeGrenades, Grain, GreenObsidian, Happiness, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, MinigameOptionResearch, MonobrynthPlays, NepotismNetworkingPlays, Obsidian, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, PowerCosts, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, SlotsPlays, StarboxPlays, Steel, Stone, Sulfur, Textiles, Tourists, Toys, Tritium, TurboTonics, Uranium, VitaminB12, Water, Wood, getResourceType } from "./ResourceTypes.js";
 import { Geothermal } from "./TechTypes.js";
 import { Notification } from "./Notification.js";
@@ -990,9 +991,26 @@ export class Skyscraper extends Building {
     getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: Math.sqrt(city.peakPopulation) * 5 }]; }
 
     override canPlace(city: City, x: number, y: number, bySpawner: boolean): boolean {
+        //The four tiles this building will occupy
+        const tiles = [
+            { x: x, y: y },
+            { x: x, y: y + 1 },
+            { x: x + 1, y: y },
+            { x: x + 1, y: y + 1 }
+        ];
+
+        //Get this Skyscraper's own business presence bonus. Note: Assumes any dynamic calculations don't use the target position. Also note there should be only 0 or 1 such effect.
+        const ownBusinessPresence = this.effects?.effects.filter(e => e.type === EffectType.BusinessPresence)
+            .map(ef => new Effect(ef.type, ef.magnitude, this, ef.dynamicCalculation).getEffect(city, this, this.x, this.y))
+            .reduce((sum, e) => sum + e, 0) || 0;
+
         return super.canPlace(city, x, y, bySpawner) && city.peakPopulation >= Skyscraper.MIN_PEAK_POPULATION
-            && (city.getBusinessDensity(x, y) >= Skyscraper.MIN_BUSINESS_PRESENCE || city.getBusinessDensity(x, y + 1) >= Skyscraper.MIN_BUSINESS_PRESENCE || city.getBusinessDensity(x + 1, y) >= Skyscraper.MIN_BUSINESS_PRESENCE || city.getBusinessDensity(x + 1, y + 1) >= Skyscraper.MIN_BUSINESS_PRESENCE)
-            && (city.getResidentialDesirability(x, y) >= Skyscraper.MIN_RESIDENTIAL_DESIRABILITY || city.getResidentialDesirability(x, y + 1) >= Skyscraper.MIN_RESIDENTIAL_DESIRABILITY || city.getResidentialDesirability(x + 1, y) >= Skyscraper.MIN_RESIDENTIAL_DESIRABILITY || city.getResidentialDesirability(x + 1, y + 1) >= Skyscraper.MIN_RESIDENTIAL_DESIRABILITY);
+            //Check if any of the 4 tiles meets the minimum business presence requirement. Add the building's own mods to allow moving to less business-y areas.
+            //But take care not to double-count the building's own effects--the city's getBusinessDensity already includes this building's effects where it's placed.
+            //If you double-counted the mods, it would let players slide a 50%-of-required-business-presence Skyscraper one tile at a time into a location with 0 business presence.
+            && tiles.some(tile => city.getBusinessDensity(tile.x, tile.y) + (city.grid[tile.y][tile.x]?.id !== this.id ? ownBusinessPresence : 0) >= Skyscraper.MIN_BUSINESS_PRESENCE)
+            //Same thing for desirability, but it's a more complicated calculation, so I put it all in ResidenceSpawningSystem.
+            && tiles.some(tile => city.getResidentialDesirabilityWithMods(tile.x, tile.y, this) >= Skyscraper.MIN_RESIDENTIAL_DESIRABILITY);
     }
 
     override getPowerUpkeep(city: City, ideal: boolean = false): number {

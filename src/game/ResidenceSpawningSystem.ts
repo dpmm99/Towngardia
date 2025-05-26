@@ -3,6 +3,7 @@ import { FurnitureStore, Highrise, Quadplex, Skyscraper, SmallApartment, SmallHo
 import { City } from "./City.js";
 import { CityFlags } from "./CityFlags.js";
 import { EffectType } from "./GridType.js";
+import { Effect } from "./Effect.js";
 import { Notification } from "./Notification.js";
 import { Happiness, Population } from "./ResourceTypes.js";
 
@@ -185,15 +186,67 @@ export class ResidenceSpawningSystem {
     //    return false;
     //}
 
+    //Constants to help keep the two calculateDesirability functions from diverging by accident.
+    private static readonly SCORE_BIAS = -0.15; //Initial bias chosen based on actual values in a test city. They were too eager to build apartments next to a coal power plant.
+    private static readonly EDUCATION_FACTOR = 0.25;
+    private static readonly POLICE_CRIME_CAP = 0.25; //Caps at 0.25 because police protection alone doesn't make a place very desirable.
+    private static readonly ORGANIZED_CRIME_FACTOR = 2; //Organized crime is twice as harmful; 1 police protection is worth 1 crime elimination otherwise.
+    private static readonly HEALTHCARE_FACTOR = 0.3; //Healthcare CAN be worth a bit more than police protection and pollution always has a negative impact. But doubled-up healthcare doesn't help anything.
+    private static readonly VACUUM_WINDOWS_NOISE_REDUCTION_DENOMINATOR = 3; //Noise impact can be reduced by 1/3 by vacuum windows.
+    private static readonly NOISE_FACTOR = 0.15 / ResidenceSpawningSystem.VACUUM_WINDOWS_NOISE_REDUCTION_DENOMINATOR; //Noise has an impact of 0.15.
+
     public calculateDesirability(x: number, y: number): number {
-        let score = -0.15; //Initial bias chosen based on actual values in a test city. They were too eager to build apartments next to a coal power plant.
-        score += this.city.getLandValue(x, y) + Math.sqrt(Math.max(0, this.city.getEducation(x, y))) * 0.25;
-        //Organized crime is twice as harmful; 1 police protection is worth 1 crime elimination. Caps at 0.2 because police protection alone doesn't make a place very desirable.
-        score += Math.min(0.25, Math.sqrt(Math.max(0, this.city.getPoliceProtection(x, y))) - this.city.getPettyCrime(x, y) - 2 * this.city.getOrganizedCrime(x, y));
-        //Healthcare CAN be worth a bit more than police protection and pollution always has a negative impact. But doubled-up healthcare doesn't help anything.
-        score += 0.3 * (Math.min(1, Math.sqrt(Math.max(0, this.city.getHealthcare(x, y)))) - this.city.getParticulatePollution(x, y)); //May want to square pollution or something, though...
-        score -= 0.05 * this.city.getNoise(x, y) * (3 - this.city.techManager.getAdoption('vacuumwindows')); //Noise has an impact of 0.15 and can be reduced by a third by vacuum windows.
+        let score = ResidenceSpawningSystem.SCORE_BIAS;
+        score += this.city.getLandValue(x, y) + Math.sqrt(Math.max(0, this.city.getEducation(x, y))) * ResidenceSpawningSystem.EDUCATION_FACTOR;
+        score += Math.min(ResidenceSpawningSystem.POLICE_CRIME_CAP, Math.sqrt(Math.max(0, this.city.getPoliceProtection(x, y)))
+            - this.city.getPettyCrime(x, y) - ResidenceSpawningSystem.ORGANIZED_CRIME_FACTOR * this.city.getOrganizedCrime(x, y));
+        score += ResidenceSpawningSystem.HEALTHCARE_FACTOR * (Math.min(1, Math.sqrt(Math.max(0, this.city.getHealthcare(x, y)))) - this.city.getParticulatePollution(x, y)); //May want to square pollution or something, though...
+        score -= ResidenceSpawningSystem.NOISE_FACTOR * this.city.getNoise(x, y) * (ResidenceSpawningSystem.VACUUM_WINDOWS_NOISE_REDUCTION_DENOMINATOR - this.city.techManager.getAdoption('vacuumwindows'));
         //Fire protection doesn't have much impact, but it does affect happiness (and therefore global chance).
+
+        return score;
+    }
+
+    /**
+     * Calculates residential desirability including the effects of a specific building.
+     * This is a more complex version of calculateDesirability, since that one needs to be fairly optimized but this one accounts for a separate building (e.g., a modded Skyscraper being moved).
+     * @param x The x coordinate to check desirability for
+     * @param y The y coordinate to check desirability for
+     * @param building Optional building whose effects should be included without double-counting
+     * @returns A desirability score representing how suitable the location is for residences
+     */
+    public calculateDesirabilityWithMods(x: number, y: number, building: Building): number {
+        //Calculate building's own effects for all needed types at once. This list must match all possible mods, currently only defined by Altitect.
+        //BusinessPresence, BusinessValue, FireHazard, and Luxury aren't used in these calculations. LandValue, FireProtection, PublicTransport, pollution/GHG, and crime aren't affected by Altitect.
+        //TODO: Actually probably should count luxury after all... Probably want to drop SCORE_BIAS by another 0.3 or so if I do start counting luxury.
+        const effectTypes = [EffectType.Education, EffectType.PoliceProtection, EffectType.Healthcare, EffectType.Noise];
+        const ownEffects = new Map<EffectType, number>();
+        if (this.city.grid[y][x]?.id !== building.id && building.effects?.effects) {
+            for (const effectType of effectTypes) {
+                const effect = building.effects.effects.filter(e => e.type === effectType)
+                    .map(ef => new Effect(ef.type, ef.magnitude, building, ef.dynamicCalculation).getEffect(this.city, building, y, x))
+                    .reduce((sum, e) => sum + e, 0);
+                if (effect) ownEffects.set(effectType, effect);
+            }
+        }
+
+        //Note: Any effect that could be negative in total or negative individually should not be handled this way, as the city functions use Math.max(0, ...).
+        const cityLandValue = this.city.getLandValue(x, y);
+        const cityEducation = this.city.getEducation(x, y) + (ownEffects.get(EffectType.Education) ?? 0);
+        const cityPoliceProtection = this.city.getPoliceProtection(x, y) + (ownEffects.get(EffectType.PoliceProtection) ?? 0);
+        const cityPettyCrime = this.city.getPettyCrime(x, y);
+        const cityOrganizedCrime = this.city.getOrganizedCrime(x, y);
+        const cityHealthcare = this.city.getHealthcare(x, y) + (ownEffects.get(EffectType.Healthcare) ?? 0);
+        const cityParticulatePollution = this.city.getParticulatePollution(x, y);
+        const cityNoise = this.city.getNoise(x, y) + (ownEffects.get(EffectType.Noise) ?? 0);
+
+        //Same calculations as the other calculateDesirability function, but including the building's own effects
+        let score = ResidenceSpawningSystem.SCORE_BIAS;
+        score += cityLandValue + Math.sqrt(Math.max(0, cityEducation)) * ResidenceSpawningSystem.EDUCATION_FACTOR;
+        score += Math.min(ResidenceSpawningSystem.POLICE_CRIME_CAP, Math.sqrt(Math.max(0, cityPoliceProtection))
+            - cityPettyCrime - ResidenceSpawningSystem.ORGANIZED_CRIME_FACTOR * cityOrganizedCrime);
+        score += ResidenceSpawningSystem.HEALTHCARE_FACTOR * (Math.min(1, Math.sqrt(Math.max(0, cityHealthcare))) - cityParticulatePollution);
+        score -= ResidenceSpawningSystem.NOISE_FACTOR * cityNoise * (ResidenceSpawningSystem.VACUUM_WINDOWS_NOISE_REDUCTION_DENOMINATOR - this.city.techManager.getAdoption('vacuumwindows'));
 
         return score;
     }
