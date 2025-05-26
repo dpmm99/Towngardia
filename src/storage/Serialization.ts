@@ -398,7 +398,7 @@ export class CityDeserializer {
         const techTypes = new Map(TECH_TYPES.map((p: Tech) => [p.id, p]));
         const techs = <Tech[]>o.te.map((p: any) => this.tech(techTypes, p));
         const r = new TechManager(techs);
-        if (o.lv) r.lastFriendVisitDates = new Map(o.lv);
+        if (o.lv) r.lastFriendVisitDates = new Map(o.lv.map((p: [number, string]) => [p[0], new Date(p[1])]));
         r.lastResearchCompletionDates = o.cd.map((p: any) => new Date(p));
         return r;
     }

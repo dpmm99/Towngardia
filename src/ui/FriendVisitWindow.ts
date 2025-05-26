@@ -85,7 +85,7 @@ export class FriendVisitWindow implements IHasDrawable {
                 y: nextY,
                 width: "calc(100% - 20px)",
                 height: "32px",
-                text: "You cannot claim any more research bonuses from friends today. Try again in about " + longTicksToHoursAndMinutes(this.researchResult.longTicksToWait) + ".",
+                text: "You cannot claim any more research bonuses from friends right now. Try again in about " + longTicksToHoursAndMinutes(this.researchResult.longTicksToWait) + ".",
                 wordWrap: true,
                 biggerOnMobile: true,
                 scaleXOnMobile: true,
@@ -109,7 +109,7 @@ export class FriendVisitWindow implements IHasDrawable {
                 y: nextY,
                 width: "calc(100% - 20px)",
                 height: "32px",
-                text: "This friend has no helpful research to share right now.", //TODO: Give a tip or two, like "You can coordinate on different research paths so you can both finish all that research sooner." or just "try a different friend or check back in a few days." Can also remind that it's a once-daily thing (though I *really* should let it 'stockpile' for up to 5 days like everything else).
+                text: "This friend's city has no helpful research to share right now. Try visiting another city, or coordinate with a friend to work on different branches of research.",
                 wordWrap: true,
                 biggerOnMobile: true,
                 scaleXOnMobile: true,
