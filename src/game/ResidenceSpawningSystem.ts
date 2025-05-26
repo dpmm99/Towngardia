@@ -249,7 +249,7 @@ export class ResidenceSpawningSystem {
 
         const regionFactor = this.city.regionID === "volcanic" ? 0.85 : 1;
         // This is the chance an upgrade of this tier happens if one is attempted city-wide
-        const overallUpgradeProbability = this.globalSpawnChance > MIN_GLOBAL_CHANCE_FOR_UPGRADE ? this.globalSpawnChance * regionFactor : 0;
+        const overallUpgradeProbability = this.globalSpawnChance > MIN_GLOBAL_CHANCE_FOR_UPGRADE ? Math.min(1, this.globalSpawnChance * regionFactor) : 0;
 
         const businessDensity = this.city.getBusinessDensity(building.x, building.y);
 
