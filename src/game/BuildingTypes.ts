@@ -524,8 +524,8 @@ export class CityHall extends Building {
             }
         }
 
-        //Third pass: assign 10% of excess tourists (assume they're assigned last) to all businesses with even proportioning PAST the patron caps.
-        let excessTouristsRemaining = Math.min(tourists, remainingPeople) * 0.1;
+        //Third pass: assign 50% of excess tourists (assume they're assigned last) to all businesses with even proportioning PAST the patron caps.
+        let excessTouristsRemaining = Math.min(tourists, remainingPeople) * 0.5;
         const excessTouristsTotal = excessTouristsRemaining;
         for (const business of businesses) {
             if (excessTouristsRemaining <= 0) break;

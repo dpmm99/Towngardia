@@ -734,7 +734,7 @@ export class TutorialOverlay implements IHasDrawable {
                 ...fieldsNotNeededForExtras,
                 title: "Tourism",
                 content: {
-                    text: "Tourism is a great way to boost your city's income, unlocked by building an Information Center. Various types of building attract tourists, including some natural formations. Tourists act as patrons in your city's businesses, drawing in flunds via sales tax. Visit a friend's city and play the Nepotism Networking minigame via the right side bar to boost both your and your friend's tourism by a small percentage for up to a few days. You can see all your active tourism boosts by checking the Information Center's info bar. Tourism boosts are multiplicative and gradually decrease until their time limits, so it's more effective to pile them all on at once--if your businesses have the capacity!",
+                    text: "Tourism is a great way to boost your city's income, unlocked by building an Information Center. Various types of building attract tourists, including some natural formations. Tourists act as patrons in your city's businesses, drawing in flunds via sales tax. Visit a friend's city and play the Nepotism Networking minigame via the right side bar to boost both your and your friend's tourism by a small percentage for up to a few days. You can see all your active tourism boosts by checking the Information Center's info bar. Tourism boosts are multiplicative and gradually decrease until their time limits, so it's more effective to pile them all on at once--if your businesses have the capacity! Businesses are greedy, though, so they'll strive to serve half of the tourists even beyond their rated capacity.",
                 },
             });
         }
