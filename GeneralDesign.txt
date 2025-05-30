@@ -44,6 +44,7 @@ Main remaining features:
 More regions (ancient ocean, delta, tundra, polluted paradise, some random planet with no atmosphere)
 aaand probably being able to buy things (particularly the resources that aren't in every region) more easily if your friends are selling them. I was thinking sales go into a list for 5 days, but then you have to load and affect the other players' city data...
 Otherwise, I'm pretty well down to just making buildings, events, techs, and titles/achievements, though I have a decent number of each of those.
+Still need more event banners for the convention center, too. :) I only have events for October through February and convention center banners for a shorter time range than that.
 
 Coolest open ideas:
 Sort businesses by patron value (or maybe do a fixed sort order for all building types, but need an indicator to show which ones are newly unlocked). Also, nothing shows the buff sources.
@@ -63,6 +64,8 @@ In medium to large cities (>~15% map coverage), I really need taxes to have some
 	minigame reward upgrades--spend a lot of flunds for a small increase to the non-flunds rewards from a minigame
 	more services--other than water and trash that I still intended to eventually add, there could be cemeteries, homeless shelters, courthouses, employment offices, intelligence agencies, military, occasional grant requests from colleges, consumer and environment protection agencies, scholarship programs...
 Advisor button that suggests what your city needs the most--businesses, factories, services, decorations, time, space, spread, research, friends, minigame skill, less road, special unlocks
+new regions:
+	Wasteland: A whole lot of blocker rubble everywhere; you essentially have to build in a labyrinth, but you can't demolish it yourself. Maybe some Dry Woods around the edges of the map. You have to unlock and then construct a building that demolishes it for you--a laser like the StarCraft II campaign map ("The Dig") where a huge laser spends the whole mission zapping a temple door. So this building would blow up the nearest one piece of rubble per day (or more like it'd do damage at a fixed rate and most rubble would have the same health). Maybe you build a separate truck to haul the rubble back to your city for use in the form of Stone, but it's optional. Some of the rubble is tougher--sealed vaults, ancient ruins, that sort of thing--and hides more interesting or unique resources, so you have to build an upgrade for the laser, like a lens that costs 100 glass or something. The wasteland would also have variable wind speeds, so wind turbines produce more or less at random each day, plus occasional sandstorms/dust storms that occlude solar panels and halt laser progress or even bury some buildings, perhaps only the outermost ones, and it could even be a health hazard. Even water could be scarce, but sand collectors can be built anywhere--and maybe even clay collectors, turning clay + sand into brick, and building with more brick and less concrete.
 new techs:
 	?
 new events:
@@ -80,7 +83,7 @@ new buildings:
 	maybe a building that can be placed on roads to reduce nearby residential power consumption (and even then, maybe only in summer) - could be a solar panel or just a vegetation trellis or whatever
 	big complexes:
 		Cheap strip mall you can place a bunch of small businesses on
-		theme park that you can place a bunch of separate components on (roller coaster, ferris wheel, 6D adventure, etc.) - would fit well as a very-high-traffic business
+		theme park that you can place a bunch of separate components on (roller coaster, ferris wheel, 6D adventure, etc.) - would fit well as a very-high-traffic business - could have a unique 'hype' stat that affects tourism/business patronage growth rate or even cause it to drop over time
 		university campus you can place a bunch of facilities on
 	space tours (business), orbital habitat, orbital collector (for tritium) that would all have to be placed on top of the space launch site (maybe like 1-3 slots per launch site) - I listed these in the buildings file, too, but I like these ideas enough to merit making them before just about any other building in that file
 	Healthcare Research Center - does its own research, very slowly growing a permanent healthcare bonus even if you remove it
@@ -98,12 +101,14 @@ new buildings:
 	Air quality monitoring and enforcement center - reduces pollution from nearby structures
 	Other environment building ideas: wildlife sanctuary (+tourism), ecosystem restoration center (improves land value)
 	More specific decorations: bronze dragon, giant wind instrument, giant steampunk chess set, plaza that looks like a compass rose, fancy bike path that both reduces traffic and spreads luxury, human-sized hamster wheels (maybe spreads a little healthcare and produces 0.1 MW for the laughs :))
+Drone distribution hubs to automatically provision resources to specific buildings--they'd be 1x1 and you'd have to assign them to one building each, or perhaps it'd be an area effect, but either way, they'd distribute uncollected resources first, so if you build enough of them, you never really have to collect resources again--they wouldn't be as meaningful if they don't also auto-collect end products to auto-sell for you, though. Obviously unlocked after logistics center (probably by the drone tech that already exists), maybe even have to be built on one (wouldn't work well if they affected all buildings around them in some radius, though). Could also lose goods to crime if there's insufficient police protection in the area.
 Mechanical failures - a few buildings would damage themselves slowly over time and show a wrench icon instead of fire when they're damaged, but the damage wouldn't harm efficiency for 5 days, then the backdrop turns from the 'warning' one into the 'error' one after that. A tech could unlock auto-repair. Could apply to all factories and high-traffic businesses starting at 2k population or something like that as a flunds sink, but factories would go back to not being worth having if you don't need the output resources.
 Make city progress -> earn wisdom points -> buy care packages you can send to newer players, e.g., temporary building unlocks, resources or discounts, research speed
 Community projects - like research, but not just spending resources, and different kinds of rewards?
 Possible multi-friend project: Intercity Trade Center (permanently reduces market buy prices)
 Some possible minigame rewards: factory booster - can boost a single factory's output by 25% for a day or something; land value booster - permanently increase land value a little bit (with a limit); temporary construction cost reduction; temporary market buy price reduction
 Possible minigame reward for a friend: Expert Consulting (temporary business efficiency boost)
+A very easy integrated minigame to encourage visiting friends: scavenger hunt for some specific parts in their city, unlocking unique decorations after you do it so many times. Could even reward you with +1 permanent tourist per city per day (with a cap of 3 cities per day or whatever). Could be a hunt for specific vehicles, too, and it'd populate their roads temporarily, but that could be basically impossible sometimes due to 1x1 buildings covering the roads since there's no "hide buildings but keep showing roads" view.
 Another minigame idea: like a 'bulldozer' game but with trash and it's really just a match-3 kind of thing. Could produce paper (which could be required by the post office)
 Another minigame idea: cryptograms that boost education and use paper, maybe occasionally lead to buried treasure or something ;)
 "corporate enticement"

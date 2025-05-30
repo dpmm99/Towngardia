@@ -26,3 +26,6 @@ VR classrooms: Increase effectiveness of educational facilities
 Brain-computer interfaces: Dramatically increase effectiveness of large educational facilities
 Quantum computing: Unlocks Quantum Research Lab, which gives random sporadic research bonuses
 Cloud seeding: shortens Drought disasters
+
+Magnetic monopolar motors: increase Groundwater Pump throughput... could also increase production of cement mill, mines, and carbon capture plant...
+- Could require exotic matter, only available via minigames, only sellable...maybe also used to build better buildings; maybe a production building could be unlocked for it in that case.

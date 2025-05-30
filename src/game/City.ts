@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, ChocolateBar, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GeothermalVent, GregsGrogBarr, GroundwaterPump, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MuseumOfFutureArts, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, Portal, PostOffice, RainCollector, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TeleportationPod, UrbanCampDome, WaterTower, WaterTreatmentPlant, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, ChocolateBar, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GeothermalVent, GoldGlobe, GregsGrogBarr, GroundwaterPump, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MuseumOfFutureArts, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, Portal, PostOffice, RainCollector, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, SpaceLaunchSite, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TeleportationPod, UrbanCampDome, WaterTower, WaterTreatmentPlant, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -195,6 +195,10 @@ export class City {
         if (!this.flags.has(CityFlags.UnlockedPortal) && !this.buildingTypes.find(p => p.type === getBuildingType(Portal))?.locked) this.flags.add(CityFlags.UnlockedPortal);
         if (!this.flags.has(CityFlags.UnlockedTourism) && this.resources.get(ResourceTypes.getResourceType(ResourceTypes.Tourists))!.capacity) this.flags.add(CityFlags.UnlockedTourism);
         if (!this.flags.has(CityFlags.GeothermalAvailable) && this.regionID !== "volcanic" && this.buildings.some(p => p.type === getBuildingType(GeothermalVent))) this.flags.add(CityFlags.GeothermalAvailable);
+        if (!this.flags.has(CityFlags.UnlockedGoldGlobe) && this.buildings.some(p => p.type === getBuildingType(SpaceLaunchSite))) {
+            this.flags.add(CityFlags.UnlockedGoldGlobe);
+            this.unlock(getBuildingType(GoldGlobe));
+        }
 
         //Version changes that aren't as simple as an unlock
         if (this.dataVersion < 1) {

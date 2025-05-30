@@ -2548,6 +2548,11 @@ export class SpaceLaunchSite extends Building {
             if (city.resources.get("uranium")?.capacity) this.outputResources.push(this.outputResourceOptions.find(p => p.type === "uranium")!);
             else this.outputResources.push(this.outputResourceOptions.find(p => p.type === "lithium")!);
         }
+        if (!city.flags.has(CityFlags.UnlockedGoldGlobe)) {
+            city.unlock(getBuildingType(GoldGlobe));
+            city.flags.add(CityFlags.UnlockedGoldGlobe);
+            city.notify(new Notification("Rocket? Unlock It!", "That's a nice rocket you've got there, all towering and domineering and stuff. But you know what you need to go with it? A shiny display planet to remind your citizens of their infinitesimal existence! The Gold Globe is now available in the Luxury category.", "luxury"));
+        }
     }
 
     override getCosts(city: City): { type: string, amount: number }[] {
@@ -3126,7 +3131,7 @@ export class ConventionCenter extends Building {
         this.outputResources.push(new Tourists(3.75, 3.75, 0, 300)); //Brings in 300 tourists per long tick, but it takes 20 days to get up to full steam.
         this.isRestaurant = true;
         this.isEntertainment = true;
-        this.maxVariant = 3;
+        this.maxVariant = 7;
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.25, "dynamicEffectForBusiness")]);
     }
 
@@ -3141,6 +3146,10 @@ export class ConventionCenter extends Building {
     pickVariant(city: City): boolean { //Returns true when the variant changes.
         let variant = 0;
         let lastTick = city.lastLongTick;
+        if (new Date(lastTick).getMonth() === 1) variant = 4; //Chocomonth
+        if (new Date(lastTick).getMonth() === 3) variant = 6; //Petalmonth
+        if (new Date(lastTick).getMonth() === 4) variant = 5; //Seedmonth
+        if (new Date(lastTick).getMonth() === 5) variant = 7; //Sacrimonth
         if (new Date(lastTick).getMonth() === 9) variant = 1; //Hauntymonth
         if (new Date(lastTick).getMonth() === 10) variant = 3; //Munchymonth
         if (new Date(lastTick).getMonth() === 11) variant = 2; //Giftymonth
@@ -3679,6 +3688,22 @@ export class H2Whoa extends Building { //Light-up water jets, just a local luxur
         this.upkeepEfficiency = city.events.find(p => p.type === "drought") ? 0 : 1;
         super.onLongTick(city);
     }
+}
+
+export class GoldGlobe extends Building {
+    constructor() {
+        super(
+            "goldglobe", "Gold Globe", "A golden globe that shines like the sun, but without all the gamma rays. Still, don't stare at it for too long, or you'll see spots... and not the cute kind. Oh, and it's actually just brass.",
+            BuildingCategory.LUXURY,
+            1, 1, 0,
+            0, true,
+        );
+        this.needsWater = this.needsPower = this.needsRoad = false;
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 6;
+        this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.16)]);
+    }
+    override getCosts(city: City): { type: string, amount: number }[] { return [{ type: "flunds", amount: 400 }, { type: "copper", amount: 15 }, { type: "stone", amount: 5 }]; }
 }
 
 export class SesharTower extends Building {
@@ -5149,7 +5174,7 @@ export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Government*/ CityHall, InformationCenter, PostOffice, DepartmentOfEnergy, EnvironmentalLab, MinigameMinilab,
     /*Services (also government)*/ PoliceBox, PoliceStation, PoliceUAVHub, FireBay, FireStation, Clinic, Library, ElementarySchool, HighSchool, College, Hospital, CarbonCapturePlant, Observatory, QuantumComputingLab, WeatherControlMachine,
     /*Seasonal (also luxury)*/ HauntymonthGrave, HauntymonthLamp, HauntymonthHouse, PeppermintPillar, CocoaCupCo, ReindeerRetreat, WrappedWonder, FlowerTower,
-    /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, Playground, UrbanCampDome, FlippinFun, H2Whoa, SesharTower, MuseumOfFutureArts, SandsOfTime, Portal,
+    /*Luxury (Recreation/Decorations)*/ SmallPark, PenguinSculpture, MediumPark, KellyStatue, SharonStatue, SmallFountain, CrystalSpire, Greenhouse, Playground, UrbanCampDome, FlippinFun, H2Whoa, GoldGlobe, SesharTower, MuseumOfFutureArts, SandsOfTime, Portal,
     /*Volcanic regional*/ TourksTrekkers, RedGreenhouse, VerticalTreeFarm, EnclosedRanch, ObsidianGatherer, ObsidianCrusher, VolcanoIronMine, IgneousQuarry, Tumbler, PowderMill, Geolab, HazmatStorage, PoliceRovers, DroneFireControl, DroneDoc,
     ].map(p => new p()).map(p => [p.type, p]));
 export function get(type: string): Building { //Get an UNMODIFIED copy of the building type. (City.buildingTypes can have modified values; this and BUILDING_TYPES do not.)

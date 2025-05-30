@@ -100,7 +100,7 @@ Orbital habitat (residential structure that would also be built above a space la
 Orchards
 ~ Parks
 Pharmacies
-Pinball arcades that raise local luxury
+~ Pinball arcades that raise local luxury
 ~ Playgrounds
 ~ Police stations
 ~ Post offices
@@ -116,7 +116,7 @@ Seaports
 Shipment distribution centers
 Shipyards
 Shooting Range
-Shopping malls
+~ Shopping malls
 ~ Silos
 Ski resorts
 ~ Small houses
@@ -143,18 +143,55 @@ TV stations
 Universities
 ~ Vertical farms
 ~ Warehouses
-Waste treatment plants
-Water towers
-Water treatment plants
+~ Water pumps
+~ Water towers
+~ Water treatment plants
 ~ Weather control machine
 Weather stations
 Wind farms
 Zoos
-
-Needs its own container: Water
 
 
 
 ...Military things
 ...endless types of factory, shop, business, and government versions of things (e.g., government-provided housing, welfare office, homeless shelter)
 ...could also have current cutting-edge tech like carbon capture plants (negative pollution) and centrifugal air purifiers. Carbon pollution could say "doesn't have immediate health effects, but a portion of the population is happier knowing they're contributing to the planet's health long-term." And noise barriers.
+
+A few more possible decorations (I have images for half of these, just never cleaned them up, in these folders: 2024-11-14, 2024-12-05, 2024-12-17):
+Digital art totem
+Zen garden
+Flowering archway
+Holographic street performer
+Star plaque
+Dog park
+Robot chess plaza
+Meteorite exhibit
+Mini lighthouse
+Crystal forest dome
+Bot battle arena
+Book fortress
+Floating rock garden
+Firefly lantern path
+Sunflower field
+Dragon statue
+Compass rose plaza
+Bike path
+Skate park
+Swimming pool
+Hockey rink
+Tennis court
+Clock tower
+Gazebo
+Hedge maze
+Archway
+Large fountain (that looks like a waterfall)
+Sundial
+Pirate ship
+Castle
+Giant musical instrument
+Human hamster wheel
+Cat shrub
+Stage
+A bench under a giant book (could not generate an image like that after trying dozens of times)
+Asian-style pagoda or ting
+Huge tree with a spiral staircase around it

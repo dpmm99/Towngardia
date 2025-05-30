@@ -1,7 +1,6 @@
 import { City } from "../game/City.js";
 import { UIManager } from "../ui/UIManager.js";
-import { Resource } from "../game/Resource.js";
-import { Flunds, NepotismNetworkingPlays } from "../game/ResourceTypes.js";
+import { NepotismNetworkingPlays } from "../game/ResourceTypes.js";
 import { TextureInfo } from "../ui/TextureInfo.js";
 import { Drawable } from "../ui/Drawable.js";
 import { addResourceCosts, humanizeFloor, longTicksToDaysAndHours } from "../ui/UIUtil.js";
@@ -458,7 +457,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
         // Check if top row is fully connected
         const isTopRowComplete = this.gridState.tiles[this.gridState.topRow + 1]?.every(tile => tile.connected);
 
-        if (isTopRowComplete && this.gridState.topRow < TOTAL_ROWS - GRID_HEIGHT) { //Note: should not be possible to reach that point, but if it is, it won't give proper rewards.
+        if (isTopRowComplete) {
             // Add to lockedInBonuses if there are any bonus in that row, and remove them from the tiles
             for (const tile of this.gridState.tiles[this.gridState.topRow + 1]) {
                 if (tile.bonus) {
@@ -467,14 +466,21 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
                 }
             }
 
-            // Start shift animation
-            this.gridState.shiftOffset = TILE_SIZE;
+            // Start shift animation (unless you acted while it's already shifting)
+            //Note: it is possible to reach the point at which it won't shift anymore; we'll end the game early in that case
+            if (this.gridState.topRow < TOTAL_ROWS - GRID_HEIGHT) {
+                if (this.gridState.shiftOffset === 0) {
+                    this.gridState.shiftOffset = TILE_SIZE;
 
-            // Update grid
-            this.gridState.topRow++;
+                    // Update grid
+                    this.gridState.topRow++;
 
-            // Recheck connections after shift
-            this.checkConnections();
+                    // Recheck connections after shift
+                    this.checkConnections();
+                }
+            } else if (this.gridState.tiles.slice(this.gridState.topRow + 2, this.gridState.topRow + GRID_HEIGHT).every(row => row?.every(tile => tile.connected))) {
+                this.endGame();
+            }
         }
     }
 
@@ -1082,7 +1088,7 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
                         y: 10,
                         width: "100%",
                         height: "48px",
-                        text: "Time's up!",
+                        text: this.gridState.topRow < TOTAL_ROWS - GRID_HEIGHT ? "Time's up!" : "Complete!",
                     })
                 ]
             }));
