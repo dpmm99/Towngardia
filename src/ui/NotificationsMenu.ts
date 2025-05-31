@@ -207,7 +207,9 @@ export class NotificationsMenu implements IHasDrawable, IOnResizeEvent {
                         fallbackColor: '#00000000',
                         onClick: () => {
                             //If multiple buildings were affected by this event, we probably want to show whichever one is are still damaged. Otherwise, show the first affected building.
-                            const bestBuilding = notification.affectedBuildings.find(b => b.damagedEfficiency < 1) || notification.affectedBuildings[0];
+                            const bestBuilding = notification.affectedBuildings.find(b => b.damagedEfficiency < 1 && b.x !== -1) //Check x because it may have despawned
+                                || notification.affectedBuildings.find(b => b.x !== -1)
+                                || notification.affectedBuildings[0];
                             this.uiManager.hideNotifications();
                             this.uiManager.centerOn(bestBuilding);
                             this.uiManager.showBuildingInfo(bestBuilding);
