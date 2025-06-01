@@ -15,24 +15,48 @@ const AchievementTypes =
     CarbonNation: new Achievement("carbonnation", "Carbon Nation", `Hear the hippies' concerns fizzle out. Maintain net-zero carbon emissions for a week in a city with at least ${GREENHOUSE_GASES_MIN_POPULATION} population.`, (me: Achievement, player: Player, city: City): number => {
         if (!city.flags.has(CityFlags.GreenhouseGasesMatter)) return 0;
         if (city.getCityAverageGreenhouseGases() > 0) {
-            me.dataPoints = [];
+            me.dataPoints = (me.dataPoints || []).filter(dp =>
+                typeof dp === 'object' && dp.cityId !== city.id);
             return 0;
         }
 
         if (!me.dataPoints || !me.dataPoints.length) me.dataPoints = [city.lastShortTick];
-        return (city.lastShortTick - me.dataPoints[0]) / 604800000;
+
+        // Convert legacy format--dataPoints used to be an array of numbers; it's an array of objects with cityId and startTime now.
+        if (me.dataPoints.length && typeof me.dataPoints[0] === 'number') {
+            me.dataPoints = [{ cityId: city.id, startTime: me.dataPoints[0] }];
+        }
+
+        const cityData = me.dataPoints.find(dp => dp.cityId === city.id);
+        if (!cityData) {
+            me.dataPoints.push({ cityId: city.id, startTime: city.lastShortTick });
+            return 0;
+        }
+        return (city.lastShortTick - cityData.startTime) / 604800000;
     }),
     CrimeIsOutlawed: new Achievement("crimeisoutlawed", "Crime is Outlawed", "Keep all types of crime at minimal levels for a week in a city with at least 1000 population.", (me: Achievement, player: Player, city: City): number => {
         if (city.resources.get("population")!.amount < 1000) return 0;
         for (let x = 0; x < city.width; x++) for (let y = 0; y < city.height; y++) {
             if (city.grid[y][x]?.owned && (city.getNetOrganizedCrime(x, y) > 0.05 || city.getNetPettyCrime(x, y) > 0.05)) { //Making it a bit easier: crime doesn't affect blockers and empty tiles.
-                me.dataPoints = [];
+                me.dataPoints = (me.dataPoints || []).filter(dp =>
+                    typeof dp === 'object' && dp.cityId !== city.id);
                 return 0;
             }
         }
 
         if (!me.dataPoints || !me.dataPoints.length) me.dataPoints = [city.lastShortTick];
-        return (city.lastShortTick - me.dataPoints[0]) / 604800000;
+
+        // Convert legacy format--same deal as CarbonNation.
+        if (me.dataPoints.length && typeof me.dataPoints[0] === 'number') {
+            me.dataPoints = [{ cityId: city.id, startTime: me.dataPoints[0] }];
+        }
+
+        const cityData = me.dataPoints.find(dp => dp.cityId === city.id);
+        if (!cityData) {
+            me.dataPoints.push({ cityId: city.id, startTime: city.lastShortTick });
+            return 0;
+        }
+        return (city.lastShortTick - cityData.startTime) / 604800000;
     }),
     FarmVile: new Achievement("farmvile", "Farm Vile", "Have very high particulate pollution affecting a Farm, Fish Farm, Ranch, Tree Farm, or Vertical Farm.", (me: Achievement, player: Player, city: City): number => {
         const farms = city.buildings.filter(p => p instanceof Farm || p instanceof FishFarm || p instanceof Ranch || p instanceof TreeFarm || p instanceof VerticalFarm);
@@ -83,14 +107,31 @@ const AchievementTypes =
     }),
     ResourceTycoon: new Achievement("resourcetycoon", "Resource Tycoon", "Collect and sell 30 types of resource in a single day.", (me: Achievement, player: Player, city: City): number => {
         if (!me.dataPoints) me.dataPoints = [];
+
+        // Convert legacy format--used to be an array of numbers; it's now an array of objects that each have cityId plus the same kind of number array as before.
+        if (me.dataPoints.length && !me.dataPoints[0].cityId) {
+            const oldData = [...me.dataPoints];
+            me.dataPoints = [{
+                cityId: city.id,
+                data: oldData
+            }];
+        }
+
+        // Ensure there's a slot for this city in dataPoints.
+        let cityData = me.dataPoints.find(dp => dp.cityId === city.id);
+        if (!cityData) {
+            cityData = { cityId: city.id, data: [] };
+            me.dataPoints.push(cityData);
+        }
+
         //Note: resourceEvents reset every TICK. I need an entire DAY worth. So I have to store the two lists of resource types in dataPoints and delimit them into sections.
-        if (me.dataPoints.length > LONG_TICKS_PER_DAY) me.dataPoints.shift();
+        if (cityData.data.length > LONG_TICKS_PER_DAY) cityData.data.shift();
 
         const producedTypes = new Set(city.resourceEvents.filter(p => p.event === "produce" && p.amount > 0).map(p => p.type));
         const soldTypes = new Set(city.resourceEvents.filter(p => p.event === "sell" && p.amount > 0).map(p => p.type));
-        me.dataPoints.push([[...producedTypes], [...soldTypes]]);
-        const allProducedTypes = new Set(me.dataPoints.flatMap(p => p[0]));
-        const allSoldTypes = new Set(me.dataPoints.flatMap(p => p[1]));
+        cityData.data.push([[...producedTypes], [...soldTypes]]);
+        const allProducedTypes = new Set(cityData.data.flatMap((p: any) => p[0]));
+        const allSoldTypes = new Set(cityData.data.flatMap((p: any) => p[1]));
 
         return Math.min(1, (allProducedTypes.size + allSoldTypes.size) / 60);
     }),
@@ -101,19 +142,31 @@ const AchievementTypes =
             || city.lastImportedPowerCost > 0 //No power imported
             || city.lastImportedWaterCost > 0
         ) {
-            me.dataPoints = [];
+            me.dataPoints = (me.dataPoints || []).filter(dp =>
+                typeof dp === 'object' && dp.cityId !== city.id);
             return 0;
         }
 
         //Check for fuel purchases
         const fuelTypes = new Set([ResourceTypes.Coal, ResourceTypes.Oil, ResourceTypes.Uranium, ResourceTypes.Tritium].map(p => (new p()).type));
         if (city.resourceEvents.find(p => fuelTypes.has(p.type) && p.event === "buy")) {
-            me.dataPoints = [];
+            me.dataPoints = (me.dataPoints || []).filter(dp =>
+                typeof dp === 'object' && dp.cityId !== city.id);
             return 0;
         }
 
         if (!me.dataPoints || !me.dataPoints.length) me.dataPoints = [city.lastShortTick];
-        return (city.lastShortTick - me.dataPoints[0]) / 604800000;
+        // Convert legacy format
+        if (me.dataPoints.length && typeof me.dataPoints[0] === 'number') {
+            me.dataPoints = [{ cityId: city.id, startTime: me.dataPoints[0] }];
+        }
+
+        const cityData = me.dataPoints.find(dp => dp.cityId === city.id);
+        if (!cityData) {
+            me.dataPoints.push({ cityId: city.id, startTime: city.lastShortTick });
+            return 0;
+        }
+        return (city.lastShortTick - cityData.startTime) / 604800000;
     }),
     TrafficChaosTheory: new Achievement("trafficchaostheory", "Traffic Chaos Theory", "Completely fill a 3x3 area with roads.", (me: Achievement, player: Player, city: City): number => {
         let best = 0;
