@@ -5,7 +5,7 @@ import { Assist } from "./Assist.js";
 import { Budget } from "./Budget.js";
 import { Building } from "./Building.js";
 import { BuildingCategory } from "./BuildingCategory.js";
-import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, ChocolateBar, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GeothermalVent, GoldGlobe, GregsGrogBarr, GroundwaterPump, HighSchool, Hospital, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MuseumOfFutureArts, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, Portal, PostOffice, RainCollector, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, SpaceLaunchSite, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TeleportationPod, UrbanCampDome, WaterTower, WaterTreatmentPlant, getBuildingType } from "./BuildingTypes.js";
+import { AlgaeFarm, AlienMonolith, BLOCKER_TYPES, BUILDING_TYPES, Bar, Casino, ChocolateBar, CityHall, Clinic, College, ConventionCenter, DepartmentOfEnergy, Dorm, DroneDoc, DroneFireControl, ElementarySchool, FireBay, FireStation, FreeStuffTable, GeothermalVent, GoldGlobe, GregsGrogBarr, GroundwaterPump, HighSchool, Hospital, HotSpringInn, InformationCenter, Library, LogisticsCenter, MediumPark, MinigameMinilab, Mountain, MuseumOfFutureArts, MysteriousRubble, Observatory, ObstructingGrove, Playground, PoliceBox, PoliceRovers, PoliceStation, Portal, PostOffice, RainCollector, ResortHotel, Road, SandBar, SandsOfTime, SauceCode, SesharTower, Skyscraper, SmallHouse, SmallPark, SpaceLaunchSite, StarterSolarPanel, TUTORIAL_COMPLETION_BUILDING_UNLOCKS, TeleportationPod, UrbanCampDome, WaterTower, WaterTreatmentPlant, getBuildingType } from "./BuildingTypes.js";
 import { CitizenDietSystem } from "./CitizenDietSystem.js";
 import { CityEvent, EventTickTiming } from "./CityEvent.js";
 import { CityFlags } from "./CityFlags.js";
@@ -186,6 +186,7 @@ export class City {
         if (this.flags.has(CityFlags.EducationMatters)) this.unlock(getBuildingType(Dorm));
         if (this.flags.has(CityFlags.UnlockedGameDev)) this.unlock(getBuildingType(SauceCode));
         if (this.flags.has(CityFlags.UnlockedGameDev)) this.unlock(getBuildingType(Observatory));
+        if (this.regionID === "volcanic") this.unlock(getBuildingType(HotSpringInn));
         if (this.techManager.techs.get(new SmartHomeSystems().id)!.researched) this.unlock(getBuildingType(DepartmentOfEnergy));
         if (this.techManager.techs.get(new VacuumInsulatedWindows().id)!.researched) this.unlock(getBuildingType(UrbanCampDome));
         if (this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount < 150) this.buildingTypes.find(p => p.type === "seshartower")!.outputResources[0].amount = 150;
