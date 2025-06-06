@@ -312,7 +312,7 @@ export class Database implements IStorage {
         const [rows] = await this.query(`
             SELECT id AS sessionId, expires, player_id AS playerId 
             FROM towngardia_sessions 
-            WHERE id = ? AND expires > DATE_ADD(UTC_DATE(), INTERVAL ? DAY);
+            WHERE id = ? AND DATE_ADD(expires, INTERVAL ? DAY) > UTC_DATE();
         `, [sessionId, extraDays]);
         return rows[0] ?? null;
     }
