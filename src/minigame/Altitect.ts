@@ -102,6 +102,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     private towerState: TowerState | null = null;
     private selectedRoom: Room | null = null;
     private preloaded: boolean = false;
+    private floorsShifting: boolean = false;
     private userInputLocked: boolean = false;
     private building: Building | null = null;
     private endReason: string = "";
@@ -147,7 +148,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     private initializeGame(): void {
         this.timer = GAME_DURATION;
         this.gameStarted = true;
-        this.userInputLocked = false;
+        this.floorsShifting = this.userInputLocked = false;
         this.towerState = this.generateInitialTowerState();
         this.towerState.floors.push(this.generateFloor());
         this.selectedRoom = null;
@@ -325,6 +326,9 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     public handleRoomClick(room: Room): void { //Clicked on a placed room or an unplaced room type in the 'currentRoomTypes' selector
         if (!this.gameStarted || !this.towerState || this.userInputLocked) return;
 
+        // If user input is locked (scrolling) but the room is from the palette (x === -1), allow the selection
+        if (this.floorsShifting && room.x !== -1) return;
+
         if (this.selectedRoom === room) {
             this.selectedRoom = null;
         } else {
@@ -333,7 +337,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     }
 
     public handleFloorClick(x: number): void {
-        if (!this.gameStarted || !this.towerState || this.userInputLocked || !this.selectedRoom || this.selectedRoom.immovable) return;
+        if (!this.gameStarted || !this.towerState || this.floorsShifting || this.userInputLocked || !this.selectedRoom || this.selectedRoom.immovable) return;
 
         const room = this.selectedRoom;
         const floor = this.towerState.floors[this.towerState.currentFloor];
@@ -403,7 +407,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
 
         // Place the room
         floor.rooms.push(room.clone(x));
-        this.selectedRoom = null;
+        if (!skipCheck) this.selectedRoom = null; // If the player has a room in the palette selected, don't let generating a new floor deselect it.
         this.updateRoomTypes(room);
 
         // Update totals
@@ -422,12 +426,12 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         if (!this.towerState) return;
         if (this.fillFloorOrEndGameIfNoValidMoves(floor) && this.isFloorComplete(floor)) {
             this.towerState.drawOffset = 1;
-            this.userInputLocked = true;
+            this.floorsShifting = true;
             this.towerState.floors.push(this.generateFloor());
             this.animateTimeout = setTimeout(() => {
                 this.towerState!.currentFloor++;
                 this.towerState!.drawOffset = 0;
-                this.userInputLocked = false;
+                this.floorsShifting = false;
                 //Check that there's a move available for the next floor, too. Will loop and keep filling up floors as long as there's no room.
                 this.checkFloorCompletion(this.towerState!.floors[this.towerState!.currentFloor]);
             }, 400);
@@ -483,6 +487,9 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
         if (!this.gameStarted || !this.towerState || this.userInputLocked) return;
 
         if (this.selectedRoom && !this.selectedRoom.immovable) {
+            // If user input is locked (scrolling) but trying to trash a room from the current floor, prevent it
+            if (this.floorsShifting && this.selectedRoom.x !== -1) return;
+
             const floor = this.towerState.floors[this.towerState.currentFloor];
             if (this.selectedRoom.x !== -1) this.removeRoom(floor, this.selectedRoom); // Don't "remove" it unless it's actually *placed* on the floor
             this.updateRoomTypes(this.selectedRoom); //Update the available room types if this room was in that selector
@@ -490,7 +497,11 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
             if (this.timer >= TRASH_CAN_COST) { // Trashing is a freebie when you have nearly no time left.
                 this.timer -= TRASH_CAN_COST;
             }
-            this.checkFloorCompletion(floor); //If you toss out your last 1-tile room, the floor should auto-fill so you don't get stuck hunting for another 1-tile room
+
+            // Only check floor completion if we're not in the middle of floor scrolling
+            if (!this.floorsShifting) {
+                this.checkFloorCompletion(floor); //If you toss out your last 1-tile room, the floor should auto-fill so you don't get stuck hunting for another 1-tile room
+            }
         }
     }
 
