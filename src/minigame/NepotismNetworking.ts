@@ -1088,7 +1088,9 @@ export class NepotismNetworking implements IHasDrawable, IOnResizeEvent {
                         y: 10,
                         width: "100%",
                         height: "48px",
-                        text: this.gridState.topRow < TOTAL_ROWS - GRID_HEIGHT ? "Time's up!" : "Complete!",
+                        text: (this.gridState.topRow < TOTAL_ROWS - GRID_HEIGHT ||
+                            !this.gridState.tiles.slice(this.gridState.topRow + 2, this.gridState.topRow + GRID_HEIGHT).every(row => row?.every(tile => tile.connected)))
+                            ? "Time's up!" : "Complete!",
                     })
                 ]
             }));

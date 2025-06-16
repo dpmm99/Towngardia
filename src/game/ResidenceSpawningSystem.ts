@@ -304,14 +304,14 @@ export class ResidenceSpawningSystem {
         // This is the chance an upgrade of this tier happens if one is attempted city-wide
         const overallUpgradeProbability = this.globalSpawnChance >= MIN_GLOBAL_CHANCE_FOR_UPGRADE ? Math.min(1, this.globalSpawnChance * regionFactor) : 0;
 
-        const businessDensity = this.city.getBusinessDensity(building.x, building.y);
-
-        // Get current desirability (maximum from all four corners for 2x2 buildings)
+        // Get current desirability and business density (maximum from all four corners for 2x2 buildings)
         //NOTE: Doesn't consider irregular footprints
         let desirability = Number.NEGATIVE_INFINITY;
+        let businessDensity = Number.NEGATIVE_INFINITY;
         for (let x = 0; x < building.width; x++) {
             for (let y = 0; y < building.height; y++) {
                 desirability = Math.max(desirability, this.city.getResidentialDesirability(building.x + x, building.y + y));
+                businessDensity = Math.max(businessDensity, this.city.getBusinessDensity(building.x + x, building.y + y));
             }
         }
 
