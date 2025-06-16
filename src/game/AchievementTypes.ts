@@ -224,7 +224,7 @@ const TitleTypes = {
         //Only runs when the player completes a research item.
         city.techManager.lastResearchCompletionDates.push(new Date()); //Note: Could store on the achievement itself. I just stuck with it after I added it to TechManager.
         if (city.techManager.lastResearchCompletionDates.length < 2) return 0;
-        if (city.techManager.lastResearchCompletionDates.length > 2) city.techManager.lastResearchCompletionDates.unshift();
+        while (city.techManager.lastResearchCompletionDates.length > 2) city.techManager.lastResearchCompletionDates.shift();
         return (city.techManager.lastResearchCompletionDates[1].getTime() - city.techManager.lastResearchCompletionDates[0].getTime()) <= 86400000 ? 1 : 0;
     }, "research point generation rate bonus"),
     CulinaryCapital: new Achievement("culinarycapital", "Culinary Capital", "It's quite a feat to pass that street without stopping to eat. Have 6 restaurants that each share a wall with one of the others.", (me: Achievement, player: Player, city: City): number => {
