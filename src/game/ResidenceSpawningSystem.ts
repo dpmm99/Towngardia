@@ -270,7 +270,7 @@ export class ResidenceSpawningSystem {
     public getWillUpgrade(building: Building): boolean {
         if (this.globalSpawnChance <= MIN_GLOBAL_CHANCE_FOR_UPGRADE) return false;
 
-        const allowedTypesAndPositions = this.getAllowedTypesAndPositions(building.x, building.y, building.residenceLevel + 1);
+        const allowedTypesAndPositions = this.getAllowedTypesAndPositions(building.x, building.y, building.residenceLevel + 1, building);
         const businessDensity = Math.max(...allowedTypesAndPositions.map(p => p.type.getHighestEffect(this.city, EffectType.BusinessPresence, p.x, p.y)));
         return businessDensity >= MIN_DENSITY_FOR_UPGRADE; //Don't have to check the higher business presence requirements for Highrise and Skyscraper here since it's already checked by getAllowedTypesAndPositions.
     }
