@@ -870,8 +870,8 @@ export class City {
             //Check the auto-sell limits. If the city WILL HAVE more than the limit, sell the excess.
             const amountToKeep = Math.min(Math.floor(cityResource.autoSellAbove * cityResource.capacity) - cityResource.amount, resource.amount);
             cityResource.amount += amountToKeep;
-            resource.amount -= amountToKeep;
             if (reason !== "cancel") this.resourceEvents.push({ type: resource.type, event: reason, amount: resource.amount });
+            resource.amount -= amountToKeep;
 
             //Sell the rest
             if (resource.amount) {
