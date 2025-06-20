@@ -81,7 +81,7 @@ const effectTextMap = new Map<BuildingModEffectType, (magnitude: number) => stri
     [EffectType.FireHazard, (m) => `${Math.round(m * 100) / 100} fire hazard`], //Already negative
     [EffectType.Education, (m) => `+${Math.round(m * 100) / 100} education`],
     [EffectType.Healthcare, (m) => `+${Math.round(m * 100) / 100} healthcare`],
-    ["research", (m) => `+${Math.round(m * 100) / 100} research/day`],
+    ["research", (m) => `+${Math.round(m * 100) / 100} research/day`], //Note: divided by LONG_TICKS_PER_DAY in Building.applyMods.
     ["population", (m) => `${m >= 0 ? "+" : ""}${humanizeFloor(m)} population`],
     ["storage", (m) => `+${Math.round(m * 100) / 100} storage (misc)`],
 ]);
@@ -115,7 +115,7 @@ export class Altitect implements IHasDrawable, IOnResizeEvent {
     private readonly SupportPillar: Room = new Room("pillar", "Support Pillar", 1, 0, 0, 0, 0, [], 0, true);
     private readonly Hallway: Room = new Room("hallway", "Hallway", 1, 20, 0, 0, 1, [], 4);
     private readonly RoomTypes: Room[] = [
-        new Room("lab",             "Lab",              4, 250,  30,  8, 25, [{ type: "research", magnitude: 0.03 }, { type: "population", magnitude: 2 }], 3),
+        new Room("lab",             "Lab",              4, 250,  30,  8, 25, [{ type: "research", magnitude: 0.05 }, { type: "population", magnitude: 2 }], 3),
         new Room("suite",           "Luxury Suite",     3, 130,  12, 15, 12, [{ type: EffectType.Luxury, magnitude: 0.03 }, { type: "population", magnitude: 6 }], 8),
         new Room("store",           "Retail Outlet",    3, 145,  15, 10, 15, [{ type: EffectType.BusinessPresence, magnitude: 0.05 }, { type: "population", magnitude: 3 }]),
         new Room("office",          "Office",           3, 215,  20, 10, 15, [{ type: EffectType.BusinessPresence, magnitude: 0.07 }, { type: "population", magnitude: 4 }], 8),

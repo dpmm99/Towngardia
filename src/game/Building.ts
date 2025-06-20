@@ -9,7 +9,7 @@ import { City } from "./City.js";
 import { CityFlags } from "./CityFlags.js";
 import { Effect } from "./Effect.js";
 import { FootprintType } from "./FootprintType.js";
-import { SHORT_TICKS_PER_LONG_TICK, SHORT_TICK_TIME } from "./FundamentalConstants.js";
+import { LONG_TICKS_PER_DAY, SHORT_TICKS_PER_LONG_TICK, SHORT_TICK_TIME } from "./FundamentalConstants.js";
 import { EffectType } from "./GridType.js";
 import { Resource } from "./Resource.js";
 import { Batteries, CAPACITY_MULTIPLIER, Clothing, Electronics, Furniture, Glass, Iron, Paper, Population, ProductionEfficiency, Research, Steel, Tourists, Toys, Wood, getResourceType } from "./ResourceTypes.js";
@@ -173,10 +173,10 @@ export class Building implements IHasDrawable {
                         if (reapply) continue;
                         const researchResource = this.outputResources.find(res => res instanceof Research);
                         if (researchResource) {
-                            researchResource.amount = Math.max(0, researchResource.amount + (negate ? -1 : 1) * mod.magnitude);
+                            researchResource.amount = Math.max(0, researchResource.amount + (negate ? -1 : 1) * mod.magnitude / LONG_TICKS_PER_DAY);
                             if (researchResource.amount === 0) this.outputResources = this.outputResources.filter(p => p !== researchResource);
                         } else if (!negate) {
-                            this.outputResources.push(new Research(0, mod.magnitude));
+                            this.outputResources.push(new Research(0, mod.magnitude / LONG_TICKS_PER_DAY));
                         }
                         break;
                     default:
