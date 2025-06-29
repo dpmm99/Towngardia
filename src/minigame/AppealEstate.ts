@@ -384,6 +384,7 @@ export class AppealEstate implements IHasDrawable, IOnResizeEvent {
 	}
 
 	private isAbilityAffordable(ability: PropertyAbility): boolean {
+		if (this.isPractice) return true;
 		const phaseCostMultiplier = this.getPhaseCostMultiplier(ability);
 		const finalCosts = ability.resourceCosts.map(p => ({ type: p.type, amount: p.amount * phaseCostMultiplier }));
 		return this.city.hasResources(finalCosts, false);
@@ -844,7 +845,7 @@ export class AppealEstate implements IHasDrawable, IOnResizeEvent {
 		this.checkEndConditions();
 
 		// Loan must be repaid with interest, even if the game ended
-		if (this.state.loanPaybackTurns > 0) {
+		if (!this.isPractice && this.state.loanPaybackTurns > 0) {
 			this.state.loanPaybackTurns--;
 			if (this.userInputLocked || this.state.loanPaybackTurns === 0) {
 				this.city.consume(getResourceType(Flunds), AppealEstate.LOAN_REPAYMENT_COST);
@@ -910,7 +911,7 @@ export class AppealEstate implements IHasDrawable, IOnResizeEvent {
 				this.state.reputation += value;
 				break;
 			case EffectTargetType.Flunds:
-				this.city.transferResourcesFrom([{ type: getResourceType(Flunds), amount: value }], "earn");
+				if (!this.isPractice) this.city.transferResourcesFrom([{ type: getResourceType(Flunds), amount: value }], "earn");
 				break;
 			// Additional effect types would be handled here
 		}
