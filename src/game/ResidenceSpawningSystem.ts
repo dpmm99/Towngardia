@@ -22,7 +22,10 @@ export interface ResidenceUpgradeUIDetails {
     minDesirability: number;
     hasSpace: boolean;
     nextTierName?: string;
+    nextTierType?: string;
     despawnChance: number;
+    x: number;
+    y: number;
 }
 
 export class ResidenceSpawningSystem {
@@ -322,16 +325,16 @@ export class ResidenceSpawningSystem {
             .flatMap(type => (type.width === 1 && type.height === 1) || (type.width === building.width && type.height === building.height) //Stay at the exact given location if upgrading from 2x2 to 2x2 or if initially spawning a 1x1 building. Otherwise, it can adjust a bit.
                 ? { type, x: building.x, y: building.y } //One tile; be faster
                 : [{ type, x: building.x, y: building.y }, { type, x: building.x - type.width + 1, y: building.y }, { type, x: building.x, y: building.y - type.height + 1 }, { type, x: building.x - type.width + 1, y: building.y - type.height + 1 }]) //The four corners
-            .filter(tp => Building.prototype.canPlace.call(tp.type, this.city, tp.x, tp.y, true))
-            .map(tp => tp.type);
+            .filter(tp => Building.prototype.canPlace.call(tp.type, this.city, tp.x, tp.y, true));
 
         //Then, like selectResidenceType, Quadplex is only allowed if SmallApartment can't fit.
-        if (potentialUpgradeChoices.some(tp => tp instanceof SmallApartment)) {
-            const quadplexIndex = potentialUpgradeChoices.findIndex(tp => tp instanceof Quadplex);
+        if (potentialUpgradeChoices.some(tp => tp.type instanceof SmallApartment)) {
+            const quadplexIndex = potentialUpgradeChoices.findIndex(tp => tp.type instanceof Quadplex);
             if (quadplexIndex > -1) potentialUpgradeChoices.splice(quadplexIndex, 1);
         }
         const hasSpace = !!potentialUpgradeChoices.length;
-        const targetType = hasSpace ? potentialUpgradeChoices[0] : this.residenceTypes.find(p => p.residenceLevel === targetMinNextResidenceLevel);
+        const targetTypeAndPosition = hasSpace ? potentialUpgradeChoices[0] : { type: this.residenceTypes.find(p => p.residenceLevel === targetMinNextResidenceLevel), x: -1, y: -1 };
+        const targetType = targetTypeAndPosition?.type;
 
         const requiredDensity = (targetType?.constructor as any)?.MIN_BUSINESS_PRESENCE || MIN_DENSITY_FOR_UPGRADE;
         const requiredPeakPopulation = (targetType?.constructor as any)?.MIN_PEAK_POPULATION || 0; //These are static readonly properties of some residence classes.
@@ -358,7 +361,10 @@ export class ResidenceSpawningSystem {
             minDesirability: requiredDesirability,
             hasSpace: hasSpace,
             nextTierName: targetType?.displayName, //residenceTypes is sorted by residenceLevel, so this is the upgrade option with the least requirements
+            nextTierType: targetType?.type,
             despawnChance: despawnChance,
+            x: targetTypeAndPosition.x,
+            y: targetTypeAndPosition.y
         };
     }
 }

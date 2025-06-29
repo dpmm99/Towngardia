@@ -66,6 +66,7 @@ export class City {
     public minigameOptions: Map<string, string> = new Map(); //Group -> option ID
     public unlockedMinigameOptions: Set<string> = new Set(); //Group + option ID
     public altitectPlays: number = 0;
+    public appealEstateDiscoveredCombos: Set<number> = new Set();
 
     public lastImportedPowerCost: number = 0;
     public lastImportedWaterCost: number = 0;
@@ -1338,6 +1339,17 @@ export class City {
         }
     }
 
+    advanceExpirableEffects(): void { //Reduce the expiration ticks of all effects that have them, and remove them if they expire.
+        for (let y = 0; y < this.height; y++) {
+            for (let x = 0; x < this.width; x++) {
+                const effectList = this.effectGrid[y][x];
+                for (let i = effectList.length - 1; i >= 0; i--) { //Reverse to avoid skipping effects when removing them
+                    if (effectList[i].expirationLongTicks && effectList[i].expirationLongTicks!-- === 1) effectList.splice(i, 1);
+                }
+            }
+        }
+    }
+
     onLongTick(): void {
         //Increase auto-buy amount availability first, but to be nice to the player, don't cap it until the end of the tick
         this.resources.forEach(resource => {
@@ -1349,6 +1361,8 @@ export class City {
         this.resources.get(ResourceTypes.getResourceType(ResourceTypes.ProductionEfficiency))!.amount = 1;
         this.resources.get(ResourceTypes.getResourceType(ResourceTypes.PowerCosts))!.amount = 1;
         this.runEvents(EventTickTiming.Early); //Some events might need to happen at this point, such as production efficiency boosts.
+
+        this.advanceExpirableEffects();
 
         this.updatePopulation();
         this.updateTourists();

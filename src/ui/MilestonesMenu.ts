@@ -28,6 +28,16 @@ export class MilestonesMenu implements IHasDrawable, IOnResizeEvent {
         private milestones: Milestone[] = []
     ) {
         this.milestones.push(new Milestone(
+            CityFlags.UnlockedAppealEstate,
+            "Appeal Estate",
+            "Build Fealty Realty to unlock the Appeal Estate minigame",
+            0, 0,
+            [],
+            [],
+            "appealestate"
+        ));
+
+        this.milestones.push(new Milestone(
             CityFlags.PoliceProtectionMatters,
             "Police Protection",
             "Reach 100 population to unlock police services", //TODO: One source of truth for the population numbers

@@ -1,5 +1,5 @@
 import { Building } from "../game/Building.js";
-import { CityHall, LogisticsCenter, SandsOfTime, Skyscraper, getBuildingType } from "../game/BuildingTypes.js";
+import { CityHall, LogisticsCenter, SandsOfTime, Skyscraper, SmallHouse, SmallApartment, Quadplex, Highrise, getBuildingType } from "../game/BuildingTypes.js";
 import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
 import { LONG_TICK_TIME } from "../game/FundamentalConstants.js";
@@ -147,6 +147,14 @@ export class ContextMenu implements IHasDrawable {
                 image: new TextureInfo(childWidth, childHeight, "ui/altitect"),
                 id: menu.id + ".Altitect",
                 onClick: () => this.uiManager.showAltitectMinigame(building)
+            }));
+        }
+        if ((building instanceof SmallHouse || building instanceof SmallApartment || building instanceof Quadplex || building instanceof Highrise) && this.uiManager.isMyCity
+            && this.city!.flags.has(CityFlags.UnlockedAppealEstate) && this.city!.residenceSpawner.getWillUpgrade(building)) {
+            menu.addChild(new Drawable({
+                image: new TextureInfo(childWidth, childHeight, "ui/appealestate"),
+                id: menu.id + ".AppealEstate",
+                onClick: () => this.uiManager.showAppealEstateMinigame(building)
             }));
         }
 

@@ -6,7 +6,7 @@ import { City } from "./City.js";
 import { FootprintType } from "./FootprintType.js";
 import { EffectType } from "./GridType.js";
 import { Effect } from "./Effect.js";
-import { Apples, Apps, BarPlays, Batteries, Berries, BrainBrews, Bricks, CAPACITY_MULTIPLIER, Chocolate, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Dynamite, Electronics, EnvironmentalLabBonus, FireObsidian, Fish, Flunds, Furniture, Gemstones, Glass, GleeGrenades, Grain, GreenObsidian, Happiness, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, MinigameOptionResearch, MonobrynthPlays, NepotismNetworkingPlays, Obsidian, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, PowerCosts, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, SlotsPlays, StarboxPlays, Steel, Stone, Sulfur, Textiles, Tourists, Toys, Tritium, TurboTonics, Uranium, VitaminB12, Water, Wood, getResourceType } from "./ResourceTypes.js";
+import { AppealEstatePlays, Apples, Apps, BarPlays, Batteries, Berries, BrainBrews, Bricks, CAPACITY_MULTIPLIER, Chocolate, Clay, Clothing, Coal, Concrete, Copper, Dairy, DeptOfEnergyBonus, Dynamite, Electronics, EnvironmentalLabBonus, FireObsidian, Fish, Flunds, Furniture, Gemstones, Glass, GleeGrenades, Grain, GreenObsidian, Happiness, Iron, LabGrownMeat, LeafyGreens, Legumes, Lithium, Lumber, MinigameOptionResearch, MonobrynthPlays, NepotismNetworkingPlays, Obsidian, Oil, Paper, Pharmaceuticals, PlantBasedDairy, Plastics, Population, Poultry, PowerCosts, RedMeat, Research, RootVegetables, Rubber, Sand, Silicon, SlotsPlays, StarboxPlays, Steel, Stone, Sulfur, Textiles, Tourists, Toys, Tritium, TurboTonics, Uranium, VitaminB12, Water, Wood, getResourceType } from "./ResourceTypes.js";
 import { Geothermal } from "./TechTypes.js";
 import { Notification } from "./Notification.js";
 import { LONG_TICKS_PER_DAY } from "./FundamentalConstants.js";
@@ -2796,6 +2796,42 @@ export class Bar extends Building {
     override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 2200; }
 }
 
+export class FealtyRealty extends Building {
+    constructor() {
+        super(
+            "fealtyrealty", "Fealty Realty", "Fealty Realty was founded by your most sycophantic followers, dear leader. Our agents have sworn blood oaths to find your prospective citizens the perfect home, even if it means camping outside their dream houses until the current owners surrender. Unlocks the 'Appeal Estate' minigame, which allows you to directly upgrade a residence rather than waiting and relying on chance. You can play Appeal Estate by selecting a residence that meets the upgrade requirements.",
+            BuildingCategory.COMMERCIAL,
+            2, 2, 0,
+            0.3,
+        );
+        this.setBusinessValue(160, 0.7); //Reduced due to the play production and extra-large radius
+        this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
+        this.areaIndicatorRounded = true;
+        this.isRestaurant = true;
+        this.isEntertainment = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.BusinessPresence, 0.15, "dynamicEffectForBusiness")]);
+        this.outputResources.push(new AppealEstatePlays());
+        this.stores.push(new AppealEstatePlays());
+        this.storeAmount = 4;
+    }
+
+    override getCosts(city: City): { type: string, amount: number }[] {
+        return [{ type: "flunds", amount: 180 }, { type: "wood", amount: 30 }, { type: "glass", amount: 15 }];
+    }
+
+    override place(city: City, x: number, y: number): void {
+        super.place(city, x, y);
+        if (!city.flags.has(CityFlags.UnlockedAppealEstate)) {
+            city.flags.add(CityFlags.UnlockedAppealEstate);
+            city.notify(new Notification("Residential bribery!", "You've unlocked the Appeal Estate minigame, enabling you to use all sorts of means to get people to move in just a bit faster. Use the Business Presence view to find a residence that's ready to upgrade, then long-tap or right-click on any such building. In that menu, you'll find a gold button displaying a chart--click that to access the Appeal Estate minigame. If you do well, the residence will upgrade to the next level as soon as you're done. If not, eh, you might make some racket and annoy the neighbors.", "residentialdesirability"));
+        }
+    }
+
+    override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 3; }
+
+    override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 900; }
+}
+
 export class PalmNomNom extends Building {
     constructor() {
         super(
@@ -5163,7 +5199,7 @@ export const BLOCKER_TYPES: Map<string, Building> = new Map([
 
 export const BUILDING_TYPES: Map<string, Building> = new Map([
     /*Residential*/ SmallHouse, Quadplex, SmallApartment, Highrise, Skyscraper, Dorm, ShowHome,
-    /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, IceCreamTruck, PalmNomNom, GregsGrogBarr, FurnitureStore, MaidTwoTeas, SauceCode, Casino, CartersCars, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter, Consumeropolis,
+    /*Commercial*/ CornerStore, Junkyard, SuckasCandy, Cafe, TheLoadedDie, Cinema, Whalemart, Bar, IceCreamTruck, FealtyRealty, PalmNomNom, GregsGrogBarr, FurnitureStore, MaidTwoTeas, SauceCode, Casino, CartersCars, GameDevStudio, BlankCheckBank, ResortHotel, HotSpringInn, ConventionCenter, Consumeropolis,
     /*Seasonal (also commercial)*/ ChocolateBar, HeartyShack,
     /*Industrial*/ MountainIronMine, Quarry, CementMill, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks, SiliconRefinery, CrystalMine, AssemblyHouse, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory, ToyManufacturer, Furnifactory, LithiumMine, MohoMine, Nanogigafactory, PharmaceuticalsLab, SpaceLaunchSite,
     /*Seasonal (also industrial)*/ MiracleWorkshop,
@@ -5184,7 +5220,7 @@ export function get(type: string): Building { //Get an UNMODIFIED copy of the bu
 export const TUTORIAL_COMPLETION_BUILDING_UNLOCKS: Set<string> = new Set([
     Farm, CementMill, Quarry, CornerStore, MountainIronMine, WindTurbine, TreeFarm, //Were originally unlocked *during* the tutorial, but then I switched to granting them so you can't softlock yourself.
     Junkyard, BikeRental, BusStation, Warehouse, ColdStorage, Silo, OilTank, SecureStorage, SolarFarm, OilPowerPlant, OilTruck, CoalPowerPlant, CoalTruck,
-    FurnitureStore, MaidTwoTeas, Ranch, FishFarm, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks,
+    FurnitureStore, FealtyRealty, MaidTwoTeas, Ranch, FishFarm, ShaftCoalMine, VerticalCopperMine, SandCollector, Glassworks,
     SiliconRefinery, CrystalMine, OilDerrick, TextileMill, ApparelFactory, SteelMill, PlasticsFactory,
     ToyManufacturer, Furnifactory, LithiumMine,
     IceCreamTruck, PlantMilkPlant,

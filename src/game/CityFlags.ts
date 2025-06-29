@@ -30,4 +30,5 @@ export enum CityFlags { //These values are SAVED in the database, so do not add 
     GeothermalAvailable,
     DataAvailable,
     UnlockedGoldGlobe,
+    UnlockedAppealEstate,
 }

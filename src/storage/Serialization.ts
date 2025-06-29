@@ -64,6 +64,7 @@ export class CitySerializer {
             ru: o.roadUpkeepPrecalculation,
             uw: o.untreatedWaterPortion,
             ap: o.altitectPlays,
+            ec: [...o.appealEstateDiscoveredCombos],
             fb: o.fadeBuildings,
             pa: o.provisionAmountPerTap,
             pf: o.provisionFilterLevel,
@@ -147,12 +148,12 @@ export class CitySerializer {
     }
 
     effect(o: Effect) {
-        //this is the part that's basically impossible to serialize as-is because the effects have lambda functions.
         return {
             bi: o.building?.id || undefined,
             mu: o.multiplier !== 1 ? o.multiplier : undefined, //default is 1
             ty: o.type,
             dc: o.dynamicCalculation,
+            ex: o.expirationLongTicks !== undefined && o.expirationLongTicks > 0 ? o.expirationLongTicks : undefined,
         }
     }
 
@@ -305,6 +306,7 @@ export class CityDeserializer {
         r.roadUpkeepPrecalculation = o.ru || 0;
         r.untreatedWaterPortion = o.uw || 0;
         r.altitectPlays = o.ap || 0;
+        r.appealEstateDiscoveredCombos = new Set(o.ec || []);
         r.fadeBuildings = o.fb || false;
         r.allResearchCompleteNotified = o.rc || false;
         if (o.pa) r.provisionAmountPerTap = o.pa;
@@ -358,7 +360,8 @@ export class CityDeserializer {
             o.ty,
             o.mu || 1,
             buildingsByID.get(o.bi),
-            o.dc
+            o.dc,
+            o.ex
         );
     }
 

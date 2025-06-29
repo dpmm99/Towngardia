@@ -155,6 +155,17 @@ export class NepotismNetworkingPlays extends Resource {
     }
 }
 
+export class AppealEstatePlays extends Resource {
+    constructor(initialCount: number = 0, productionRate: number = 0.2, consumptionRate: number = 0, capacity: number = (productionRate + consumptionRate) * CAPACITY_MULTIPLIER) {
+        super(
+            "appealestateplays", "Appeal Estate Plays",
+            initialCount, productionRate, capacity, consumptionRate,
+            true
+        );
+        this.autoCollect = true;
+    }
+}
+
 export class PracticeRuns extends Resource {
     constructor(initialCount: number = 3) {
         super(
@@ -810,7 +821,7 @@ export const RESOURCE_TYPES = <Resource[]>([
     /*Building materials*/ Concrete, Glass, Iron, Bricks, Clay, Lumber, Steel, Stone, Wood,
     /*Fuel and ingredients*/ Coal, Copper, Gemstones, Lithium, Oil, Plastics, Rubber, Sand, Silicon, Textiles, Tritium, Uranium,
     /*Manufactured goods*/ Apps, Batteries, Clothing, Electronics, Furniture, Paper, Pharmaceuticals, Toys,
-    /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays, PracticeRuns, MinigameOptionResearch,
+    /*Minigames*/ BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays, AppealEstatePlays, PracticeRuns, MinigameOptionResearch,
     /*Mainly math*/ FriendResearchVisits, Crime, Education, FoodHealth, FoodSufficiency, FoodSatisfaction, Happiness, Health, GreenhouseGases, ProductionEfficiency, PowerCosts, DeptOfEnergyBonus, EnvironmentalLabBonus,
     /*Citywide needs*/ Flunds, Research, Population, Tourists, UntappedPatronage, Power, Timeslips, Water,
     /*Event-limited*/ BrainBrews, GleeGrenades, TurboTonics, Chocolate,

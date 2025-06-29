@@ -8,6 +8,7 @@ import { getResourceType, Research } from "../game/ResourceTypes.js";
 import { FriendResearchVisitResult } from "../game/GrantFreePointsResult.js";
 import { TechManager } from "../game/TechManager.js";
 import { Altitect } from "../minigame/Altitect.js";
+import { AppealEstate } from "../minigame/AppealEstate.js";
 import { MemoryMixology } from "../minigame/MemoryMixology.js";
 import { Monobrynth } from "../minigame/Monobrynth.js";
 import { NepotismNetworking } from "../minigame/NepotismNetworking.js";
@@ -77,6 +78,7 @@ export class UIManager {
     private monobrynth!: Monobrynth;
     private neponet!: NepotismNetworking;
     private altitect!: Altitect;
+    private appealEstate!: AppealEstate;
 
     private city!: City; //Set in switchRenderer, called by the constructor, but TypeScript compiler doesn't know that
     public renderer!: IRenderer;
@@ -190,6 +192,7 @@ export class UIManager {
         this.monobrynth = new Monobrynth(this.game.city!, this, this.game);
         this.neponet = new NepotismNetworking(this.game.city!, newCity, this, this.game); //Affects BOTH your city and the other player's
         this.altitect = new Altitect(this.game.city!, this, this.game);
+        this.appealEstate = new AppealEstate(this.game.city!, this, this.game);
 
         //This overlay has to be instantiated after bottomBar.shown is set, because the tutorial hides the bottom bar.
         this.windows.push(this.tutorialOverlay = new TutorialOverlay(this.game.player!, this.game.city!, this)); //Also NEVER changes cities/players
@@ -753,6 +756,17 @@ export class UIManager {
         this.switchRenderer(this.renderer);
     }
 
+    async showAppealEstateMinigame(building: Building): Promise<void> {
+        game.onLoadStart?.();
+        await this.appealEstate.preloadImages();
+        game.onLoadEnd?.();
+
+        this.appealEstate.show(building);
+        this.renderOnlyWindow = this.appealEstate;
+        this.cityView.drawBuildings = false;
+        this.switchRenderer(this.renderer);
+    }
+
     hideRenderOnlyWindow() {
         if (this.renderOnlyWindow && 'hide' in this.renderOnlyWindow && typeof this.renderOnlyWindow.hide === 'function') this.renderOnlyWindow.hide();
         this.cityView = new CityView(this.city, this);
@@ -762,7 +776,8 @@ export class UIManager {
 
     isPlayingMinigame() {
         //Detect if any of the minigames are actively being played--not just shown, but actually playing. In such a case, we don't want to auto-refresh.
-        return this.starbox.isPlaying() || this.neponet.isPlaying() || this.memoryMixology.isPlaying() || this.monobrynth.isPlaying() || this.slots.isPlaying() || this.altitect.isPlaying();
+        return this.starbox.isPlaying() || this.neponet.isPlaying() || this.memoryMixology.isPlaying() || this.monobrynth.isPlaying() || this.slots.isPlaying() ||
+            this.altitect.isPlaying() || this.appealEstate.isPlaying();
     }
 
     //Because screenToWorldCoordinates doesn't round/truncate
