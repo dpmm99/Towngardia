@@ -971,7 +971,7 @@ export class AppealEstate implements IHasDrawable, IOnResizeEvent {
 			else if (this.getTotalTenantValue() >= this.state.tenantValueThreshold) this.endReason = "Agreement signed!";
 			else this.endReason = "Investors approved!";
 			this.endGame();
-		} else if (!this.hasAffordableAbilities() && this.state.availableAbilities.length === 0) {
+		} else if (!this.hasAffordableAbilities() && !this.state.bankedAbility && this.state.tenantApplications.length === 0) {
 			this.endReason = "Project failed!";
 			this.endGame();
 		}
