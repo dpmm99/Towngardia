@@ -58,6 +58,11 @@ export class StandardScroller {
     setChildrenSize(size: number): void {
         if (size === this.lastSize) return; //To avoid skipping events unnecessarily--the width likely isn't changing due to scrolling, but the Drawables get rebuilt
         this.lastTouch = -99999; //Reset so it calculates on the next touch (because we don't know the screen coordinates when this is called)
+
+        //If the size is smaller than the last size, given that we know the previous maxScroll, we can estimate the new maxScroll and cap the scroll to that.
+        //Note: it still has to draw 1 more time before you can tell the difference.
+        //TODO: I think I can attach a StandardScroller instance (or two) to Drawables instead of subtracting getScroll() from the x or y coordinate immediately--that subtraction can be done in the renderer. AND then it could become possible to set max scroll based on word wrapped elements (anything with unknown size at 'draw' time), though that's still a hard problem...like you'd have to identify the most extreme positioned elements and their container and assume some amount of padding... Might be better off making a ClippingScrollingDrawable to act as a container and make it clip children outside its bounds at that point.
+        if (size < this.lastSize) this.scroll = Math.min(this.scroll, Math.max(0, this.maxScroll - this.lastSize + size));
         this.lastSize = this.maxScroll = size;
     }
 }

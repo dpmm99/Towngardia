@@ -64,7 +64,7 @@ export function getInUseSpriteURLs(city: City): { [key: string]: string } {
     //}
 
     //Like that, except only look at PLACED buildings, and distinctify them first. Saves us a lot of time in small cities AND we never have to load out-of-region buildings or variants.
-    const buildingTypes = new Set<string>(['unloaded1x1', 'unloaded2x2', 'unloaded3x3']);
+    const buildingTypes = new Set<string>(['unloaded1x1', 'unloaded2x2', 'unloaded3x3', 'unloaded4x4', 'unloaded2x3', 'unloaded3x2', 'unloaded1x2', 'unloaded2x1']);
     for (const building of city.buildings.values()) {
         buildingTypes.add(building.type + (building.variant || "")); //Include only the in-use variants; the default one (above) never has a number appended.
     }
@@ -141,7 +141,7 @@ export function getLatePreloadSpriteURLs(): { [key: string]: string } {
         /*top bar*/ 'diet', 'foodsufficiency', 'foodsatisfaction', 'foodhealth',
         /*resource bar*/ 'tradesettingson', 'tradesettingsoff', 'autobuyhandle', 'autosellhandle', 'arrowleft', 'arrowright',
         /*ConstructMenu*/ 'ok', 'x',
-        /*ContextMenu*/ 'info', 'move', 'remove', 'demolish', 'demolishnobg', 'buildcopy', 'switch', 'switchnobg', 'fastforward', 'fastforwardnobg', 'altitect',
+        /*ContextMenu*/ 'info', 'move', 'remove', 'demolish', 'demolishnobg', 'buildcopy', 'switch', 'switchnobg', 'fastforward', 'fastforwardnobg', 'altitect', 'appealestate',
         /*BudgetMenu*/ 'incometax', 'propertytax', 'salestax', 'budgetok', "fireprotection", "policeprotection", "healthcare", "education", "environment", "infrastructure", //Services might be resources, dunno
         /*TechTreeMenu*/ 'completeresearch', 'progressresearch', 'cannotresearch', 'adoptionrate',
         /*NotificationsMenu*/ 'unread', 'notice', 'advisor', 'logistics', 'minigames', 'depro',

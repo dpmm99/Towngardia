@@ -4,6 +4,7 @@ import { Drawable } from "./Drawable.js";
 import { TextureInfo } from "./TextureInfo.js";
 
 export function humanizeFloor(value: number): string {
+    if (value < 1) return (Math.floor(value * 100) / 100).toLocaleString();
     if (value < 1000) return (Math.floor(value * 10) / 10).toLocaleString();
     if (value < 1000000) return (Math.floor(value / 100) / 10).toLocaleString() + "k";
     if (value < 1000000000) return (Math.floor(value / 100000) / 10).toLocaleString() + "M";
@@ -12,6 +13,7 @@ export function humanizeFloor(value: number): string {
 }
 
 export function humanizeCeil(value: number): string {
+    if (value < 1) return (Math.ceil(value * 100) / 100).toLocaleString();
     if (value < 1000) return (Math.ceil(value * 10) / 10).toLocaleString();
     if (value < 1000000) return (Math.ceil(value / 100) / 10).toLocaleString() + "k";
     if (value < 1000000000) return (Math.ceil(value / 100000) / 10).toLocaleString() + "M";
