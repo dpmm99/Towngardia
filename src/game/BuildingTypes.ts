@@ -1620,7 +1620,7 @@ export class TreeFarm extends Building {
 
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 1 + 0.35 * city.techManager.getAdoption("gmcrops");
-        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].productionRate * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 }
@@ -1659,7 +1659,7 @@ export class Farm extends Building {
         if (coldSnap && ["apples", "berries", "legumes"].includes(this.outputResources[0].type)) this.upkeepEfficiency *= 0.5;
 
         this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("gmcrops");
-        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].productionRate * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 
@@ -1717,7 +1717,7 @@ export class Ranch extends Building {
 
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 4 + 2 * city.techManager.getAdoption("incubators");
-        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].productionRate * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 }
@@ -1750,7 +1750,7 @@ export class AlgaeFarm extends Building {
 
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("gmcrops");
-        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].productionRate * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 }
@@ -1787,7 +1787,7 @@ export class FishFarm extends Building {
 
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("incubators");
-        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].productionRate * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 }
@@ -1858,7 +1858,7 @@ export class VerticalFarm extends Building {
         if (coldSnap && ["berries", "legumes"].includes(this.outputResources[0].type)) this.upkeepEfficiency *= 0.6;
 
         this.outputResources[0].productionRate = 5 + 1.67 * city.techManager.getAdoption("gmcrops");
-        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].productionRate * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 
@@ -1905,7 +1905,7 @@ export class Carnicultivator extends Building {
 
     override onLongTick(city: City): void {
         this.outputResources[0].productionRate = 3 + 1 * city.techManager.getAdoption("incubators");
-        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].amount * CAPACITY_MULTIPLIER);
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].productionRate * CAPACITY_MULTIPLIER);
         super.onLongTick(city);
     }
 }
@@ -4796,6 +4796,12 @@ export class RedGreenhouse extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 6; }
 
     override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 1200 * (5 - city.techManager.getAdoption('retainingsoil')); }
+
+    override onLongTick(city: City): void {
+        this.outputResources[0].productionRate = 5 + 2 * city.techManager.getAdoption("gmcrops");
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].productionRate * CAPACITY_MULTIPLIER);
+        super.onLongTick(city);
+    }
 }
 
 export class VerticalTreeFarm extends Building {
@@ -4806,7 +4812,7 @@ export class VerticalTreeFarm extends Building {
             2, 2, 0,
             0.3,
         );
-        this.outputResources.push(new Wood(0, 1));
+        this.outputResources.push(new Wood(0, 1)); //NOTE: Production rate gets reset in onLongTick
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, -0.05)]);
         this.onlyAllowInRegions.push("volcanic");
     }
@@ -4822,6 +4828,12 @@ export class VerticalTreeFarm extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 8; }
 
     override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 240 * (5 - city.techManager.getAdoption('retainingsoil')); }
+
+    override onLongTick(city: City): void {
+        this.outputResources[0].productionRate = 1 + 0.35 * city.techManager.getAdoption("gmcrops");
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].productionRate * CAPACITY_MULTIPLIER);
+        super.onLongTick(city);
+    }
 }
 
 export class EnclosedRanch extends Building {
@@ -4832,7 +4844,7 @@ export class EnclosedRanch extends Building {
             4, 4, 0,
             0.3,
         );
-        this.outputResourceOptions = [RedMeat, Poultry, Dairy].map(foodType => new foodType(0, 3));
+        this.outputResourceOptions = [RedMeat, Poultry, Dairy].map(foodType => new foodType(0, 3)); //NOTE: Production rate gets reset in onLongTick
         this.effects = new BuildingEffects([new EffectDefinition(EffectType.GreenhouseGases, 0.075)]);
         this.onlyAllowInRegions.push("volcanic");
     }
@@ -4856,6 +4868,12 @@ export class EnclosedRanch extends Building {
     override getPowerUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 10; }
 
     override getWaterUpkeep(city: City, ideal: boolean = false): number { return (ideal ? 1 : this.lastEfficiency) * 900; }
+
+    override onLongTick(city: City): void {
+        this.outputResources[0].productionRate = 3 + 1.5 * city.techManager.getAdoption("incubators");
+        this.outputResources[0].capacity = Math.max(this.outputResources[0].capacity, this.outputResources[0].productionRate * CAPACITY_MULTIPLIER);
+        super.onLongTick(city);
+    }
 }
 
 export class ObsidianGatherer extends Building {
