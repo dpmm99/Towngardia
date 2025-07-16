@@ -892,7 +892,6 @@ export class AppealEstate implements IHasDrawable, IOnResizeEvent {
 		// Update state
 		this.state.lastUsedAbility = ability;
 		this.state.usedAbilities.push({ ability, buffStrength, debuffStrength });
-		ability.usageCount--;
 
 		this.removeFromAvailable(index);
 		this.generateAvailableAbilities();
