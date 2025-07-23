@@ -749,7 +749,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
         }
         //One more: the import cost per day if there's a deficit. City has a getImportPowerRate/getImportWaterRate function for that.
         if (surplus < 0) {
-            const importCost = Math.min(desiredAmount * importLimit, -surplus) * importRate * (type === "power" ? SHORT_TICKS_PER_LONG_TICK : 1) * LONG_TICKS_PER_DAY;
+            const importCost = Math.min(desiredAmount * importLimit, -surplus) * importRate * (type === "power" ? LONG_TICKS_PER_DAY : 1) * SHORT_TICKS_PER_LONG_TICK;
             infoDrawable.addChild(new Drawable({
                 x: padding,
                 y: nextY,
