@@ -1,14 +1,14 @@
 import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
 import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
-import { FoodHealth, FoodSatisfaction, FoodSufficiency, RESOURCE_TYPES } from "../game/ResourceTypes.js";
+import { FOOD_TYPES, FoodHealth, FoodSatisfaction, FoodSufficiency, RESOURCE_TYPES } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
 import { StandardScroller } from "./StandardScroller.js";
 import { TextureInfo } from "./TextureInfo.js";
 import { UIManager } from "./UIManager.js";
-import { humanizeCeil } from "./UIUtil.js";
+import { humanizeCeil, humanizeFloor } from "./UIUtil.js";
 
 export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
     private lastDrawable: Drawable | null = null;
@@ -18,6 +18,16 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
     constructor(private city: City, private uiManager: UIManager) { }
 
     onResize(): void { this.scroller.onResize(); }
+
+    getFoodProduction(efficiency?: number): number {
+        let totalProduction = 0;
+        for (const building of this.city.buildings) {
+            for (const resource of building.outputResources.filter(p => FOOD_TYPES.has(p.type))) {
+                totalProduction += resource.productionRate * (efficiency ?? building.getEfficiencyEffectMultiplier(this.city));
+            }
+        }
+        return totalProduction;
+    }
 
     asDrawable(): Drawable {
         if (!this.shown) return this.lastDrawable = new Drawable({ width: "0px" });
@@ -72,6 +82,15 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
             x: 10,
             y: nextY,
             text: `Food consumption: ${humanizeCeil(this.city.citizenDietSystem.getFoodNeeded(true) * LONG_TICKS_PER_DAY)}/day`,
+            width: "450px",
+            height: "24px"
+        }));
+        nextY += 34;
+
+        windowDrawable.addChild(new Drawable({
+            x: 10,
+            y: nextY,
+            text: `Food production: ${humanizeFloor(this.getFoodProduction() * LONG_TICKS_PER_DAY)}/day (${humanizeFloor(this.getFoodProduction(1) * LONG_TICKS_PER_DAY)} base)`,
             width: "450px",
             height: "24px"
         }));
