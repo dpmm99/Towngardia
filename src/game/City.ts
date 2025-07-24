@@ -14,7 +14,7 @@ import { Drought, EVENT_TYPES, EmergencyPowerAid, Epidemic, PowerOutage, Researc
 import { FootprintType } from "./FootprintType.js";
 import { LONG_TICK_TIME, LONG_TICKS_PER_DAY, SHORT_TICKS_PER_LONG_TICK } from "./FundamentalConstants.js";
 import { GameState } from "./GameState.js";
-import { GREENHOUSE_GASES_MIN_POPULATION } from "./GameplayConstants.js";
+import { GREENHOUSE_GASES_MIN_POPULATION, RESOURCE_DAILY_BUY_CAPACITY_FACTOR } from "./GameplayConstants.js";
 import { EffectType } from "./GridType.js";
 import { HappinessCalculator } from "./HappinessCalculator.js";
 import { inPlaceShuffle } from "./MiscFunctions.js";
@@ -1355,7 +1355,7 @@ export class City {
         this.resources.forEach(resource => {
             if (resource.isSpecial) return; //Can't buy happiness. :) ...or flunds, population, tourists, water and power (except as allowed by the hard-coded mechanism), pollution (!?), health, education, crime (!?!?), or research (okay, that's sort-of feasible, but no)
             if (resource.capacity) resource.buyCapacity = Math.min(this.getBuyCapacity(resource), resource.capacity);
-            resource.buyableAmount = Math.min(resource.buyCapacity, resource.buyableAmount + resource.buyCapacity * 0.2 / LONG_TICKS_PER_DAY);
+            resource.buyableAmount = Math.min(resource.buyCapacity, resource.buyableAmount + resource.buyCapacity * RESOURCE_DAILY_BUY_CAPACITY_FACTOR / LONG_TICKS_PER_DAY);
         });
 
         this.resources.get(ResourceTypes.getResourceType(ResourceTypes.ProductionEfficiency))!.amount = 1;

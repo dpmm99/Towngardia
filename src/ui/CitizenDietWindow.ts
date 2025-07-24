@@ -1,6 +1,7 @@
 import { City } from "../game/City.js";
 import { CityFlags } from "../game/CityFlags.js";
 import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
+import { RESOURCE_DAILY_BUY_CAPACITY_FACTOR } from "../game/GameplayConstants.js";
 import { FOOD_TYPES, FoodHealth, FoodSatisfaction, FoodSufficiency, RESOURCE_TYPES } from "../game/ResourceTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
@@ -27,6 +28,24 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
             }
         }
         return totalProduction;
+    }
+
+    getTotalDailyAutoBuyAmount(): number {
+        let total = 0;
+        for (const foodType of FOOD_TYPES.values()) {
+            const resource = this.city.resources.get(foodType)!;
+            total += Math.min(resource.autoBuyBelow * resource.capacity * LONG_TICKS_PER_DAY, resource.buyCapacity * RESOURCE_DAILY_BUY_CAPACITY_FACTOR);
+        }
+        return total;
+    }
+
+    getTotalStorageAmount(): number {
+        let total = 0;
+        for (const foodType of FOOD_TYPES.values()) {
+            const resource = this.city.resources.get(foodType)!;
+            total += resource.capacity;
+        }
+        return total;
     }
 
     asDrawable(): Drawable {
@@ -91,6 +110,24 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
             x: 10,
             y: nextY,
             text: `Food production: ${humanizeFloor(this.getFoodProduction() * LONG_TICKS_PER_DAY)}/day (${humanizeFloor(this.getFoodProduction(1) * LONG_TICKS_PER_DAY)} base)`,
+            width: "450px",
+            height: "24px"
+        }));
+        nextY += 34;
+
+        windowDrawable.addChild(new Drawable({
+            x: 10,
+            y: nextY,
+            text: `Auto-buying up to: ${humanizeFloor(this.getTotalDailyAutoBuyAmount())}/day`,
+            width: "450px",
+            height: "24px"
+        }));
+        nextY += 34;
+
+        windowDrawable.addChild(new Drawable({
+            x: 10,
+            y: nextY,
+            text: `Total storage capacity: ${humanizeFloor(this.getTotalStorageAmount())}`,
             width: "450px",
             height: "24px"
         }));
