@@ -14,7 +14,7 @@ import { Drought, EVENT_TYPES, EmergencyPowerAid, Epidemic, PowerOutage, Researc
 import { FootprintType } from "./FootprintType.js";
 import { LONG_TICK_TIME, LONG_TICKS_PER_DAY, SHORT_TICKS_PER_LONG_TICK } from "./FundamentalConstants.js";
 import { GameState } from "./GameState.js";
-import { GREENHOUSE_GASES_MIN_POPULATION, RESOURCE_DAILY_BUY_CAPACITY_FACTOR } from "./GameplayConstants.js";
+import { GREENHOUSE_GASES_MIN_POPULATION, RESOURCE_DAILY_BUY_CAPACITY_FACTOR, WATER_TREATMENT_PER_SHORT_TICK } from "./GameplayConstants.js";
 import { EffectType } from "./GridType.js";
 import { HappinessCalculator } from "./HappinessCalculator.js";
 import { inPlaceShuffle } from "./MiscFunctions.js";
@@ -1568,7 +1568,7 @@ export class City {
 
         if (this.flags.has(CityFlags.WaterTreatmentMatters)) {
             const water = this.resources.get("water")!;
-            const waterTreatmentQuantity = this.getWaterTreatment();
+            const waterTreatmentQuantity = this.getWaterTreatmentPerShortTick(); //desiredWater and building.getWaterProduction are per long tick, but the others are per short tick. I was a bit sloppy.
             const importedWater = Math.max(0, Math.min(water.consumptionRate - water.productionRate, this.desiredWater / SHORT_TICKS_PER_LONG_TICK * this.budget.waterImportLimit));
 
             //I considered a moving average so one bad short tick doesn't immediately skyrocket the epidemic chance, but it seemed too gross
@@ -1579,8 +1579,8 @@ export class City {
         }
     }
 
-    getWaterTreatment() {
-        return this.buildings.filter(p => p instanceof WaterTreatmentPlant).reduce((a, b) => a + b.lastEfficiency, 0) * 1900000; //Treats 76 megaliters per plant *per day* (x4) for now--enough for 5100 citizens, so you need 4 for a city with ~30k citizens.
+    getWaterTreatmentPerShortTick() {
+        return this.buildings.filter(p => p instanceof WaterTreatmentPlant).reduce((a, b) => a + b.lastEfficiency, 0) * WATER_TREATMENT_PER_SHORT_TICK;
     }
 
     frozenAdvanceLongTick(): void {

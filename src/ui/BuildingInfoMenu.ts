@@ -6,6 +6,7 @@ import { CityFlags } from "../game/CityFlags.js";
 import { Effect } from "../game/Effect.js";
 import { Epidemic, TourismReward } from "../game/EventTypes.js";
 import { LONG_TICKS_PER_DAY, LONG_TICK_TIME, SHORT_TICKS_PER_LONG_TICK } from "../game/FundamentalConstants.js";
+import { WATER_TREATMENT_PER_SHORT_TICK } from "../game/GameplayConstants.js";
 import { EffectType } from "../game/GridType.js";
 import { HIGH_TECH_UNLOCK_EDU } from "../game/HappinessCalculator.js";
 import { Resource } from "../game/Resource.js";
@@ -796,7 +797,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
                 width: (barWidth - padding * 2) + "px",
                 height: "24px",
                 text: this.city.untreatedWaterPortion ? "Water contamination: " + humanizeCeil(this.city.untreatedWaterPortion * 100) + "%" :
-                    ("Treatment surplus: " + floorFunc(this.city.getWaterTreatment() - Math.min(resource.productionRate, resource.consumptionRate))),
+                    ("Treatment surplus: " + floorFunc(LONG_TICKS_PER_DAY * SHORT_TICKS_PER_LONG_TICK * (this.city.getWaterTreatmentPerShortTick() - Math.min(resource.productionRate, resource.consumptionRate))) + "/day"),
                 reddize: this.city.untreatedWaterPortion > 0,
             }));
             nextY += 24 + padding;
@@ -1187,7 +1188,7 @@ export class BuildingInfoMenu implements IHasDrawable, IOnResizeEvent {
     }
 
     private addWaterTreatmentInfo(infoDrawable: Drawable, padding: number, nextY: number, iconSize: number, building: WaterTreatmentPlant, barWidth: number): number {
-        const maxTreated = 1900000 * LONG_TICKS_PER_DAY;
+        const maxTreated = WATER_TREATMENT_PER_SHORT_TICK * SHORT_TICKS_PER_LONG_TICK * LONG_TICKS_PER_DAY;
         const treated = (building.x !== -1 ? building.lastEfficiency : 1) * maxTreated;
         infoDrawable.addChild(new Drawable({
             x: padding,
