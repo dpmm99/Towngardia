@@ -100,6 +100,40 @@ These are both imported from `../ui/`
 	}))
   ```
 
+### Drawable and Anchor specs
+```
+export type Anchor = 'top' | 'bottom' | 'left' | 'right' | 'below' | 'centerX' | 'selfBottom';
+export class Drawable {
+    children: Drawable[] = []; //note: there is *no* clipping; hierarchy is for click detection and relative positioning only
+    anchors: Anchor[] = [];
+    image?: TextureInfo;
+    fallbackImage?: TextureInfo; //for low-quality generic placeholders while loading; not used for minigames
+    fallbackColor: string = '#FF00FF'; //magenta by default. Note: text is always white unless you use 'grayscale' or 'reddize'
+    width?: string; //like CSS, can be % or px (though CSS supports a whole lot more than that)
+    height?: string;
+    clipWidth?: number; //width is for stretching the texture; clipWidth is a ratio (0-1) of the stretched-out texture's width to actually draw; mostly for progress bars
+    x?: number;
+    y?: number;
+    biggerOnMobile?: boolean; //scale up a bit on mobile devices relative to other elements
+    scaleXOnMobile?: boolean; //can also decide whether to scale each coordinate independently
+    scaleYOnMobile?: boolean;
+    grayscale: boolean = false;
+    reddize: boolean = false;
+
+    text?: string;
+    rightAlign: boolean = false;
+    wordWrap: boolean = false; //"height" is *per line* when this is true.
+    noXStretch: boolean = true; //turns width into a max width
+    keepParentWidth: boolean = false; //keeps word-wrapped random-width text from screwing up nesting (it's used for positioning)
+    centerOnOwnX: boolean = false; //basically makes the anchor relative to the center of this Drawable. For centering in the parent, set this to true, set x=0 and add 'centerX' to the anchors.
+
+    onClick: (() => void) | null = null; //If null, it's not clickable and should ignore clicks in its area.
+    onLongTap: (() => void) | null = null; //Only works if onClick is also set.
+    onDrag: ((x: number, y: number) => void) | null = null;
+    onDragEnd: (() => void) | null = null;
+}
+```
+
 ---
 
 ## 4. **Game Mechanics**
