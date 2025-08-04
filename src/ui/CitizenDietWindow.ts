@@ -3,6 +3,7 @@ import { CityFlags } from "../game/CityFlags.js";
 import { LONG_TICKS_PER_DAY } from "../game/FundamentalConstants.js";
 import { RESOURCE_DAILY_BUY_CAPACITY_FACTOR } from "../game/GameplayConstants.js";
 import { FOOD_TYPES, FoodHealth, FoodSatisfaction, FoodSufficiency, RESOURCE_TYPES } from "../game/ResourceTypes.js";
+import { HydroponicGardens } from "../game/TechTypes.js";
 import { Drawable } from "./Drawable.js";
 import { IHasDrawable } from "./IHasDrawable.js";
 import { IOnResizeEvent } from "./IOnResizeEvent.js";
@@ -27,6 +28,13 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
                 totalProduction += resource.productionRate * (efficiency ?? building.getEfficiencyEffectMultiplier(this.city));
             }
         }
+
+        //With Hydroponic Gardens researched, citizens grow some vegetables for themselves--2% each of roots, berries, leafy greens, and legumes.
+        if (this.city.techManager.techs.get(new HydroponicGardens().id)!.researched) {
+            const fraction = this.city.techManager.getAdoption(new HydroponicGardens().id) * 0.02;
+            totalProduction += 4 * fraction; //The 4 is for RootVegetables, Berries, LeafyGreens, and Legumes.
+        }
+
         return totalProduction;
     }
 
