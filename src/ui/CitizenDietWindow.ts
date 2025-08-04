@@ -32,7 +32,7 @@ export class CitizenDietWindow implements IHasDrawable, IOnResizeEvent {
         //With Hydroponic Gardens researched, citizens grow some vegetables for themselves--2% each of roots, berries, leafy greens, and legumes.
         if (this.city.techManager.techs.get(new HydroponicGardens().id)!.researched) {
             const fraction = this.city.techManager.getAdoption(new HydroponicGardens().id) * 0.02;
-            totalProduction += 4 * fraction; //The 4 is for RootVegetables, Berries, LeafyGreens, and Legumes.
+            totalProduction += this.city.citizenDietSystem.getFoodNeeded(true) * 4 * fraction; //The 4 is for RootVegetables, Berries, LeafyGreens, and Legumes.
         }
 
         return totalProduction;
