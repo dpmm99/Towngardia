@@ -1018,7 +1018,7 @@ export class City {
         }
     }
 
-    //If the effect contains a building, the effect will spread from there. Otherwise, you need to specify x and y, and you should basically only do that for land value when generating the city, I guess. (After all, I don't have a method for removing effects that didn't come from a building.)
+    //If the effect contains a building, the effect will spread from there. Otherwise, you need to specify x and y, and you should basically only do that for land value when generating the city, unless you give the effect expirationLongTicks > 1. (After all, I don't have a method for removing effects that didn't come from a building.)
     spreadEffect(effect: Effect, xRadius: number, yRadius: number, rounded: boolean = false, x: number = 0, y: number = 0): void {
         const tiles = this.getTilesInArea(effect.building?.x ?? x, effect.building?.y ?? y, effect.building?.width ?? 1, effect.building?.height ?? 1, xRadius, yRadius, rounded);
         tiles.forEach(tile => this.effectGrid[tile.y][tile.x].push(effect));

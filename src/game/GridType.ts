@@ -13,5 +13,5 @@
     BusinessPresence,
     Luxury,
     PublicTransport,
-    BusinessValue, //Currently only used for a December event building.
+    BusinessValue, //Currently only used for a December event building and an Appeal Estate reward.
 }

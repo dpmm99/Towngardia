@@ -11,7 +11,7 @@ This document attempts to distill the implementation of minigames in Towngardia,
 ### External Interfaces
 - **`IHasDrawable`**: Requires `asDrawable()` method for UI rendering.
 - **`IOnResizeEvent`**: Handles resize events via `onResize()`.
-These are both imported from `../ui/`
+These are both imported from their files in the path `../ui/`.
 
 ### Design Philosophy
 - **Encapsulation**: Game logic and state are encapsulated within the base class.
@@ -35,7 +35,7 @@ These are both imported from `../ui/`
   - endReason: String so the reason the game ended only needs evaluated once no matter how many times it redraws
   - Timeouts: Use NodeJS.Timeout to hold the return value of any call to setTimeout, such as for a brief animation or for a game timer
   - preloaded: Checked at the start of preloadImages and set to true at the end
-  - winnings: Results of the last completed playthrough, set in calculateWinnings, which is called by endGame; this is usually a `Resource[]`
+  - winnings: Results of the last completed playthrough, set in calculateWinnings, which is called by endGame; this is usually a `Resource[]` (which are constructed like `new Flunds(amount)` or `new Electronics(amount)`)
   - score: Many minigames use a simple score to base the winnings calculation on
   - gameStarted: The game is running
   - scroller: Generally, a StandardScroller(false, true) (which makes it vertical) is needed for the UI
@@ -133,6 +133,7 @@ export class Drawable {
     onDragEnd: (() => void) | null = null;
 }
 ```
+You may not make up additional fields in Drawable.
 
 ---
 
@@ -193,6 +194,23 @@ export class Drawable {
 - **Units**: Units like tiles, seconds, and Watts are generally placed at the end of the constant or property name if they're likely to be confusing; otherwise, at least include the unit in a comment by the member definition.
 - **Helper Functions**: Encapsulate complex logic (e.g., `canPlaceElement()`, `isLevelComplete()`).
 - **Type Safety**: Interfaces enforce data structure consistency.
+
+### Helpers
+The following functions are exported from MinigameUtil:
+```
+//roundTo should be 0.1 if you want to round to the nearest 0.1, 0.5 if you want to round to the nearest 0.5...pretty clean.
+//Added outputMultiplier so you can apply a factor before rounding without writing "multiplier * " twice for every call to one of these functions.
+function rangeMapLinear(value: number, lowEndOutput: number, highEndOutput: number, rangeLower: number, rangeUpper: number, roundTo: number, outputMultiplier: number = 1);
+
+//Same thing, but with a curve-bending factor (exponent, but the number is 0-1, so if exponent > 1, the output approaches the maximum faster at the lower end).
+function rangeMapExp(value: number, lowEndOutput: number, highEndOutput: number, rangeLower: number, rangeUpper: number, exponent: number, roundTo: number, outputMultiplier: number = 1);
+
+//Only return the winnings that have a nonzero amount, and convert uranium or tritium to flunds (LESS than the normal sell rate because it'd be early-game, when flunds are much more valuable) if there's nowhere to put them.
+function filterConvertAwardWinnings(city: City, winnings: Resource[], extraFlunds: number = 0);
+
+//Most minigames use this as an unlisted reward with no minimum score and a wide output range (but very rarely more than 0.1).
+export function progressMinigameOptionResearch(city: City, amount: number);
+```
 
 ---
 
@@ -358,7 +376,87 @@ public startGame(): void {
 
 ---
 
-## 12. **Example Minigame Template**
+## 12. **Possible References**
+
+### Resource types
+- Food: Apples, Berries, Dairy, Fish, Grain, LabGrownMeat, LeafyGreens, Legumes, PlantBasedDairy, Poultry, RedMeat, RootVegetables, VitaminB12,
+- Building materials: Concrete, Glass, Iron, Bricks, Clay, Lumber, Steel, Stone, Wood,
+- Fuel and ingredients: Coal, Copper, Gemstones, Lithium, Oil, Plastics, Rubber, Sand, Silicon, Textiles, Tritium, Uranium,
+- Manufactured goods: Apps, Batteries, Clothing, Electronics, Furniture, Paper, Pharmaceuticals, Toys,
+- Minigames: BarPlays, SlotsPlays, StarboxPlays, MonobrynthPlays, NepotismNetworkingPlays, AppealEstatePlays, PracticeRuns, MinigameOptionResearch,
+- Citywide needs: Flunds, Research
+- Event-limited: BrainBrews, GleeGrenades, TurboTonics, Chocolate,
+- Region-limited: Obsidian, GreenObsidian, FireObsidian, Sulfur, Dynamite,
+
+Numbers are usually rather small; a common minigame reward might be 3 units each of several resources.
+
+### City methods not demonstrated elsewhere
+```
+//If the effect contains a building, the effect will spread from there. Otherwise, you need to specify x and y. For minigames, the Effect should have expirationLongTicks specified (based on LONG_TICKS_PER_DAY).
+spreadEffect(effect: Effect, xRadius: number, yRadius: number, rounded: boolean = false, x: number = 0, y: number = 0): void
+
+//Takes from each of the given resources until the city is at max capacity for that resource type, then sells the rest.
+transferResourcesFrom(resources: { type: string, amount: number }[], reason: "produce" | "earn" | "cancel"): void;
+
+//Checks an achievement's conditions - you may invent a few possible achievements, preferably humorous, and pick the most rewarding-feeling or the most creative one to add to the game.
+public checkAndAwardAchievement(achievementId: string): boolean;
+
+//Uses Notification from "./Notification.js"; often used with a feature/bonus/building unlock flag like this.city.flags.add(CityFlags.UnlockedTeleportationPod); and a building unlock like this.city.unlock(getBuildingType(TeleportationPod));
+public notify(notice: Notification): void; //and Notification is (title: string, body: string, icon: string), where icon is auto-prefixed with ui/ if it doesn't contain a slash
+```
+
+### UIUtil functions
+```
+addResourceCosts(parentDrawable: Drawable, costs: { type: string, amount: number, reddize?: boolean }[],
+    startX: number, startY: number, biggerOnMobile: boolean = false, scaleXOnMobile: boolean = false, scaleYOnMobile: boolean = false,
+    resourceIconSize = 16, resourcePadding = 2, fontHeight = 14, wrapAfter = 3, grayscale: boolean = false, reddize: boolean = false, city?: City | undefined,
+    floor: boolean = false);
+```
+`humanizeFloor`, `humanizeCeil`, `longTicksToDaysAndHours`, `longTicksToHoursAndMinutes` all accept a number and return a string.
+
+### Effect and EffectType
+```
+/* @param type The type of effect.
+ * @param multiplier The multiplier of the effect. Default is 1.
+ * @param building The building that is causing the effect. Default is undefined (e.g., for default land value numbers). Mainly used for removing the effects when removing a building.
+ * @param dynamicCalculation A function that calculates the effect dynamically. MUST be a function of the given building. If this is set, the multiplier is still considered, but it's multiplied by the result of this function. Inputs are the city, AFFECTED building, and tile position (x, y).
+ * @param expirationLongTicks The number of ticks after which the effect expires. If undefined or less than 1, the effect does not expire.*/
+constructor(public type: EffectType, public multiplier: number = 1, public building?: Building, public dynamicCalculation?: string, public expirationLongTicks?: number);
+
+enum EffectType {
+    PettyCrime,
+    OrganizedCrime,
+    PoliceProtection,
+    ParticulatePollution,
+    GreenhouseGases,
+    Noise,
+    LandValue,
+    FireHazard,
+    FireProtection,
+    Education,
+    Healthcare,
+    BusinessPresence,
+    Luxury,
+    PublicTransport,
+    BusinessValue, //Currently only used for a December event building and an Appeal Estate reward.
+}
+```
+You may not add more effect types.
+
+### Reward events
+```
+TourismReward extends CityEvent { constructor(initialDuration = 12, bonusFraction = 0); }
+ProductionReward extends CityEvent { constructor(initialDuration = 12, bonusFraction = 0); }
+DietReward extends CityEvent { constructor(initialDuration = 12, bonusFraction = 0); }
+HappinessReward extends CityEvent { constructor(initialDuration = 12, bonusAmount = 0); }
+ResearchReward extends CityEvent { constructor(initialDuration = 12, bonusAmount = 0); }
+PowerReward extends CityEvent { constructor(initialDuration = 12, discountFraction = 0); }
+```
+You may invent more of these as needed. The events can be used as winnings via `this.city.events.push(reward)`.
+
+---
+
+## 13. **Example Minigame Template**
 
 ### Structure
 ```typescript
@@ -589,6 +687,8 @@ export class MyMinigame implements IHasDrawable, IOnResizeEvent {
         //    { group: "aa-r", id: "0", text: "Business Buds (+tourism)", icon: "resource/tourists" },
         //    { group: "aa-r", id: "1", text: "Power Pals (-power cost)", icon: "resource/power" },
         //    { group: "aa-r", id: "2", text: "Industrial Invitees (+production)", icon: "ui/logistics" }]);
+		//Used like this: this.city.minigameOptions.get("aa-r") === "1"
+		//The 'aa' is the minigame's abbreviation, and the 'r' is for 'rewards'. Other options like a difficulty selector ('d') can also exist.
 
         this.scroller.setChildrenSize(nextY - baseY);
     }
@@ -635,7 +735,7 @@ export class MyMinigame implements IHasDrawable, IOnResizeEvent {
   public async preloadImages(): Promise<void> {
     if (this.preloaded) return;
     const urls: { [key: string]: string } = {
-        "minigame/altitrash": "assets/minigame/altitrash.png",
+        "minigame/altitrash": "assets/minigame/altitrash.png", //Minigame-specific assets are in assets/minigame/ and have a prefix unique to the minigame
         "minigame/altiempty": "assets/minigame/altiempty.png",
     };
 
