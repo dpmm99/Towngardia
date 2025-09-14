@@ -3772,6 +3772,7 @@ export class MuseumOfFutureArts extends Building { //Unlocked by Quantum Computi
         );
         this.areaIndicatorRadiusX = this.areaIndicatorRadiusY = 8;
         this.areaIndicatorRounded = true;
+        this.effects = new BuildingEffects([new EffectDefinition(EffectType.Luxury, 0.2)]);
         this.outputResources.push(new Tourists(10, 10, 0, 200));
     }
 
