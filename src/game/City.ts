@@ -1840,8 +1840,9 @@ export class City {
 
     runEvents(tickTiming: EventTickTiming) {
         if (this.timeFreeze) return; //Don't run any events while in the tutorial. Don't want to confuse the player that soon.
+        const now = new Date(this.lastLongTick);
         this.events.filter(p => p.tickTiming === tickTiming).forEach(p => {
-            if (!p.onLongTick(this)) { //true = keep it going
+            if (!p.onLongTick(this, now)) { //true = keep it going
                 this.events.splice(this.events.indexOf(p), 1); //Remove when the event is done.
                 if (p.endMessage) this.notify(new Notification(p.displayName, p.endMessage, p.notificationIcon ?? undefined));
             }

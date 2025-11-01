@@ -21,12 +21,24 @@ export class CityEvent {
     /**
      * Should be executed exactly once per long tick, but when it's executed may differ based on the event type.
      * @param city
+     * @param date
      * @returns true if the event is still active
      */
-    onLongTick(city: City): boolean {
-        if (--this.duration > 0) return true;
+    onLongTick(city: City, date: Date): boolean {
+        this.duration--;
+        this.calculateDuration(city, date);
+        if (this.duration > 0) return true;
+
         this.end(city);
         return false;
+    }
+
+    /**
+     * Recalculates duration based on current time. Implement this if your event shouldn't be affected by Timeslips because it's tied to real time.
+     * @param city
+     * @param date
+     */
+    calculateDuration(city: City, date: Date): void {
     }
 
     /**
@@ -54,6 +66,7 @@ export class CityEvent {
         this.skippedStarts = 0;
         this.activations++;
         this.duration = this.maxDuration;
+        this.calculateDuration(city, date);
     }
     end(city: City): void { } //Just for override purposes
 
