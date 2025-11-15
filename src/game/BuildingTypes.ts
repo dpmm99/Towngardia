@@ -4314,7 +4314,7 @@ export class QuantumComputingLab extends Building {
         }
 
         //Teleportation Pod unlocked and Museum of Future Arts locked -> 10% chance per long tick to unlock Museum of Future Arts
-        if (this.outputResources[0].amount > 200 && Math.random() < 0.1 * this.lastEfficiency && city.flags.has(CityFlags.UnlockedTeleportationPod) && !city.flags.has(CityFlags.UnlockedMuseumOfFutureArts)) {
+        if (this.outputResources[0].amount >= this.outputResources[0].capacity && Math.random() < 0.1 * this.lastEfficiency && city.flags.has(CityFlags.UnlockedTeleportationPod) && !city.flags.has(CityFlags.UnlockedMuseumOfFutureArts)) {
             city.unlock(getBuildingType(MuseumOfFutureArts));
             city.flags.add(CityFlags.UnlockedMuseumOfFutureArts);
             city.notify(new Notification("Particle Accelerator Accident", "Thanks to what we're legally required to call an 'unexpected synergistic intersection of experimental technologies' (but was actually just an intern trying to teleport his lunch while the particle accelerator was running and someone was using the quantum computer to mine cryptocurrency), we now have access to art from approximately 47 years in the future. The good news: temporal art tourism is now possible! The bad news: future art critics are still just as pretentious. You can now build the Museum of Future Arts from the Luxury construction category.", "luxury"));
